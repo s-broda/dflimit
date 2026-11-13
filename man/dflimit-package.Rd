@@ -15,6 +15,7 @@ MATLAB and Julia).
 \describe{
   \item{[ltratio_cdf()], [ltratio_pdf()], [ltratio_icdf()], [ltratio_mom()]}{the t-ratio, cases DK, DU, DT
     (zero or fixed start), SK, SU, ST (stationary start) and DG (GLS-detrended trend case);}
+  \item{[coef_cdf()], [coef_icdf()]}{the coefficient statistic \eqn{n(\hat\phi - \phi_0)}{n(phi^ - phi0)};}
   \item{[adfmax_cdf()], [adfmax_pdf()], [adfmax_icdf()]}{the ADFmax test of Leybourne (1995);}
   \item{[ltratio_region()]}{the probability of a region \eqn{\{U \le g(V)\}}{{U <= g(V)}}, case DK;}
   \item{[ltratio_threads()]}{the number of worker threads.}

@@ -22,6 +22,7 @@ arguments, exist in MATLAB and Julia.
 | `ltratio_pdf(x, cas, c, c0, g0, method)` | its density |
 | `ltratio_icdf(p, cas, c, c0, g0, method, tol)` | quantiles (asymptotic critical values) |
 | `ltratio_mom(p, cas, c, c0, g0)` | moments E[t^j], j = 1..p |
+| `coef_cdf(y, cas, c, c0, g0, method)`, `coef_icdf(p, ...)` | the coefficient statistic n(phi^ - phi0) |
 | `adfmax_cdf`, `adfmax_pdf`, `adfmax_icdf` | the ADFmax statistic (cases DU, DT, SU, ST) |
 | `ltratio_region(bnd, "DK", c)` | P{U <= g(V)} for a line, the parabola of the t-ratio, the WAP boundary |
 | `ltratio_threads(n)` | the number of worker threads of the engine |
@@ -30,6 +31,12 @@ The case `cas` is a two-letter code: `D` (fixed start, `g0`, default 0) or `S` (
 followed by `K` (no deterministic terms, tau), `U` (intercept, tau_mu) or `T` (intercept and trend, tau_tau);
 `"DG"` is the GLS-detrended trend case (DF-GLS, cbar = -13.5). `method` is `"auto"` (the faster representation at
 each point), `"single"` (the line integral, Theorem 2) or `"double"` (the conditional integral, Theorem S1).
+
+All numbers come from the C engine. `coef_cdf`, `coef_icdf` and `adfmax_icdf` have no entry point of their own
+there: as in the MATLAB programs, they are short R-level wrappers (the distribution function of the t-ratio at 0
+with a shifted local null value, and root searches on the engine's distribution functions). Not in the package,
+because the C engine does not have them: `ltratio_lincdf` (the linear form U - aV) and `power_envelope` of the
+MATLAB programs, and the boundary type `"fun"` (any function g) of `ltratio_region`.
 
 ## Example
 
@@ -49,6 +56,8 @@ ltratio_pdf(-2, "DT", -5)                      # density
 #> [1] 0.5088008
 ltratio_mom(4, "DT")                           # first four moments of tau_tau
 #> [1]  -2.181356   5.320676 -14.035800  39.554430
+coef_cdf(-14.0936, "DU", -10)                  # power of the 5% coefficient test at c = -10
+#> [1] 0.4592526
 ```
 
 The engine uses all processors by default; `ltratio_threads(n)` or `options(dflimit.threads = n)` (before the

@@ -3,6 +3,8 @@
 export(adfmax_cdf)
 export(adfmax_icdf)
 export(adfmax_pdf)
+export(coef_cdf)
+export(coef_icdf)
 export(ltratio_cdf)
 export(ltratio_icdf)
 export(ltratio_mom)

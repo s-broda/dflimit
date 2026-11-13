@@ -59,7 +59,7 @@
 #'
 #'   Elliott, G., Rothenberg, T. J. and Stock, J. H. (1996), "Efficient Tests for an Autoregressive Unit Root",
 #'   Econometrica 64, 813-836.
-#' @seealso [ltratio_icdf()], [ltratio_mom()], [adfmax_cdf()], [ltratio_region()], [ltratio_threads()].
+#' @seealso [ltratio_icdf()], [ltratio_mom()], [coef_cdf()], [adfmax_cdf()], [ltratio_region()], [ltratio_threads()].
 #' @examples
 #' ltratio_cdf(-2.86157, "DU", -5)            # limiting power of the 5% test of tau_mu at c = -5
 #' ltratio_cdf(-2.86157, "SU", -5)            # the same with a stationary start

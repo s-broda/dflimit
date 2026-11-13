@@ -92,5 +92,5 @@ Bao, Y., Broda, S. A. and Kan, R., "The Exact Limiting Distribution of the Dicke
   Econometrica 64, 813-836.
 }
 \seealso{
-[ltratio_icdf()], [ltratio_mom()], [adfmax_cdf()], [ltratio_region()], [ltratio_threads()].
+[ltratio_icdf()], [ltratio_mom()], [coef_cdf()], [adfmax_cdf()], [ltratio_region()], [ltratio_threads()].
 }
