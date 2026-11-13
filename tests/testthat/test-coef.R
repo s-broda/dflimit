@@ -24,8 +24,9 @@ test_that("coef_icdf inverts coef_cdf", {
 })
 
 test_that("coef_cdf is the distribution function of the t-ratio at 0 with the shifted null value", {
-  expect_identical(coef_cdf(-5, "DT", -2, c0 = 1), ltratio_cdf(0, "DT", -2, c0 = -4))
-  expect_identical(coef_cdf(-3, "DK", 0, g0 = 1), ltratio_cdf(0, "DK", 0, c0 = -3, g0 = 1))
+  # equal to rounding, not identical: with threads the order of summation in the engine can differ by one ulp
+  expect_equal(coef_cdf(-5, "DT", -2, c0 = 1), ltratio_cdf(0, "DT", -2, c0 = -4), tolerance = 1e-13)
+  expect_equal(coef_cdf(-3, "DK", 0, g0 = 1), ltratio_cdf(0, "DK", 0, c0 = -3, g0 = 1), tolerance = 1e-13)
 })
 
 test_that("coef_cdf and coef_icdf keep the shape and check their arguments", {

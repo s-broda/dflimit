@@ -70,7 +70,7 @@ jobs:
         shell: bash
         run: |
           R CMD INSTALL --build "${{ needs.source.outputs.tarball }}"
-          rver=$(Rscript -e 'cat(R.version$major, sub("\\..*", "", R.version$minor), sep = ".")')
+          rver=$(Rscript -e 'cat(R.version$major, sub("[.].*", "", R.version$minor), sep = ".")')
           ver=$(echo "${{ needs.source.outputs.tarball }}" | sed -E 's/dflimit_(.*)\.tar\.gz/\1/')
           out="dflimit_${ver}_R${rver}_${{ matrix.platform }}.${{ matrix.ext }}"
           mv "dflimit_${ver}.${{ matrix.ext }}" "$out"
