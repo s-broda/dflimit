@@ -65,14 +65,14 @@ Linux, e.g. `build-essential`):
 
 ```r
 # install.packages("remotes")
-remotes::install_github("OWNER/dflimit")       # while the repository is private: set GITHUB_PAT first
+remotes::install_github("s-broda/dflimit")       # while the repository is private: set GITHUB_PAT first
 ```
 
 or, from a downloaded source tarball, `install.packages("dflimit_0.1.0.tar.gz", repos = NULL, type = "source")`
 (on the command line `R CMD INSTALL dflimit_0.1.0.tar.gz`).
 
 **From a release binary** (no compiler needed): the releases of the GitHub repository (the Releases page of
-`OWNER/dflimit`) carry binary packages for Windows (`.zip`) and macOS
+`s-broda/dflimit`) carry binary packages for Windows (`.zip`) and macOS
 (`.tgz`, Apple silicon and Intel), built for the R release named in the file name (a binary package works only
 with that minor version of R, e.g. 4.5.x). Download the one for your platform and
 
