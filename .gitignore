@@ -1,0 +1,7 @@
+.Rproj.user
+.Rhistory
+src/*.o
+src/*.so
+src/*.dll
+*.tar.gz
+*.Rcheck/

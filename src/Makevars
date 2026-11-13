@@ -1,0 +1,4 @@
+# the engine runs its own worker threads (pthreads); see "Using pthreads" in Writing R Extensions
+# DFL_QUIET compiles out the debugging output of the engine (tools/patches/0001-dfl_gen-quiet-debug-output.patch)
+PKG_CPPFLAGS = -pthread -DDFL_QUIET
+PKG_LIBS = -pthread

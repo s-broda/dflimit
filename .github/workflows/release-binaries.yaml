@@ -1,0 +1,110 @@
+# Builds the source package and the binary packages for Windows (.zip) and macOS (.tgz, Apple silicon and Intel)
+# with the current R release, and attaches them to a GitHub release.
+# Runs only when started by hand (Actions tab, "Run workflow", which builds and uploads the files as artifacts of
+# the run and creates a release only if a tag is given) or when a version tag v* is pushed (which creates the
+# release of that tag). The account's Actions minutes are limited: nothing runs on an ordinary push.
+name: release-binaries
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to attach the files to (e.g. v0.1.0); empty: artifacts only"
+        required: false
+        default: ""
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    outputs:
+      tarball: ${{ steps.build.outputs.tarball }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: release
+      - name: R CMD build
+        id: build
+        run: |
+          R CMD build --no-manual .
+          echo "tarball=$(ls dflimit_*.tar.gz)" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: source
+          path: dflimit_*.tar.gz
+
+  binary:
+    needs: source
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform: windows-x86_64
+            ext: zip
+          - os: macos-latest
+            platform: macos-arm64
+            ext: tgz
+          - os: macos-15-intel
+            platform: macos-x86_64
+            ext: tgz
+    env:
+      _R_CHECK_LIMIT_CORES_: "TRUE"
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: source
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: release
+      - name: Install testthat (for the tests of the built package)
+        run: Rscript -e 'install.packages("testthat", repos = "https://cloud.r-project.org")'
+      - name: Build the binary package
+        shell: bash
+        run: |
+          R CMD INSTALL --build "${{ needs.source.outputs.tarball }}"
+          rver=$(Rscript -e 'cat(R.version$major, sub("\\..*", "", R.version$minor), sep = ".")')
+          ver=$(echo "${{ needs.source.outputs.tarball }}" | sed -E 's/dflimit_(.*)\.tar\.gz/\1/')
+          out="dflimit_${ver}_R${rver}_${{ matrix.platform }}.${{ matrix.ext }}"
+          mv "dflimit_${ver}.${{ matrix.ext }}" "$out"
+          echo "BINARY=$out" >> "$GITHUB_ENV"
+      - name: Install the binary and run the tests
+        shell: bash
+        run: |
+          mkdir lib
+          Rscript -e 'install.packages(Sys.getenv("BINARY"), lib = "lib", repos = NULL)'
+          mkdir src && tar -xzf "${{ needs.source.outputs.tarball }}" -C src
+          Rscript -e '.libPaths(c("lib", .libPaths())); testthat::test_dir("src/dflimit/tests/testthat", package = "dflimit", load_package = "installed", stop_on_failure = TRUE)'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.platform }}
+          path: ${{ env.BINARY }}
+
+  release:
+    needs: [source, binary]
+    if: startsWith(github.ref, 'refs/tags/v') || inputs.tag != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Create or update the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag != '' && inputs.tag || github.ref_name }}
+        run: |
+          ls -l dist
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1 ||
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --title "dflimit $TAG" --verify-tag \
+              --notes "Source package and binary packages for Windows and macOS (R release). Install a binary with install.packages(\"<file>\", repos = NULL)."
+          gh release upload "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --clobber

@@ -1,0 +1,7 @@
+# LF line endings everywhere: R CMD check warns about CR or CRLF in the sources and in src/Makevars
+* text=auto eol=lf
+*.png binary
+*.pdf binary
+*.zip binary
+*.tgz binary
+*.tar.gz binary
