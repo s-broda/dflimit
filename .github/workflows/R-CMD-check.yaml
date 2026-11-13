@@ -39,3 +39,4 @@ jobs:
           args: 'c("--no-manual", "--as-cran")'
           error-on: '"warning"'
           upload-snapshots: false
+# started by hand: gh workflow run R-CMD-check.yaml

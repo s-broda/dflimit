@@ -108,3 +108,4 @@ jobs:
             gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --title "dflimit $TAG" --verify-tag \
               --notes "Source package and binary packages for Windows and macOS (R release). Install a binary with install.packages(\"<file>\", repos = NULL)."
           gh release upload "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --clobber
+# started by hand: gh workflow run release-binaries.yaml
