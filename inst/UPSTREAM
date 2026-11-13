@@ -2,4 +2,4 @@
 upstream_commit: 72cfaf04c7efba15449526233feace2f1ea04325
 upstream_commit_date: 2026-11-13T14:57:01+01:00
 upstream_c_modified: no
-patches: 0001-dfl_gen-quiet-debug-output.patch
+patches: 0001-dfl_gen-quiet-debug-output.patch 0002-faddeeva-header-h.patch

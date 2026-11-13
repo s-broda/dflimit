@@ -45,7 +45,8 @@ above only.
 }
 \examples{
 ltratio_region(list(type = "wap", k = 3.6658, omega = 10), "DK", 0)   # 0.05 (Table V of the paper)
-ltratio_region(list(type = "line", a = -3.5, b = -0.2639), "DK", 0)   # 0.05, point-optimal test at cbar = -7
+# the point-optimal test against cbar = -7: size 0.05
+ltratio_region(list(type = "line", a = -3.5, b = -0.2639), "DK", 0)
 }
 \seealso{
 [ltratio_cdf()].

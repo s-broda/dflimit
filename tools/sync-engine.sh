@@ -4,7 +4,8 @@
 #   sh tools/sync-engine.sh /path/to/DF-Limit
 #
 # The script only reads the DF-Limit checkout.  It
-#   1. copies the engine sources of c/ (and c/faddeeva/, flattened into src/) into src/,
+#   1. copies the engine sources of c/ (and c/faddeeva/, flattened into src/, with Faddeeva.hh renamed Faddeeva.h)
+#      into src/,
 #   2. converts them to LF line endings (a Windows checkout with core.autocrlf=true has CRLF, which R CMD check
 #      reports),
 #   3. applies the patches in tools/patches/*.patch, in name order (each one is a change that R requires and that
@@ -21,11 +22,15 @@ PKG=$(cd "$(dirname "$0")/.." && pwd)
 
 ENGINE="dflimit.h dfl_lock.h dfl_vmath.h dfl_api.c dfl_double.c dfl_gen.c dfl_mgf.c dfl_moments.c dfl_single.c
         dfl_special.c dfl_threads.c tables.c"
-FADDEEVA="Faddeeva.cc Faddeeva.hh faddeeva_shim.cpp"
+FADDEEVA="Faddeeva.cc faddeeva_shim.cpp"
 
 lf() { tr -d '\r' < "$1" > "$2"; }
 for f in $ENGINE; do lf "$UP/c/$f" "$PKG/src/$f"; done
 for f in $FADDEEVA; do lf "$UP/c/faddeeva/$f" "$PKG/src/$f"; done
+# the header Faddeeva.hh becomes Faddeeva.h (R CMD check: "unlikely file names for src files"); patch 0002 changes
+# the #include of faddeeva_shim.cpp to match
+lf "$UP/c/faddeeva/Faddeeva.hh" "$PKG/src/Faddeeva.h"
+rm -f "$PKG/src/Faddeeva.hh"
 
 # the patches (unified diffs relative to the package root, paths src/...)
 PATCHES=""

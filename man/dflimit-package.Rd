@@ -35,7 +35,7 @@ Authors:
 
 Other contributors:
 \itemize{
-  \item Steven G. Johnson (author of the Faddeeva package in src/Faddeeva.cc and src/Faddeeva.hh) [contributor]
+  \item Steven G. Johnson (author of the Faddeeva package in src/Faddeeva.cc and src/Faddeeva.h) [contributor]
   \item Massachusetts Institute of Technology (copyright holder of the Faddeeva package) [copyright holder]
 }
 

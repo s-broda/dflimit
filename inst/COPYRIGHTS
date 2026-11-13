@@ -6,7 +6,7 @@ The package (R code, the C engine in src/ other than the files below, tests and 
   The C engine is copied from the DF-Limit repository (directory c/) by tools/sync-engine.sh; the upstream commit
   is recorded in the file UPSTREAM.
 
-src/Faddeeva.cc, src/Faddeeva.hh: the Faddeeva package (http://ab-initio.mit.edu/Faddeeva),
+src/Faddeeva.cc, src/Faddeeva.h (Faddeeva.hh upstream): the Faddeeva package (http://ab-initio.mit.edu/Faddeeva),
   by Steven G. Johnson, Massachusetts Institute of Technology.
   Copyright (c) 2012 Massachusetts Institute of Technology
 

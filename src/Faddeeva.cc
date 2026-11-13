@@ -158,7 +158,7 @@
 
 #ifdef __cplusplus
 
-#  include "Faddeeva.hh"
+#  include "Faddeeva.h"   /* (renamed from Faddeeva.hh for R: R CMD check warns about the extension .hh in src/) */
 
 #  include <cfloat>
 #  include <cmath>

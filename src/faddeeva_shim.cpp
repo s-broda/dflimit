@@ -1,6 +1,6 @@
 /* faddeeva_shim.cpp: C entry points to the Faddeeva package (C++), so that the engine's C sources compile with every
  * compiler, MSVC included (whose C has no `double complex` syntax for the package's C header). */
-#include "Faddeeva.hh"
+#include "Faddeeva.h"           /* (renamed from Faddeeva.hh: R CMD check warns about the extension .hh in src/) */
 extern "C" void dfl_faddeeva_w(double re, double im, double *ore, double *oim)
 {
     std::complex<double> r = Faddeeva::w(std::complex<double>(re, im), 0.0);
