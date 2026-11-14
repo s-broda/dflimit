@@ -1,3 +1,3 @@
 # Windows threads (dfl_threads.c, dfl_lock.h: SRW locks need Windows Vista or later, _WIN32_WINNT >= 0x0600)
-# DFL_QUIET compiles out the debugging output of the engine (tools/patches/0001-dfl_gen-quiet-debug-output.patch)
+# DFL_QUIET compiles out the debugging output of the engine (dfl_gen.c)
 PKG_CPPFLAGS = -DDFL_QUIET -D_WIN32_WINNT=0x0601

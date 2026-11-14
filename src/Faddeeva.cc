@@ -126,7 +126,7 @@
       3 November 2012: Provide implementations of erf, erfc, erfcx,
                        and Dawson functions in Faddeeva:: namespace,
                        in addition to Faddeeva::w.  Provide header
-                       file Faddeeva.hh.
+                       file Faddeeva.hh (here Faddeeva.h).
       4 November 2012: Slightly faster erf for real arguments.
                        Updated MATLAB and Octave plugins.
      27 November 2012: Support compilation with either C++ or
@@ -158,7 +158,8 @@
 
 #ifdef __cplusplus
 
-#  include "Faddeeva.h"   /* (renamed from Faddeeva.hh for R: R CMD check warns about the extension .hh in src/) */
+#  include "Faddeeva.h"   /* the C++ header, Faddeeva.hh in the original distribution: renamed because R CMD check
+                             warns about the extension .hh in the src/ of a package (the R package dflimit) */
 
 #  include <cfloat>
 #  include <cmath>

@@ -177,9 +177,9 @@ typedef struct { double err; int status, nbad, nunres, nrefine; } dfl_double_inf
 cdouble dfl_Pkap(cdouble k1, cdouble k2, double a, bool pdfm, int Nl, bool nc, cdouble m1s, cdouble m2s);
 void dfl_qpieces(int model, double c, cdouble S, double gg, cdouble s1, cdouble s2, bool girs, cdouble *Q0, cdouble *m1s, cdouble *m2s);
 int dfl_double(int kind, int n, const double *x, int model, double c, double c0, double g0, bool stat, const dfl_double_opts *o, double *out, dfl_double_info *info, char *err, size_t errlen);
-/* the applications of the paper (julia/application/): the ADFmax statistic of Leybourne (1995), the larger of the t-ratios of
+/* the applications of the paper (julia/DFExact.jl): the ADFmax statistic of Leybourne (1995), the larger of the t-ratios of
  * the forward and the reverse regression, with the limit (|R| - 1/2)/sqrt(V), model 2 (constant) or 3 (constant and trend),
- * zero or stationary start (kind 1 density, 2 distribution function; adfmax_cdf of adfmax.jl); and P{U <= g(V)} in case DK
+ * zero or stationary start (kind 1 density, 2 distribution function; adfmax_cdf of DFExact.jl); and P{U <= g(V)} in case DK
  * with a zero start for the boundaries type 1 (line g(v) = par[1] + par[0] v), 2 (parabola par[0] sqrt(v) + par[1] v) and 3
  * (the weighted-average-power test with the half-normal weight of scale par[1] and the critical value par[0]), g = +Inf on
  * (0, v0) (P(V < v0) included), nbrk kinks brks (Pregion of wap.jl) */

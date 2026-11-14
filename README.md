@@ -74,7 +74,7 @@ Linux, e.g. `build-essential`):
 
 ```r
 # install.packages("remotes")
-remotes::install_github("s-broda/dflimit")       # while the repository is private: set GITHUB_PAT first
+remotes::install_github("s-broda/dflimit")
 ```
 
 or, from a downloaded source tarball, `install.packages("dflimit_0.1.0.tar.gz", repos = NULL, type = "source")`
@@ -82,12 +82,13 @@ or, from a downloaded source tarball, `install.packages("dflimit_0.1.0.tar.gz", 
 
 **From a release binary** (no compiler needed): the releases of the GitHub repository (the Releases page of
 `s-broda/dflimit`) carry binary packages for Windows (`.zip`) and macOS
-(`.tgz`, Apple silicon and Intel), built for the R release named in the file name (a binary package works only
-with that minor version of R, e.g. 4.5.x). Download the one for your platform and
+(`.tgz`, Apple silicon and Intel), built for the R release named in the release notes and in the names of the
+macOS files (a binary package works only with that minor version of R, e.g. 4.6.x). Download the one for your
+platform and
 
 ```r
-install.packages("dflimit_0.1.0_R4.5_windows-x86_64.zip", repos = NULL)   # Windows
-install.packages("dflimit_0.1.0_R4.5_macos-arm64.tgz", repos = NULL)      # macOS, Apple silicon
+install.packages("dflimit_0.1.0.zip", repos = NULL)                       # Windows (do not rename the file)
+install.packages("dflimit_0.1.0_R4.6_macos-arm64.tgz", repos = NULL)      # macOS, Apple silicon
 ```
 
 Linux users install from source (R has no portable Linux binary format; Posit Public Package Manager and

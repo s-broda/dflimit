@@ -26,7 +26,7 @@ Bao, Y., Broda, S. A. and Kan, R., "The Exact Limiting Distribution of the Dicke
   and Some Related Statistics", working paper.
 }
 \author{
-\strong{Maintainer}: Simon A. Broda \email{s.a.broda@uva.nl} [copyright holder]
+\strong{Maintainer}: Simon A. Broda \email{simon.broda@hslu.ch} [copyright holder]
 
 Authors:
 \itemize{

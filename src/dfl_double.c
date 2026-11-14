@@ -927,7 +927,7 @@ static int double_start(int kind, int nx, const double *x, int model, double c, 
     return double_start_x(kind, nx, x, model, c, c0, g0, stat, o, F, info, false);
 }
 /* two: the region |R| <= a(b) of the ADFmax statistic (c0 = 0, a stationary start), ending at the zero v0 = 1/(4x^2) of a(b)
- * when x < 0 (stat_two of julia/application/adfmax.jl) */
+ * when x < 0 (stat_two of julia/DFExact.jl) */
 static int double_start_x(int kind, int nx, const double *x, int model, double c, double c0, double g0, bool stat, const dfl_double_opts *o, double *F, dfl_double_info *info, bool two)
 {
     sctx_t S = {0}; S.two = two;
@@ -974,8 +974,8 @@ static int double_start_x(int kind, int nx, const double *x, int model, double c
     return 0;
 }
 
-/* ---- the applications (julia/application/): the ADFmax statistic and a general boundary ---- */
-/* the steps of the outer integrand of the boundary sg (1/2 + x sqrt(b)) (steps_bnd of adfmax.jl; STEPROOTS with c0 = 0 and
+/* ---- the applications (julia/DFExact.jl): the ADFmax statistic and a general boundary ---- */
+/* the steps of the outer integrand of the boundary sg (1/2 + x sqrt(b)) (steps_bnd of DFExact.jl; STEPROOTS with c0 = 0 and
  * the reflected boundary) */
 static int steproots_sg(const stepgrid_t *G, double sg, double x, double wmax, double *ls, double *ws)
 {

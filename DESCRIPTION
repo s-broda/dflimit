@@ -4,7 +4,7 @@ Title: Exact Limiting Distribution of the Dickey-Fuller t-Ratio
 Version: 0.1.0
 Authors@R: c(
     person("Yong", "Bao", role = c("aut", "cph")),
-    person("Simon A.", "Broda", email = "s.a.broda@uva.nl", role = c("aut", "cre", "cph")),
+    person("Simon A.", "Broda", email = "simon.broda@hslu.ch", role = c("aut", "cre", "cph")),
     person("Raymond", "Kan", role = c("aut", "cph")),
     person("Steven G.", "Johnson", role = "ctb",
            comment = "author of the Faddeeva package in src/Faddeeva.cc and src/Faddeeva.h"),

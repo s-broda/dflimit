@@ -72,8 +72,15 @@ jobs:
           R CMD INSTALL --build "${{ needs.source.outputs.tarball }}"
           rver=$(Rscript -e 'cat(R.version$major, sub("[.].*", "", R.version$minor), sep = ".")')
           ver=$(echo "${{ needs.source.outputs.tarball }}" | sed -E 's/dflimit_(.*)\.tar\.gz/\1/')
-          out="dflimit_${ver}_R${rver}_${{ matrix.platform }}.${{ matrix.ext }}"
-          mv "dflimit_${ver}.${{ matrix.ext }}" "$out"
+          # macOS: the R version and the platform go into the file name.  Windows: the file keeps the name
+          # dflimit_<version>.zip, because install.packages() and R CMD INSTALL take the package name from the name
+          # of a zip file (everything before a final _<digits>), and a renamed file cannot be installed
+          if [ "${{ matrix.ext }}" = "zip" ]; then
+            out="dflimit_${ver}.zip"
+          else
+            out="dflimit_${ver}_R${rver}_${{ matrix.platform }}.${{ matrix.ext }}"
+            mv "dflimit_${ver}.${{ matrix.ext }}" "$out"
+          fi
           echo "BINARY=$out" >> "$GITHUB_ENV"
       - name: Install the binary and run the tests
         shell: bash
@@ -104,8 +111,10 @@ jobs:
           TAG: ${{ inputs.tag != '' && inputs.tag || github.ref_name }}
         run: |
           ls -l dist
+          # the R version of the binaries, from the name of a macOS file (the Windows zip cannot carry it)
+          rver=$(ls dist/*_macos-arm64.tgz | sed -E 's/.*_R([0-9.]+)_macos.*/\1/')
           gh release view "$TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1 ||
             gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --title "dflimit $TAG" --verify-tag \
-              --notes "Source package and binary packages for Windows and macOS (R release). Install a binary with install.packages(\"<file>\", repos = NULL)."
+              --notes "Source package and binary packages for Windows (the .zip) and macOS (the .tgz files), all built for R ${rver}.x. Install a binary with install.packages(\"<file>\", repos = NULL); do not rename the Windows file."
           gh release upload "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --clobber
 # started by hand: gh workflow run release-binaries.yaml
