@@ -117,6 +117,32 @@ static SEXP dfl_r_region(SEXP type, SEXP par, SEXP v0, SEXP brks, SEXP c)
     return res;
 }
 
+/* .Call("dfl_r_lincdf", b, a, model, c, cbar): P(U - aV <= b) (a = NaN: P(V <= b)) */
+static SEXP dfl_r_lincdf(SEXP b, SEXP a, SEXP model, SEXP c, SEXP cbar)
+{
+    int n = len(b, "b"), m = int1(model, "model");
+    double aa = num1(a, "a"), cc = num1(c, "c"), cb = num1(cbar, "cbar");
+    SEXP out = PROTECT(Rf_allocVector(REALSXP, n));
+    char err[ERRLEN] = "";
+    int rc = dfl_lincdf(n, REAL(b), aa, m, cc, cb, NULL, REAL(out), err, sizeof err);
+    engine_error(rc, err);
+    UNPROTECT(1);
+    return out;
+}
+
+/* .Call("dfl_r_envelope", c, model, alpha): the power envelope at the points c */
+static SEXP dfl_r_envelope(SEXP c, SEXP model, SEXP alpha)
+{
+    int n = len(c, "c"), m = int1(model, "model");
+    double al = num1(alpha, "alpha");
+    SEXP out = PROTECT(Rf_allocVector(REALSXP, n));
+    char err[ERRLEN] = "";
+    int rc = dfl_power_envelope(n, REAL(c), m, al, NULL, REAL(out), err, sizeof err);
+    engine_error(rc, err);
+    UNPROTECT(1);
+    return out;
+}
+
 /* .Call("dfl_r_threads", n): the number of worker threads, after setting it to n (NULL: unchanged) */
 static SEXP dfl_r_threads(SEXP n)
 {
@@ -130,6 +156,8 @@ static const R_CallMethodDef call_methods[] = {
     {"dfl_r_moments", (DL_FUNC) &dfl_r_moments, 6},
     {"dfl_r_adfmax", (DL_FUNC) &dfl_r_adfmax, 5},
     {"dfl_r_region", (DL_FUNC) &dfl_r_region, 5},
+    {"dfl_r_lincdf", (DL_FUNC) &dfl_r_lincdf, 5},
+    {"dfl_r_envelope", (DL_FUNC) &dfl_r_envelope, 3},
     {"dfl_r_threads", (DL_FUNC) &dfl_r_threads, 1},
     {NULL, NULL, 0}
 };

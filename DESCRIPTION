@@ -1,7 +1,7 @@
 Package: dflimit
 Type: Package
 Title: Exact Limiting Distribution of the Dickey-Fuller t-Ratio
-Version: 0.1.0
+Version: 0.2.0
 Authors@R: c(
     person("Yong", "Bao", role = c("aut", "cph")),
     person("Simon A.", "Broda", email = "simon.broda@hslu.ch", role = c("aut", "cre", "cph")),
@@ -16,9 +16,9 @@ Description: The distribution function, density, quantiles and moments of the
     intercept and a trend, with a zero, a fixed or a stationary initial
     observation, and for the t-ratio centred at a local null value; also the
     GLS-detrended trend case of Elliott, Rothenberg and Stock (1996)
-    <doi:10.2307/2171846>, the ADFmax statistic of Leybourne (1995)
-    and the probabilities of regions
-    of the limit experiment.  The values are computed by the exact
+    <doi:10.2307/2171846>, the ADFmax statistic of Leybourne (1995),
+    the probabilities of regions of the limit experiment and its
+    asymptotic power envelope.  The values are computed by the exact
     representations of Bao, Broda and Kan, "The Exact Limiting Distribution of
     the Dickey-Fuller t-Ratio and Some Related Statistics" (working paper), in
     a multithreaded C engine.

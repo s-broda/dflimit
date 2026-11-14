@@ -11,8 +11,9 @@ t-ratios under local alternatives, phi = 1 + c/n, by the exact representations o
 for the regression without deterministic terms, with an intercept and with an intercept and a trend; with a zero,
 a fixed or a stationary initial observation; for the t-ratio centred at the unit root or at a local null value c0;
 and for the GLS-detrended trend case of Elliott, Rothenberg and Stock (1996). It also has the ADFmax test of
-Leybourne (1995) and the probabilities of regions {U <= g(V)} of the limit experiment (point-optimal and
-weighted-average-power tests). The numbers come from the multithreaded C engine of the paper (a port of its Julia
+Leybourne (1995), the probabilities of regions {U <= g(V)} of the limit experiment (point-optimal and
+weighted-average-power tests), the distribution of the linear form U - aV and the asymptotic power envelope of
+Elliott, Rothenberg and Stock. The numbers come from the multithreaded C engine of the paper (a port of its Julia
 reference implementation, checked against it to 1e-10 or better); the same functions, with the same names and
 arguments, exist in MATLAB and Julia.
 
@@ -25,6 +26,8 @@ arguments, exist in MATLAB and Julia.
 | `coef_cdf(y, cas, c, c0, g0, method)`, `coef_icdf(p, ...)` | the coefficient statistic n(phi^ - phi0) |
 | `adfmax_cdf`, `adfmax_pdf`, `adfmax_icdf` | the ADFmax statistic (cases DU, DT, SU, ST) |
 | `ltratio_region(bnd, "DK", c)` | P{U <= g(V)} for a line, the parabola of the t-ratio, the WAP boundary |
+| `ltratio_lincdf(b, a, cas, c, cbar)` | P(U - aV <= b), cases DK and DG (a = NaN: P(V <= b)) |
+| `power_envelope(c, cas, alpha)` | the asymptotic power envelope of Elliott, Rothenberg and Stock (cases DK, DU, DG) |
 | `ltratio_threads(n)` | the number of worker threads of the engine |
 
 The case `cas` is a two-letter code: `D` (fixed start, `g0`, default 0) or `S` (stationary start, c < 0),
@@ -35,8 +38,7 @@ each point), `"single"` (the line integral, Theorem 2) or `"double"` (the condit
 All numbers come from the C engine. `coef_cdf`, `coef_icdf` and `adfmax_icdf` have no entry point of their own
 there: as in the MATLAB programs, they are short R-level wrappers (the distribution function of the t-ratio at 0
 with a shifted local null value, and root searches on the engine's distribution functions). Not in the package,
-because the C engine does not have them: `ltratio_lincdf` (the linear form U - aV) and `power_envelope` of the
-MATLAB programs, and the boundary type `"fun"` (any function g) of `ltratio_region`.
+because the C engine does not have it: the boundary type `"fun"` (any function g) of `ltratio_region`.
 
 ## Example
 
@@ -58,6 +60,10 @@ ltratio_mom(4, "DT")                           # first four moments of tau_tau
 #> [1]  -2.181356   5.320676 -14.035800  39.554430
 coef_cdf(-14.0936, "DU", -10)                  # power of the 5% coefficient test at c = -10
 #> [1] 0.4592526
+ltratio_lincdf(-0.2639, -3.5, "DK", -7)        # power of the point-optimal test against cbar = -7 at c = -7
+#> [1] 0.4993816
+power_envelope(c(-5, -10), "DG")               # the power envelope of the trend case
+#> [1] 0.1148372 0.3100271
 ```
 
 The engine uses all processors by default; `ltratio_threads(n)` or `options(dflimit.threads = n)` (before the
@@ -77,8 +83,8 @@ Linux, e.g. `build-essential`):
 remotes::install_github("s-broda/dflimit")
 ```
 
-or, from a downloaded source tarball, `install.packages("dflimit_0.1.0.tar.gz", repos = NULL, type = "source")`
-(on the command line `R CMD INSTALL dflimit_0.1.0.tar.gz`).
+or, from a downloaded source tarball, `install.packages("dflimit_0.2.0.tar.gz", repos = NULL, type = "source")`
+(on the command line `R CMD INSTALL dflimit_0.2.0.tar.gz`).
 
 **From a release binary** (no compiler needed): the releases of the GitHub repository (the Releases page of
 `s-broda/dflimit`) carry binary packages for Windows (`.zip`) and macOS
@@ -87,8 +93,8 @@ macOS files (a binary package works only with that minor version of R, e.g. 4.6.
 platform and
 
 ```r
-install.packages("dflimit_0.1.0.zip", repos = NULL)                       # Windows (do not rename the file)
-install.packages("dflimit_0.1.0_R4.6_macos-arm64.tgz", repos = NULL)      # macOS, Apple silicon
+install.packages("dflimit_0.2.0.zip", repos = NULL)                       # Windows (do not rename the file)
+install.packages("dflimit_0.2.0_R4.6_macos-arm64.tgz", repos = NULL)      # macOS, Apple silicon
 ```
 
 Linux users install from source (R has no portable Linux binary format; Posit Public Package Manager and

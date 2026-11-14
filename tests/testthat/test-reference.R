@@ -51,12 +51,23 @@ test_that("the moments reproduce the Julia values", {
   }
 })
 
-test_that("ADFmax and the regions reproduce the Julia values", {
+test_that("ADFmax, the regions, the linear form and the power envelope reproduce the Julia values", {
   rows <- strsplit(grep("^#", readLines(test_path("ref", "app_ref.txt")), invert = TRUE, value = TRUE), " ")
+  # the pairs (point, value) of a line from position 'from' on
+  pairs <- function(v, from) matrix(v[from:length(v)], 2)
   for (v in rows) {
     tag <- v[1]
     v <- as.numeric(v[-1])
-    if (tag == "adfmax") {
+    if (tag == "lincdf") {
+      p <- pairs(v, 6)
+      expect_lt(max(abs(ltratio_lincdf(p[1, ], v[2], c("DK", "", "", "DG")[v[1]], v[3], v[4]) - p[2, ])), 1e-10)
+    } else if (tag == "vcdf") {
+      p <- pairs(v, 3)
+      expect_lt(max(abs(ltratio_lincdf(p[1, ], NaN, "DK", v[1]) - p[2, ])), 1e-10)
+    } else if (tag == "envelope") {
+      p <- pairs(v, 4)
+      expect_lt(max(abs(power_envelope(p[1, ], c("DK", "", "", "DG")[v[1]], v[2]) - p[2, ])), 1e-10)
+    } else if (tag == "adfmax") {
       cas <- paste0(if (v[2] == 1) "S" else "D", c("K", "U", "T")[v[1]])
       expect_close_Ff(adfmax_cdf(v[4], cas, v[3]), adfmax_pdf(v[4], cas, v[3]), v[5], v[6], 1e-10, 0, 1e-10,
                       sprintf("ADFmax %s c = %g x = %g", cas, v[3], v[4]))

@@ -11,6 +11,8 @@
 #'   \item{[coef_cdf()], [coef_icdf()]}{the coefficient statistic \eqn{n(\hat\phi - \phi_0)}{n(phi^ - phi0)};}
 #'   \item{[adfmax_cdf()], [adfmax_pdf()], [adfmax_icdf()]}{the ADFmax test of Leybourne (1995);}
 #'   \item{[ltratio_region()]}{the probability of a region \eqn{\{U \le g(V)\}}{{U <= g(V)}}, case DK;}
+#'   \item{[ltratio_lincdf()]}{the distribution of the linear form \eqn{U - aV}, cases DK and DG;}
+#'   \item{[power_envelope()]}{the asymptotic power envelope of Elliott, Rothenberg and Stock (1996);}
 #'   \item{[ltratio_threads()]}{the number of worker threads.}
 #' }
 #'
