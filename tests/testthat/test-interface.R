@@ -23,7 +23,7 @@ test_that("the shape of the input is kept and non-finite points have their limit
 
 test_that("errors of the engine become R errors", {
   expect_error(ltratio_cdf(0, "DU", -600), "at least -550")
-  expect_error(ltratio_cdf(0, "SU", 1), "requires c < 0")
+  expect_error(ltratio_cdf(0, "SU", 1), "requires c <= -1e-4", fixed = TRUE)
   expect_error(ltratio_cdf(0, "DU", -5, g0 = 3), "fixed start")
   expect_error(ltratio_cdf(0, "SU", -5, g0 = 1), "applies to cases DK, DU, DT")
   expect_error(ltratio_mom(2, "DG"), "not available")
@@ -61,4 +61,22 @@ test_that("the number of threads can be set and does not change the values", {
   expect_equal(ltratio_lincdf(c(-0.2639, 0.5), -3.5, "DK", -7), P1, tolerance = 1e-14)
   expect_equal(power_envelope(c(-7, -13.5), "DG"), E1, tolerance = 1e-14)
   expect_error(ltratio_threads(0), "positive integer")
+})
+
+test_that("a stationary start needs c <= -1e-4, and the values near the unit root are those of the Julia engine", {
+  # for c > -1e-4 the engine refuses: the variance -1/(2c) of the start is too large for the quadrature
+  msg <- "requires c <= -1e-4"
+  expect_error(ltratio_cdf(-1.94087, "SK", -9e-5), msg, fixed = TRUE)
+  expect_error(ltratio_pdf(-2, "SU", -9e-5), msg, fixed = TRUE)
+  expect_error(ltratio_mom(2, "ST", -9e-5), msg, fixed = TRUE)
+  expect_error(ltratio_icdf(0.05, "SK", -9e-5), msg, fixed = TRUE)
+  expect_error(coef_cdf(-8.039, "SK", -9e-5), msg, fixed = TRUE)
+  expect_error(adfmax_cdf(-2.4, "SU", -9e-5), msg, fixed = TRUE)
+  # at c = -1e-4 (julia/quickcheck.jl of DF-Limit, section 18b)
+  expect_lt(abs(ltratio_cdf(-1.94087, "SK", -1e-4) - 0.028490044498374834), 1e-11)
+  expect_lt(abs(coef_cdf(-8.039, "SK", -1e-4) - 0.00032997244558452543), 1e-12)
+  expect_lt(abs(adfmax_cdf(-2.43542, "SU", -1e-4) - 0.050000718603976146), 1e-11)
+  # case SK: the coefficient statistic at c = -0.001, which the lower end of the conditional integral had put at 6e-6
+  expect_lt(abs(coef_cdf(-8.039, "SK", -0.001) - 0.0010438037922007037), 1e-12)
+  expect_lt(abs(ltratio_cdf(-1.94087, "SK", -0.1) - 0.059510986573375835), 1e-11)
 })

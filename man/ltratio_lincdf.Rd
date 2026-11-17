@@ -24,10 +24,12 @@ The probabilities, with the attributes of `b`.
 The limit of \eqn{P(U - aV \le b)}{P(U - aV <= b)} under \eqn{\phi = 1 + c/n}{phi = 1 + c/n}, zero start, no
 drift, with \eqn{U} and \eqn{V} as in [ltratio_cdf()]: case `"DK"` (no deterministic terms, and the constant case
 with GLS demeaning, whose limit is the same) or `"DG"` (the GLS-detrended trend case of Elliott, Rothenberg and
-Stock (1996), detrended at `cbar`). With \eqn{a = \bar c/2}{a = cbar/2}, \eqn{\bar c < 0}{cbar < 0}, the
-point-optimal test of Elliott, Rothenberg and Stock against \eqn{\bar c}{cbar} rejects for \eqn{U - aV < b} (its
-log likelihood ratio is \eqn{\bar c U - \bar c^2 V/2}{cbar U - cbar^2 V/2}); see [power_envelope()]. `a = NaN`
-gives \eqn{P(V \le b)}{P(V <= b)} (case DK).
+Stock (1996), detrended at `cbar`). The point-optimal test of Elliott, Rothenberg and Stock against
+\eqn{\bar c < 0}{cbar < 0} rejects for \eqn{U - aV < b}: in case DK with \eqn{a = \bar c/2}{a = cbar/2} (its log
+likelihood ratio is \eqn{\bar c U - \bar c^2 V/2}{cbar U - cbar^2 V/2}), in case DG, with the data detrended at
+\eqn{\bar c}{cbar}, with \eqn{a = \bar c^2/(2(\bar c - 1))}{a = cbar^2/(2 (cbar - 1))} (it rejects for small
+\eqn{\bar c^2 V + (1 - \bar c) J(1)^2}{cbar^2 V + (1 - cbar) J(1)^2}, \eqn{J(1)^2 = 2U + 1}); see
+[power_envelope()]. `a = NaN` gives \eqn{P(V \le b)}{P(V <= b)} (case DK).
 }
 \details{
 The probability is computed by the inversion formula of Gil-Pelaez,

@@ -43,7 +43,7 @@ numerators \eqn{U} and \eqn{-U - 1}, so that ADFmax converges to \eqn{(|R| - 1/2
 }
 \details{
 The cases are `"DU"` and `"DT"` (a constant, or a constant and a trend, zero start) and `"SU"` and `"ST"` (the
-same with a stationary start, `c < 0`). The values are accurate to about 1e-11.
+same with a stationary start, `c <= -1e-4`). The values are accurate to about 1e-11.
 
 `adfmax_icdf()` has no entry point of its own in the C engine: as `adfmax_icdf` of the MATLAB and Julia
   programs, it finds each quantile by Newton's method on `adfmax_cdf()` with `adfmax_pdf()` as the derivative,

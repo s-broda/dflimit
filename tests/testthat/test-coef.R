@@ -39,7 +39,7 @@ test_that("coef_cdf and coef_icdf keep the shape and check their arguments", {
   expect_identical(coef_cdf(numeric(0), "DU"), numeric(0))
   expect_error(coef_cdf(0, "XX"), "the case must be")
   expect_error(coef_cdf(0, "DU", method = "fast"), "method must be")
-  expect_error(coef_cdf(-1, "SU", 1), "requires c < 0")
+  expect_error(coef_cdf(-1, "SU", 1), "requires c <= -1e-4", fixed = TRUE)
   expect_error(coef_icdf(0, "DU"), "(0, 1)", fixed = TRUE)
   expect_error(coef_icdf(0.5, "DU", c = NA), "single number")
 })

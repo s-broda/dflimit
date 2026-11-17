@@ -3,10 +3,12 @@
 #' The limit of \eqn{P(U - aV \le b)}{P(U - aV <= b)} under \eqn{\phi = 1 + c/n}{phi = 1 + c/n}, zero start, no
 #' drift, with \eqn{U} and \eqn{V} as in [ltratio_cdf()]: case `"DK"` (no deterministic terms, and the constant case
 #' with GLS demeaning, whose limit is the same) or `"DG"` (the GLS-detrended trend case of Elliott, Rothenberg and
-#' Stock (1996), detrended at `cbar`). With \eqn{a = \bar c/2}{a = cbar/2}, \eqn{\bar c < 0}{cbar < 0}, the
-#' point-optimal test of Elliott, Rothenberg and Stock against \eqn{\bar c}{cbar} rejects for \eqn{U - aV < b} (its
-#' log likelihood ratio is \eqn{\bar c U - \bar c^2 V/2}{cbar U - cbar^2 V/2}); see [power_envelope()]. `a = NaN`
-#' gives \eqn{P(V \le b)}{P(V <= b)} (case DK).
+#' Stock (1996), detrended at `cbar`). The point-optimal test of Elliott, Rothenberg and Stock against
+#' \eqn{\bar c < 0}{cbar < 0} rejects for \eqn{U - aV < b}: in case DK with \eqn{a = \bar c/2}{a = cbar/2} (its log
+#' likelihood ratio is \eqn{\bar c U - \bar c^2 V/2}{cbar U - cbar^2 V/2}), in case DG, with the data detrended at
+#' \eqn{\bar c}{cbar}, with \eqn{a = \bar c^2/(2(\bar c - 1))}{a = cbar^2/(2 (cbar - 1))} (it rejects for small
+#' \eqn{\bar c^2 V + (1 - \bar c) J(1)^2}{cbar^2 V + (1 - cbar) J(1)^2}, \eqn{J(1)^2 = 2U + 1}); see
+#' [power_envelope()]. `a = NaN` gives \eqn{P(V \le b)}{P(V <= b)} (case DK).
 #'
 #' The probability is computed by the inversion formula of Gil-Pelaez,
 #' \eqn{P(X < b) = 1/2 - (1/\pi) \int_0^\infty \mathrm{Im}[\varphi(u) e^{-iub}]/u \, du}{P(X < b) = 1/2 - (1/pi)
@@ -44,8 +46,10 @@ ltratio_lincdf <- function(b, a, cas, c = 0, cbar = -13.5) {
 #' `"DU"`, where the point-optimal test uses the GLS-demeaned data and the envelope is the same curve) and case
 #' `"DG"` (the trend case, the point-optimal test against `c` with the data GLS-detrended at `c`).
 #'
-#' The test against \eqn{\bar c}{cbar} rejects for small \eqn{U - aV}, \eqn{a = \bar c/2}{a = cbar/2}
-#' ([ltratio_lincdf()]): its critical value is the `alpha`-quantile at `c = 0`, found by bisection on
+#' The test against \eqn{\bar c}{cbar} rejects for small \eqn{U - aV} ([ltratio_lincdf()]), with
+#' \eqn{a = \bar c/2}{a = cbar/2} in case DK and \eqn{a = \bar c^2/(2(\bar c - 1))}{a = cbar^2/(2 (cbar - 1))} in case
+#' DG, where the limit of the invariant statistic of Elliott, Rothenberg and Stock is
+#' \eqn{\bar c^2 V + (1 - \bar c) J(1)^2}{cbar^2 V + (1 - cbar) J(1)^2}, \eqn{J(1)^2 = 2U + 1}: its critical value is the `alpha`-quantile at `c = 0`, found by bisection on
 #' \eqn{[-50, 50]} to the width 1e-9, and the envelope is its power at \eqn{\bar c = c}{cbar = c}; `alpha` for
 #' `c >= 0`. As `power_envelope` of the MATLAB and Julia programs.
 #'

@@ -14,7 +14,8 @@
 #'
 #' @section Cases:
 #' `cas` is a two-letter code, the initial observation (`D`: deterministic, i.e. fixed; `S`: drawn from the
-#' stationary distribution, which requires `c < 0`) followed by the deterministic terms of the regression
+#' stationary distribution, which requires `c <= -1e-4`: closer to zero the variance \eqn{-1/(2c)} of the start is
+#' too large for the quadrature, and the functions raise an error) followed by the deterministic terms of the regression
 #' (`K`: none, the intercept is known to be zero; `U`: an unknown intercept; `T`: an intercept and a trend):
 #' \describe{
 #'   \item{`"DK"`, `"DU"`, `"DT"`}{the statistics \eqn{\tau}{tau}, \eqn{\tau_\mu}{tau_mu},

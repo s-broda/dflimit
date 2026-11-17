@@ -9,7 +9,7 @@
 #' `adfmax_icdf()` gives its quantiles.
 #'
 #' The cases are `"DU"` and `"DT"` (a constant, or a constant and a trend, zero start) and `"SU"` and `"ST"` (the
-#' same with a stationary start, `c < 0`). The values are accurate to about 1e-11.
+#' same with a stationary start, `c <= -1e-4`). The values are accurate to about 1e-11.
 #'
 #' @inheritParams ltratio_cdf
 #' @param cas The case, one of `"DU"`, `"DT"`, `"SU"`, `"ST"`.

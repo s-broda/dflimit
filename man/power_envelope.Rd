@@ -23,8 +23,10 @@ tests of the unit root, zero start, no drift: case `"DK"` (no deterministic term
 `"DG"` (the trend case, the point-optimal test against `c` with the data GLS-detrended at `c`).
 }
 \details{
-The test against \eqn{\bar c}{cbar} rejects for small \eqn{U - aV}, \eqn{a = \bar c/2}{a = cbar/2}
-([ltratio_lincdf()]): its critical value is the `alpha`-quantile at `c = 0`, found by bisection on
+The test against \eqn{\bar c}{cbar} rejects for small \eqn{U - aV} ([ltratio_lincdf()]), with
+\eqn{a = \bar c/2}{a = cbar/2} in case DK and \eqn{a = \bar c^2/(2(\bar c - 1))}{a = cbar^2/(2 (cbar - 1))} in case
+DG, where the limit of the invariant statistic of Elliott, Rothenberg and Stock is
+\eqn{\bar c^2 V + (1 - \bar c) J(1)^2}{cbar^2 V + (1 - cbar) J(1)^2}, \eqn{J(1)^2 = 2U + 1}: its critical value is the `alpha`-quantile at `c = 0`, found by bisection on
 \eqn{[-50, 50]} to the width 1e-9, and the envelope is its power at \eqn{\bar c = c}{cbar = c}; `alpha` for
 `c >= 0`. As `power_envelope` of the MATLAB and Julia programs.
 }
