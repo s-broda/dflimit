@@ -24,7 +24,10 @@
 #' coef_cdf(-14.0936, "DU", -10)    # power of the 5% coefficient test of rho_mu at c = -10
 #' coef_icdf(0.05, "DK")            # -8.039, the 5% critical value of rho
 #' @export
-coef_cdf <- function(y, cas, c = 0, c0 = 0, g0 = 0, method = "auto") {
+coef_cdf <- function(y, cas, c = 0, c0 = 0, g0 = 0, method = "auto", verified = FALSE) {
+  dfl_once(coef_cdf_(y, cas, c, c0, g0, method, verified))
+}
+coef_cdf_ <- function(y, cas, c, c0, g0, method, verified) {
   dfl_case(cas)
   c <- dfl_num(c, "c")
   c0 <- dfl_num(c0, "c0")
@@ -35,7 +38,7 @@ coef_cdf <- function(y, cas, c = 0, c0 = 0, g0 = 0, method = "auto") {
     if (is.nan(yk) || is.na(yk)) NaN
     else if (yk == Inf) 1
     else if (yk == -Inf) 0
-    else ltratio_cdf(0, cas, c, c0 = c0 + yk, g0 = g0, method = method)
+    else ltratio_cdf(0, cas, c, c0 = c0 + yk, g0 = g0, method = method, verified = verified)
   }, 0)
   dfl_shape(F, y)
 }
@@ -44,7 +47,10 @@ coef_cdf <- function(y, cas, c = 0, c0 = 0, g0 = 0, method = "auto") {
 #' @param p Numeric vector or array of probabilities in (0, 1).
 #' @param tol The width of the final bracket.
 #' @export
-coef_icdf <- function(p, cas, c = 0, c0 = 0, g0 = 0, method = "auto", tol = 1e-9) {
+coef_icdf <- function(p, cas, c = 0, c0 = 0, g0 = 0, method = "auto", tol = 1e-9, verified = FALSE) {
+  dfl_once(coef_icdf_(p, cas, c, c0, g0, method, tol, verified))
+}
+coef_icdf_ <- function(p, cas, c, c0, g0, method, tol, verified) {
   p0 <- p
   p <- dfl_real(p, "p")
   if (!all(!is.na(p) & p > 0 & p < 1)) stop("p must lie in (0, 1)", call. = FALSE)
@@ -55,7 +61,7 @@ coef_icdf <- function(p, cas, c = 0, c0 = 0, g0 = 0, method = "auto", tol = 1e-9
   g0 <- dfl_num(g0, "g0")
   dfl_method(method)
   y <- vapply(p, function(pk) {
-    f <- function(x) coef_cdf(x, cas, c, c0, g0, method) - pk
+    f <- function(x) coef_cdf_(x, cas, c, c0, g0, method, verified) - pk
     lo <- -40
     hi <- 10
     flo <- f(lo)

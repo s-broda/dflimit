@@ -36,34 +36,41 @@ static int len(SEXP a, const char *name)
 /* (no call in the message: the R functions check their arguments and report with call. = FALSE as well) */
 static void engine_error(int rc, const char *err) { if (rc) Rf_errorcall(R_NilValue, "%s", err[0] ? err : "the engine failed"); }
 
-/* .Call("dfl_r_dist", kind, x, model, c, c0, g0, stat, method): list(value, nstatus) */
-static SEXP dfl_r_dist(SEXP kind, SEXP x, SEXP model, SEXP c, SEXP c0, SEXP g0, SEXP stat, SEXP method)
+/* .Call("dfl_r_dist", kind, x, model, c, c0, g0, stat, method, verified): list(value, nstatus, the brittle-regime message
+ * of the one-evaluation default, "" if none) */
+static SEXP dfl_r_dist(SEXP kind, SEXP x, SEXP model, SEXP c, SEXP c0, SEXP g0, SEXP stat, SEXP method, SEXP verified)
 {
-    int n = len(x, "x"), ns = 0, k = int1(kind, "kind"), m = int1(model, "model"), st = int1(stat, "stat"), me = int1(method, "method");
+    int n = len(x, "x"), ns = 0, k = int1(kind, "kind"), m = int1(model, "model"), st = int1(stat, "stat"), me = int1(method, "method"), ve = int1(verified, "verified");
     double cc = num1(c, "c"), cc0 = num1(c0, "c0"), gg0 = num1(g0, "g0");
     SEXP out = PROTECT(Rf_allocVector(REALSXP, n));
     char err[ERRLEN] = "";
-    int rc = dfl_dist(k, n, REAL(x), m, cc, cc0, gg0, st != 0, me, NULL, NULL, REAL(out), &ns, err, sizeof err);
+    dfl_double_opts dv; dfl_double_defaults(&dv); dv.verified = ve != 0;
+    int rc = dfl_dist(k, n, REAL(x), m, cc, cc0, gg0, st != 0, me, NULL, &dv, REAL(out), &ns, err, sizeof err);
     engine_error(rc, err);
-    SEXP res = PROTECT(Rf_allocVector(VECSXP, 2));
+    const char *bm = ve ? NULL : dfl_brittle(k, m, cc, cc0, gg0, st != 0, me);
+    SEXP res = PROTECT(Rf_allocVector(VECSXP, 3));
     SET_VECTOR_ELT(res, 0, out);
     SET_VECTOR_ELT(res, 1, Rf_ScalarInteger(ns));
+    SET_VECTOR_ELT(res, 2, Rf_mkString(bm ? bm : ""));
     UNPROTECT(2);
     return res;
 }
 
-/* .Call("dfl_r_icdf", p, model, c, c0, g0, stat, method, tol): list(q, F, iter, conv) */
-static SEXP dfl_r_icdf(SEXP p, SEXP model, SEXP c, SEXP c0, SEXP g0, SEXP stat, SEXP method, SEXP tol)
+/* .Call("dfl_r_icdf", p, model, c, c0, g0, stat, method, tol, verified): list(q, F, iter, conv, message) */
+static SEXP dfl_r_icdf(SEXP p, SEXP model, SEXP c, SEXP c0, SEXP g0, SEXP stat, SEXP method, SEXP tol, SEXP verified)
 {
-    int n = len(p, "p"), m = int1(model, "model"), st = int1(stat, "stat"), me = int1(method, "method");
+    int n = len(p, "p"), m = int1(model, "model"), st = int1(stat, "stat"), me = int1(method, "method"), ve = int1(verified, "verified");
     double cc = num1(c, "c"), cc0 = num1(c0, "c0"), gg0 = num1(g0, "g0"), tl = num1(tol, "tol");
     SEXP q = PROTECT(Rf_allocVector(REALSXP, n)), F = PROTECT(Rf_allocVector(REALSXP, n));
     SEXP it = PROTECT(Rf_allocVector(INTSXP, n)), cv = PROTECT(Rf_allocVector(LGLSXP, n));
     char err[ERRLEN] = "";
-    int rc = dfl_icdf(n, REAL(p), m, cc, cc0, gg0, st != 0, me, tl, NULL, NULL, REAL(q), REAL(F), INTEGER(it), LOGICAL(cv), err, sizeof err);
+    dfl_double_opts dv; dfl_double_defaults(&dv); dv.verified = ve != 0;
+    int rc = dfl_icdf(n, REAL(p), m, cc, cc0, gg0, st != 0, me, tl, NULL, &dv, REAL(q), REAL(F), INTEGER(it), LOGICAL(cv), err, sizeof err);
     engine_error(rc, err);
-    SEXP res = PROTECT(Rf_allocVector(VECSXP, 4));
+    const char *bm = ve ? NULL : dfl_brittle(2, m, cc, cc0, gg0, st != 0, me);
+    SEXP res = PROTECT(Rf_allocVector(VECSXP, 5));
     SET_VECTOR_ELT(res, 0, q); SET_VECTOR_ELT(res, 1, F); SET_VECTOR_ELT(res, 2, it); SET_VECTOR_ELT(res, 3, cv);
+    SET_VECTOR_ELT(res, 4, Rf_mkString(bm ? bm : ""));
     UNPROTECT(5);
     return res;
 }
@@ -151,8 +158,8 @@ static SEXP dfl_r_threads(SEXP n)
 }
 
 static const R_CallMethodDef call_methods[] = {
-    {"dfl_r_dist", (DL_FUNC) &dfl_r_dist, 8},
-    {"dfl_r_icdf", (DL_FUNC) &dfl_r_icdf, 8},
+    {"dfl_r_dist", (DL_FUNC) &dfl_r_dist, 9},
+    {"dfl_r_icdf", (DL_FUNC) &dfl_r_icdf, 9},
     {"dfl_r_moments", (DL_FUNC) &dfl_r_moments, 6},
     {"dfl_r_adfmax", (DL_FUNC) &dfl_r_adfmax, 5},
     {"dfl_r_region", (DL_FUNC) &dfl_r_region, 5},

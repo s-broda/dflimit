@@ -12,7 +12,8 @@ ltratio_icdf(
   g0 = 0,
   method = "auto",
   tol = 1e-10,
-  info = FALSE
+  info = FALSE,
+  verified = FALSE
 )
 }
 \arguments{
@@ -26,13 +27,16 @@ ltratio_icdf(
 
 \item{g0}{The fixed start, \eqn{y_0 = g_0 \sigma \sqrt{n}}{y_0 = g0 sigma sqrt(n)} (cases DK, DU, DT).}
 
-\item{method}{`"auto"`, `"single"` (or `"line"`) or `"double"` (or `"conditional"`); see the section Methods
-and ranges.}
+\item{method}{`"auto"`, `"single"` (or `"line"`), `"double"` (or `"conditional"`) or `"contour"` (a fixed start
+in cases DU, DT only); see the section Methods and ranges.}
 
 \item{tol}{The tolerance on the quantile.}
 
 \item{info}{If `TRUE`, return a list with the quantiles `q`, the distribution function `F` at `q`, the number
 of iterations `iter` and the convergence flags `conv`.}
+
+\item{verified}{`FALSE` (the default): one evaluation by one method; `TRUE`: the checked computation (see the
+section Methods and ranges).}
 }
 \value{
 The quantiles, with the attributes of `p` (or the list described under `info`). A warning is given if

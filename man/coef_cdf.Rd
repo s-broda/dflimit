@@ -5,9 +5,18 @@
 \alias{coef_icdf}
 \title{Limiting distribution of the Dickey-Fuller coefficient statistic}
 \usage{
-coef_cdf(y, cas, c = 0, c0 = 0, g0 = 0, method = "auto")
+coef_cdf(y, cas, c = 0, c0 = 0, g0 = 0, method = "auto", verified = FALSE)
 
-coef_icdf(p, cas, c = 0, c0 = 0, g0 = 0, method = "auto", tol = 1e-09)
+coef_icdf(
+  p,
+  cas,
+  c = 0,
+  c0 = 0,
+  g0 = 0,
+  method = "auto",
+  tol = 1e-09,
+  verified = FALSE
+)
 }
 \arguments{
 \item{y}{Numeric vector or array of points. `-Inf`, `Inf` and `NaN` give 0, 1 and `NaN`.}
@@ -20,8 +29,11 @@ coef_icdf(p, cas, c = 0, c0 = 0, g0 = 0, method = "auto", tol = 1e-09)
 
 \item{g0}{The fixed start, \eqn{y_0 = g_0 \sigma \sqrt{n}}{y_0 = g0 sigma sqrt(n)} (cases DK, DU, DT).}
 
-\item{method}{`"auto"`, `"single"` (or `"line"`) or `"double"` (or `"conditional"`); see the section Methods
-and ranges.}
+\item{method}{`"auto"`, `"single"` (or `"line"`), `"double"` (or `"conditional"`) or `"contour"` (a fixed start
+in cases DU, DT only); see the section Methods and ranges.}
+
+\item{verified}{`FALSE` (the default): one evaluation by one method; `TRUE`: the checked computation (see the
+section Methods and ranges).}
 
 \item{p}{Numeric vector or array of probabilities in (0, 1).}
 

@@ -1,7 +1,7 @@
 Package: dflimit
 Type: Package
 Title: Exact Limiting Distribution of the Dickey-Fuller t-Ratio
-Version: 0.2.0
+Version: 0.3.0
 Authors@R: c(
     person("Yong", "Bao", role = c("aut", "cph")),
     person("Simon A.", "Broda", email = "simon.broda@hslu.ch", role = c("aut", "cre", "cph")),
