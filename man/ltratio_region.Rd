@@ -24,7 +24,8 @@ The probability (or the list described under `info`). A warning is given if the 
 The limit of the probability \eqn{P\{U \le g(V)\}}{P{U <= g(V)}} under \eqn{\phi = 1 + c/n}{phi = 1 + c/n}, no
 drift, zero start, case DK (no deterministic terms; also the constant case with GLS demeaning), with \eqn{U} and
 \eqn{V} as in [ltratio_cdf()]. Every test of the unit root in the limit experiment of case DK rejects on such a
-region (Section 7 of the paper), and Theorem 3 gives its probability by one outer integral over \eqn{V}.
+region (Section 7 of the paper), and Theorem S2(i) of the Supplementary Material of the paper gives its probability
+by one outer integral over \eqn{V}.
 Accurate to about 1e-11.
 }
 \details{

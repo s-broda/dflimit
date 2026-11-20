@@ -27,11 +27,12 @@
 #' }
 #'
 #' @section Methods and ranges:
-#' Three exact representations are implemented: the line integral of Theorem 2 of the paper (`method = "single"`,
-#' or `"line"`), the conditional integral of Theorem S1 of its Supplementary Material (`"double"`, or
-#' `"conditional"`) and, for a fixed start `g0 != 0` in cases DU and DT only, the contour integral (`"contour"`):
-#' the double integral of Theorem 1 of the paper with the integral over v in closed form and the paths in s and t
-#' deformed, an explicit integrand where the line integral needs a noncentral kernel that is itself an integral.
+#' Three exact representations are implemented: the line integral of Theorem S1 of the Supplementary Material of the
+#' paper (`method = "single"`, or `"line"`), the conditional integral of Theorem S2 of the Supplementary Material
+#' (`"double"`, or `"conditional"`) and, for a fixed start `g0 != 0` in cases DU and DT only, the contour integral
+#' (`"contour"`): the double integral of Corollary 1 of the paper (the second form of Theorem 1), with the integral over
+#' v in closed form and the paths in s and t deformed, an explicit integrand where the line integral needs a noncentral
+#' kernel that is itself an integral.
 #'
 #' By default (`verified = FALSE`) every value is one evaluation by one method: no second evaluation, no refinement
 #' driven by an error estimate, no fallback to another representation and no recomputation. `"auto"` (the default)

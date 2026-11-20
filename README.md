@@ -33,8 +33,9 @@ arguments, exist in MATLAB and Julia.
 The case `cas` is a two-letter code: `D` (fixed start, `g0`, default 0) or `S` (stationary start, c <= -1e-4),
 followed by `K` (no deterministic terms, tau), `U` (intercept, tau_mu) or `T` (intercept and trend, tau_tau);
 `"DG"` is the GLS-detrended trend case (DF-GLS, cbar = -13.5). `method` is `"auto"` (at each point the fastest
-representation that one evaluation gives to well below 1e-5), `"single"` (the line integral, Theorem 2), `"double"`
-(the conditional integral, Theorem S1) or `"contour"` (the contour integral, a fixed start in cases DU, DT only). Every
+representation that one evaluation gives to well below 1e-5), `"single"` (the line integral, Theorem S1 of the
+Supplementary Material), `"double"` (the conditional integral, Theorem S2 of the Supplementary Material) or `"contour"`
+(the contour integral, a fixed start in cases DU, DT only). Every
 value is one evaluation by one method, with a warning where the parameters lie in a regime in which one evaluation is
 known to be brittle; `verified = TRUE` gives the checked computation (error estimates and fallbacks).
 
