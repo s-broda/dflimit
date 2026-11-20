@@ -125,11 +125,13 @@ test_that("the warnings of the brittle regimes fire where they should and not el
   expect_lt(abs(Fa - ltratio_cdf(-8.4075, "DU", 2, c0 = 5, g0 = 1.5, method = "double", verified = TRUE)), 1e-9)
   # once per call of the functions that evaluate the distribution many times
   w <- character(0)
-  withCallingHandlers(ltratio_icdf(c(0.05, 0.5), "DU", -20, c0 = 2, g0 = 0.5),
+  withCallingHandlers(coef_cdf(c(5, 10), "DU", -10, method = "double"),
                       warning = function(e) { w <<- c(w, conditionMessage(e)); invokeRestart("muffleWarning") })
   expect_equal(length(w), 1L)
+  # (the quantiles below take about 3 s on two threads, a fifth of the suite: not on CRAN)
+  skip_on_cran()
   w <- character(0)
-  withCallingHandlers(coef_cdf(c(5, 10), "DU", -10, method = "double"),
+  withCallingHandlers(ltratio_icdf(c(0.05, 0.5), "DU", -20, c0 = 2, g0 = 0.5),
                       warning = function(e) { w <<- c(w, conditionMessage(e)); invokeRestart("muffleWarning") })
   expect_equal(length(w), 1L)
 })

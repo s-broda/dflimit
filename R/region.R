@@ -32,7 +32,8 @@
 #'   met.
 #' @seealso [ltratio_cdf()].
 #' @examples
-#' ltratio_region(list(type = "wap", k = 3.6658, omega = 10), "DK", 0)   # 0.05 (the weighted-average-power test of the paper)
+#' # the weighted-average-power test of the paper: size 0.05
+#' ltratio_region(list(type = "wap", k = 3.6658, omega = 10), "DK", 0)
 #' # the point-optimal test against cbar = -7: size 0.05
 #' ltratio_region(list(type = "line", a = -3.5, b = -0.2639), "DK", 0)
 #' @export

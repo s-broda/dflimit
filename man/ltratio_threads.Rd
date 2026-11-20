@@ -19,8 +19,9 @@ threads on Windows). `ltratio_threads()` returns the number of workers; `ltratio
 \details{
 When the package is loaded the number is taken, in this order, from the option `dflimit.threads`, from the
 environment variable `DFL_NTHREADS`, as 2 when the environment variable `_R_CHECK_LIMIT_CORES_` is set (as by
-`R CMD check --as-cran`), and otherwise it is the number of processors, capped by the environment variable
-`OMP_THREAD_LIMIT` if that is set.
+`R CMD check --as-cran`) or the package is loaded under `R CMD check` (the environment variable
+`_R_CHECK_PACKAGE_NAME_` is set), so that checks use at most two cores, and otherwise it is the number of
+processors, capped by the environment variable `OMP_THREAD_LIMIT` if that is set.
 }
 \examples{
 old <- ltratio_threads()

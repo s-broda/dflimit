@@ -27,6 +27,14 @@ MATLAB and Julia).
 Bao, Y., Broda, S. A. and Kan, R., "The Exact Limiting Distribution of the Dickey-Fuller t-Ratio
   and Some Related Statistics", working paper.
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/s-broda/dflimit}
+  \item Report bugs at \url{https://github.com/s-broda/dflimit/issues}
+}
+
+}
 \author{
 \strong{Maintainer}: Simon A. Broda \email{simon.broda@hslu.ch} [copyright holder]
 

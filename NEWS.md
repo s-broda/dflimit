@@ -5,6 +5,8 @@
   unchanged.
 * The C engine is now copied from dflimit-matlab, the repository of the MATLAB package, which holds the C engine since
   it left the paper's repository (`tools/sync-engine.sh /path/to/dflimit-matlab`); the sources are unchanged.
+* Prepared for the first submission to CRAN: the engine uses two threads under any `R CMD check` (not only with
+  `--as-cran`), the slowest test is skipped on CRAN, and the DESCRIPTION has URLs and DOIs; the results are unchanged.
 
 # dflimit 0.3.0
 

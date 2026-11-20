@@ -5,8 +5,9 @@
 #'
 #' When the package is loaded the number is taken, in this order, from the option `dflimit.threads`, from the
 #' environment variable `DFL_NTHREADS`, as 2 when the environment variable `_R_CHECK_LIMIT_CORES_` is set (as by
-#' `R CMD check --as-cran`), and otherwise it is the number of processors, capped by the environment variable
-#' `OMP_THREAD_LIMIT` if that is set.
+#' `R CMD check --as-cran`) or the package is loaded under `R CMD check` (the environment variable
+#' `_R_CHECK_PACKAGE_NAME_` is set), so that checks use at most two cores, and otherwise it is the number of
+#' processors, capped by the environment variable `OMP_THREAD_LIMIT` if that is set.
 #'
 #' @param n `NULL` (the default) to query, or the number of worker threads, a positive integer (1: no threads).
 #' @return The number of worker threads in effect, invisibly when `n` is given.
@@ -29,6 +30,7 @@ dfl_default_threads <- function() {
   if (nzchar(Sys.getenv("DFL_NTHREADS"))) return(NULL)                 # (the engine reads it)
   lim <- Sys.getenv("_R_CHECK_LIMIT_CORES_")
   if (nzchar(lim) && !tolower(lim) %in% c("false", "no", "0")) return(2L)
+  if (nzchar(Sys.getenv("_R_CHECK_PACKAGE_NAME_"))) return(2L)       # under R CMD check (CRAN policy: two cores)
   omp <- suppressWarnings(as.integer(Sys.getenv("OMP_THREAD_LIMIT")))
   if (!is.na(omp) && omp >= 1L) return(min(omp, .Call(C_dfl_r_threads, NULL)))
   NULL

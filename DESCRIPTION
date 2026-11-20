@@ -11,18 +11,23 @@ Authors@R: c(
     person("Massachusetts Institute of Technology", role = "cph",
            comment = "copyright holder of the Faddeeva package"))
 Description: The distribution function, density, quantiles and moments of the
-    limits of the Dickey-Fuller t-ratios under local alternatives, for the
-    regression without deterministic terms, with an intercept, and with an
-    intercept and a trend, with a zero, a fixed or a stationary initial
-    observation, and for the t-ratio centred at a local null value; also the
-    GLS-detrended trend case of Elliott, Rothenberg and Stock (1996)
-    <doi:10.2307/2171846>, the ADFmax statistic of Leybourne (1995),
-    the probabilities of regions of the limit experiment and its
-    asymptotic power envelope.  The values are computed by the exact
-    representations of Bao, Broda and Kan, "The Exact Limiting Distribution of
-    the Dickey-Fuller t-Ratio and Some Related Statistics" (working paper), in
-    a multithreaded C engine.
+    limits of the Dickey-Fuller t-ratios under local alternatives are computed
+    for the regression without deterministic terms, with an intercept, and with
+    an intercept and a trend, with a zero, a fixed or a stationary initial
+    observation, and for the t-ratio centred at a local null value. Also
+    covered are the trend case of Elliott, Rothenberg and Stock (1996)
+    <doi:10.2307/2171846>, with the data detrended by generalized least squares
+    (GLS); the ADFmax statistic of Leybourne (1995)
+    <doi:10.1111/j.1468-0084.1995.tb00040.x>, the larger of the t-ratios of the
+    forward and the reverse regression; and the probabilities of regions of the
+    limit experiment and its asymptotic power envelope.
+    The values come from the exact representations of Bao, Broda and Kan, "The
+    Exact Limiting Distribution of the Dickey-Fuller t-Ratio and Some Related
+    Statistics" (unpublished working paper), evaluated by a multithreaded
+    engine written in 'C'.
 License: MIT + file LICENSE
+URL: https://github.com/s-broda/dflimit
+BugReports: https://github.com/s-broda/dflimit/issues
 Copyright: See the file inst/COPYRIGHTS.
 Encoding: UTF-8
 Depends: R (>= 4.1.0)
