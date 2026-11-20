@@ -17,7 +17,7 @@
 #' }
 #'
 #' @references Bao, Y., Broda, S. A. and Kan, R., "The Exact Limiting Distribution of the Dickey-Fuller t-Ratio
-#'   and Some Related Statistics", working paper.
+#'   and Some Related Statistics", working paper, 2026, \url{https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7725619}.
 #' @keywords internal
 #' @useDynLib dflimit, .registration = TRUE, .fixes = "C_"
 "_PACKAGE"

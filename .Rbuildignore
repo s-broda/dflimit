@@ -9,3 +9,4 @@
 ^CRAN-SUBMISSION$
 ^dflimit_.*\.tar\.gz$
 ^dflimit\.Rcheck$
+^CITATION\.cff$

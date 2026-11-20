@@ -1,0 +1,9 @@
+bibentry(
+  bibtype = "Unpublished",
+  header  = "To cite dflimit in publications, please cite the paper:",
+  title   = "The Exact Limiting Distribution of the {Dickey}--{Fuller} t-Ratio and Some Related Statistics",
+  author  = c(person("Yong", "Bao"), person("Simon A.", "Broda"), person("Raymond", "Kan")),
+  year    = "2026",
+  note    = "Working paper",
+  url     = "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7725619"
+)
