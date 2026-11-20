@@ -1,5 +1,5 @@
-# independent references: the Julia values stored in public/ltratio_test.m of DF-Limit (from julia/DFExact.jl and
-# julia/application) and the 5% critical values printed in the paper (public/ltratio_paper.m, public/Contents.m)
+# independent references: the Julia values stored in matlab/ltratio_test.m of dflimit-matlab (computed with the Julia
+# engine) and the 5% critical values printed in the paper (its replication script ltratio_paper.m, and matlab/Contents.m)
 test_that("coef_cdf and coef_icdf reproduce the stored Julia values", {
   expect_lt(abs(coef_cdf(-14, "DU", -5) - 0.1938495145682877), 1e-10)
   expect_lt(abs(coef_cdf(-14, "SU", -10) - 0.45401150754561903), 1e-10)
@@ -8,7 +8,7 @@ test_that("coef_cdf and coef_icdf reproduce the stored Julia values", {
 })
 
 test_that("coef_icdf reproduces the published 5% critical values", {
-  expect_equal(round(coef_icdf(0.05, "DU"), 4), -14.0936)                       # public/Contents.m
+  expect_equal(round(coef_icdf(0.05, "DU"), 4), -14.0936)                       # matlab/Contents.m of dflimit-matlab
   expect_equal(round(coef_icdf(0.05, "DK"), 3), -8.039)                      # the paper: -8.039 -14.094 -21.711
   expect_equal(round(coef_icdf(0.05, "DT"), 3), -21.711)
   expect_equal(round(coef_icdf(0.05, "DG"), 2), -16.59)                         # the paper: -16.59
