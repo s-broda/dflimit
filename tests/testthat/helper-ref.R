@@ -1,4 +1,4 @@
-# the stored reference values of the Julia engine (subsets of c/test/*_ref.txt of DF-Limit; see the first line of
+# the stored reference values of the Julia engine (subsets of c/test/*_ref.txt of dflimit-matlab; see the first line of
 # each file in ref/)
 read_ref <- function(name, cols) {
   utils::read.table(test_path("ref", name), col.names = cols, comment.char = "#")

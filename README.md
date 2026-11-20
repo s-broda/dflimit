@@ -109,5 +109,6 @@ r-universe build such binaries for packages that are public).
 MIT (see `LICENSE`); the Faddeeva package in `src/Faddeeva.cc` is by Steven G. Johnson, MIT licence (see
 `inst/COPYRIGHTS`). Please cite the paper when using the package.
 
-The C engine in `src/` is copied from the paper's repository by `tools/sync-engine.sh` (the upstream commit is in
-`inst/UPSTREAM`); do not edit those files here.
+The C engine in `src/` is copied from dflimit-matlab, the repository of the MATLAB package, which holds the C engine
+(its directory `c/`), by `tools/sync-engine.sh` (the upstream commit is in `inst/UPSTREAM`); do not edit those files
+here. The engine was developed in the paper's repository up to commit b484d4f.

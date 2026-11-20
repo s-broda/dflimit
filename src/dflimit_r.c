@@ -1,4 +1,4 @@
-/* dflimit_r.c: the R gateway to the C engine (the other files of src/ are copied from DF-Limit's c/ by
+/* dflimit_r.c: the R gateway to the C engine (the other files of src/ are copied from c/ of dflimit-matlab by
  * tools/sync-engine.sh and are not edited here).  Plain .Call entry points, registered in R_init_dflimit; the R
  * functions in R/ check and convert the arguments (the case code to the model and the start, the method name to its
  * number), this file checks their types again and calls the engine.

@@ -72,7 +72,7 @@ test_that("a stationary start needs c <= -1e-4, and the values near the unit roo
   expect_error(ltratio_icdf(0.05, "SK", -9e-5), msg, fixed = TRUE)
   expect_error(coef_cdf(-8.039, "SK", -9e-5), msg, fixed = TRUE)
   expect_error(adfmax_cdf(-2.4, "SU", -9e-5), msg, fixed = TRUE)
-  # at c = -1e-4 (julia/quickcheck.jl of DF-Limit, section 18b)
+  # at c = -1e-4 (test/engine/quickcheck.jl of DFLimit.jl, section 18b)
   expect_lt(abs(ltratio_cdf(-1.94087, "SK", -1e-4) - 0.028490044498374834), 1e-11)
   expect_lt(abs(coef_cdf(-8.039, "SK", -1e-4) - 0.00032997244558452543), 1e-12)
   expect_lt(abs(adfmax_cdf(-2.43542, "SU", -1e-4) - 0.050000718603976146), 1e-11)

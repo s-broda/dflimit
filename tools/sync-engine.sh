@@ -1,23 +1,24 @@
 #!/bin/sh
-# tools/sync-engine.sh: copy the C engine from a DF-Limit checkout into src/ of this package.
+# tools/sync-engine.sh: copy the C engine from a checkout of dflimit-matlab, the repository of the MATLAB package that
+# holds the C engine, into src/ of this package.
 #
-#   sh tools/sync-engine.sh /path/to/DF-Limit
+#   sh tools/sync-engine.sh /path/to/dflimit-matlab
 #
-# The script only reads the DF-Limit checkout.  It
+# The script only reads the dflimit-matlab checkout.  It
 #   1. copies the engine sources of c/ (and c/faddeeva/, flattened into src/) into src/,
 #   2. converts them to LF line endings (a Windows checkout with core.autocrlf=true has CRLF, which R CMD check
 #      reports),
 #   3. applies the patches in tools/patches/*.patch, if there are any, in name order (a patch is a change that R
-#      requires and that should go upstream into DF-Limit's c/; once it is upstream, delete the patch file; there
+#      requires and that should go upstream into c/ of dflimit-matlab; once it is upstream, delete the patch file; there
 #      are none at present),
 #   4. records the upstream commit in inst/UPSTREAM.
 # Left out: the test programs (dfl_test_*.c), dfl_probe.c, gen_tables.jl, the MEX gateway (c/mex/) and c/test/.
 set -e
 
-if [ $# -ne 1 ]; then echo "usage: sh tools/sync-engine.sh /path/to/DF-Limit" >&2; exit 2; fi
+if [ $# -ne 1 ]; then echo "usage: sh tools/sync-engine.sh /path/to/dflimit-matlab" >&2; exit 2; fi
 UP=$(cd "$1" && pwd)
 PKG=$(cd "$(dirname "$0")/.." && pwd)
-[ -f "$UP/c/dflimit.h" ] || { echo "$UP does not look like a DF-Limit checkout (no c/dflimit.h)" >&2; exit 1; }
+[ -f "$UP/c/dflimit.h" ] || { echo "$UP does not look like a dflimit-matlab checkout (no c/dflimit.h)" >&2; exit 1; }
 [ -f "$PKG/DESCRIPTION" ] || { echo "$PKG is not the package root" >&2; exit 1; }
 
 ENGINE="dflimit.h dfl_lock.h dfl_vmath.h dfl_api.c dfl_double.c dfl_gen.c dfl_gilpelaez.c dfl_mgf.c dfl_moments.c
@@ -36,14 +37,14 @@ for p in "$PKG"/tools/patches/*.patch; do
     PATCHES="$PATCHES $(basename "$p")"
 done
 
-# the upstream commit (read-only git commands: --no-optional-locks keeps git from refreshing DF-Limit's index)
+# the upstream commit (read-only git commands: --no-optional-locks keeps git from refreshing the index of the checkout)
 G="git --no-optional-locks -C $UP"
 COMMIT=$($G rev-parse HEAD 2>/dev/null || echo unknown)
 CDATE=$($G log -1 --format=%cI 2>/dev/null || echo unknown)
 if $G diff --quiet HEAD -- c 2>/dev/null; then DIRTY=no; else DIRTY=yes; fi
 mkdir -p "$PKG/inst"
 {
-    echo "# The C engine in src/ was copied from DF-Limit by tools/sync-engine.sh"
+    echo "# The C engine in src/ was copied from dflimit-matlab (its directory c/) by tools/sync-engine.sh"
     echo "upstream_commit: $COMMIT"
     echo "upstream_commit_date: $CDATE"
     echo "upstream_c_modified: $DIRTY"
