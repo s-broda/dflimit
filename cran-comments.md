@@ -8,6 +8,10 @@ This is the first submission of dflimit to CRAN.
   `R CMD check --as-cran` on the tarball built by `R CMD build`.
 * the same machine, R 4.5.3 (conda-forge build), clang 23.1.2: `R CMD check --as-cran` (the same result, and a
   second NOTE of that installation only: "Skipping checking math rendering: package 'V8' unavailable").
+* win-builder, R-devel (2026-11-17 r90926 ucrt) and R-release (4.6.2), x86_64-w64-mingw32: 1 NOTE each (New
+  submission, with the spelling flags listed below); tests 77 s and 74 s.
+* GitHub Actions, R-release on windows-latest, macos-latest and ubuntu-latest, `R CMD check --as-cran --no-manual`:
+  Status OK on all three.
 * the same machine, R 4.5.2: the package installed with strict compiler warnings (`-Wall -pedantic
   -Wstrict-prototypes` for C, `-Wall -pedantic` for C++); the C sources also compiled with GCC 16.2 at `-O2 -Wall
   -pedantic -Wstrict-prototypes`. Neither reports a warning that `R CMD check` counts as significant.
@@ -22,9 +26,9 @@ This is the first submission of dflimit to CRAN.
   Maintainer: 'Simon A. Broda <simon.broda@hslu.ch>'
   New submission
 
-  A spelling check of the DESCRIPTION may flag Bao and Broda (authors of the method), Rothenberg (an author
-  cited), ADFmax (the name of Leybourne's statistic) and GLS (generalized least squares, spelled out in the
-  Description); they are spelled correctly.
+  The spelling check of the DESCRIPTION flags Bao and Broda (authors of the method), Leybourne and Rothenberg
+  (authors cited), ADFmax (the name of Leybourne's statistic), GLS (generalized least squares, spelled out in the
+  Description) and multithreaded; they are spelled correctly.
 
 ## Notes for the reviewers
 
@@ -36,11 +40,11 @@ This is the first submission of dflimit to CRAN.
 * Run time: the whole `R CMD check --as-cran` takes about 31 s on the machine above; no example takes more than
   0.3 s. One test (about 3 s) is skipped on CRAN.
 * The method is that of a working paper (Bao, Broda and Kan, 2026, "The Exact Limiting Distribution of the
-  Dickey-Fuller t-Ratio and Some Related Statistics"), which is on SSRN at <https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7725619>;
+  Dickey-Fuller t-Ratio and Some Related Statistics"), which is on SSRN at 
+  <https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7725619>;
   the DESCRIPTION and two help pages give that address. SSRN answers automated requests with status 403, so the
   URL check may list it as possibly invalid; it opens in a browser. Its DOI was not yet registered when this was
   submitted.
-
 * `src/Faddeeva.cc` and `src/Faddeeva.h` are the Faddeeva package by Steven G. Johnson (MIT licence, copyright
   Massachusetts Institute of Technology); Authors@R lists him as a contributor and MIT as a copyright holder, and
   `inst/COPYRIGHTS` reproduces the licence.
