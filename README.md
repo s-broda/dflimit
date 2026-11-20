@@ -33,9 +33,9 @@ arguments, exist in MATLAB and Julia.
 The case `cas` is a two-letter code: `D` (fixed start, `g0`, default 0) or `S` (stationary start, c <= -1e-4),
 followed by `K` (no deterministic terms, tau), `U` (intercept, tau_mu) or `T` (intercept and trend, tau_tau);
 `"DG"` is the GLS-detrended trend case (DF-GLS, cbar = -13.5). `method` is `"auto"` (at each point the fastest
-representation that one evaluation gives to well below 1e-5), `"single"` (the line integral, Theorem S1 of the
-Supplementary Material), `"double"` (the conditional integral, Theorem S2 of the Supplementary Material) or `"contour"`
-(the contour integral, a fixed start in cases DU, DT only). Every
+representation that one evaluation gives to well below 1e-5), `"single"` (the line integral representation of the
+paper), `"double"` (the conditional integral representation) or `"contour"`
+(the contour integral representation, a fixed start in cases DU, DT only). Every
 value is one evaluation by one method, with a warning where the parameters lie in a regime in which one evaluation is
 known to be brittle; `verified = TRUE` gives the checked computation (error estimates and fallbacks).
 
@@ -87,8 +87,8 @@ Linux, e.g. `build-essential`):
 remotes::install_github("s-broda/dflimit")
 ```
 
-or, from a downloaded source tarball, `install.packages("dflimit_0.3.0.tar.gz", repos = NULL, type = "source")`
-(on the command line `R CMD INSTALL dflimit_0.3.0.tar.gz`).
+or, from a downloaded source tarball, `install.packages("dflimit_0.4.0.tar.gz", repos = NULL, type = "source")`
+(on the command line `R CMD INSTALL dflimit_0.4.0.tar.gz`).
 
 **From a release binary** (no compiler needed): the releases of the GitHub repository (the Releases page of
 `s-broda/dflimit`) carry binary packages for Windows (`.zip`) and macOS
@@ -97,8 +97,8 @@ macOS files (a binary package works only with that minor version of R, e.g. 4.6.
 platform and
 
 ```r
-install.packages("dflimit_0.3.0.zip", repos = NULL)                       # Windows (do not rename the file)
-install.packages("dflimit_0.3.0_R4.6_macos-arm64.tgz", repos = NULL)      # macOS, Apple silicon
+install.packages("dflimit_0.4.0.zip", repos = NULL)                       # Windows (do not rename the file)
+install.packages("dflimit_0.4.0_R4.6_macos-arm64.tgz", repos = NULL)      # macOS, Apple silicon
 ```
 
 Linux users install from source (R has no portable Linux binary format; Posit Public Package Manager and

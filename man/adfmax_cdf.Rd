@@ -38,7 +38,7 @@ statistic of Leybourne (1995), the larger of the Dickey-Fuller t-ratios of the f
 \eqn{y_{t-1}}) and of the reverse regression (\eqn{y_t} on \eqn{y_{t+1}}), under
 \eqn{\phi = 1 + c/n}{phi = 1 + c/n}, no drift. In the limit both regressions have the denominator \eqn{V} and the
 numerators \eqn{U} and \eqn{-U - 1}, so that ADFmax converges to \eqn{(|R| - 1/2)/\sqrt{V}}{(|R| - 1/2)/sqrt(V)},
-\eqn{R = U + 1/2}, whose distribution is computed by the conditional integral (Section 6 of the paper).
+\eqn{R = U + 1/2}, whose distribution is computed by the conditional integral (the ADFmax test of the paper).
 `adfmax_icdf()` gives its quantiles.
 }
 \details{
@@ -50,9 +50,9 @@ same with a stationary start, `c <= -1e-4`). The values are accurate to about 1e
   safeguarded by bisection on a bracket grown from `[x0 - 1, x0 + 1]`.
 }
 \examples{
-adfmax_cdf(-2.43542, "DU")       # 0.05 (Table I of the paper)
+adfmax_cdf(-2.43542, "DU")       # 0.05 (the quantiles of the ADFmax statistic in the paper)
 adfmax_pdf(c(-3, -2), "DT", -5)
-adfmax_icdf(0.05, "DT")          # -3.11891 (Table I of the paper)
+adfmax_icdf(0.05, "DT")          # -3.11891 (the quantiles of the ADFmax statistic in the paper)
 }
 \references{
 Leybourne, S. J. (1995), "Testing for Unit Roots Using Forward and Reverse Dickey-Fuller

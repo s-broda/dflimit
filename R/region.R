@@ -3,8 +3,9 @@
 #' The limit of the probability \eqn{P\{U \le g(V)\}}{P{U <= g(V)}} under \eqn{\phi = 1 + c/n}{phi = 1 + c/n}, no
 #' drift, zero start, case DK (no deterministic terms; also the constant case with GLS demeaning), with \eqn{U} and
 #' \eqn{V} as in [ltratio_cdf()]. Every test of the unit root in the limit experiment of case DK rejects on such a
-#' region (Section 7 of the paper), and Theorem S2(i) of the Supplementary Material of the paper gives its probability
-#' by one outer integral over \eqn{V}.
+#' region (the paper's section on the weighted-average-power test), and the first part of the conditional integral
+#' representation of the paper, the probability of a region of the plane, gives its probability by one outer integral
+#' over \eqn{V}.
 #' Accurate to about 1e-11.
 #'
 #' `bnd` is a list with the element `type` and the parameters of the boundary:
@@ -31,7 +32,7 @@
 #'   met.
 #' @seealso [ltratio_cdf()].
 #' @examples
-#' ltratio_region(list(type = "wap", k = 3.6658, omega = 10), "DK", 0)   # 0.05 (Table V of the paper)
+#' ltratio_region(list(type = "wap", k = 3.6658, omega = 10), "DK", 0)   # 0.05 (the weighted-average-power test of the paper)
 #' # the point-optimal test against cbar = -7: size 0.05
 #' ltratio_region(list(type = "line", a = -3.5, b = -0.2639), "DK", 0)
 #' @export

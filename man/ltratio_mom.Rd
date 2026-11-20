@@ -25,7 +25,8 @@ A numeric vector of length `p` (or the list described under `info`).
 \description{
 The moments \eqn{E[\tau^j]}{E[tau^j]}, \eqn{j = 1, \dots, p}{j = 1..p}, of the limit
 \eqn{\tau = (U - c_0 V)/\sqrt{V}}{tau = (U - c0 V)/sqrt(V)} of [ltratio_cdf()], as one-dimensional integrals of
-the joint moment generating function of \eqn{(U, V)} (Proposition S1 of the Supplementary Material of the paper).
+the joint moment generating function of \eqn{(U, V)} (the moments of the limit in the Supplementary Material of the
+paper).
 Not available for case DG.
 }
 \section{Cases}{

@@ -27,10 +27,10 @@
 #' }
 #'
 #' @section Methods and ranges:
-#' Three exact representations are implemented: the line integral of Theorem S1 of the Supplementary Material of the
-#' paper (`method = "single"`, or `"line"`), the conditional integral of Theorem S2 of the Supplementary Material
-#' (`"double"`, or `"conditional"`) and, for a fixed start `g0 != 0` in cases DU and DT only, the contour integral
-#' (`"contour"`): the double integral of Corollary 1 of the paper (the second form of Theorem 1), with the integral over
+#' Three exact representations of the paper are implemented: the line integral representation (`method = "single"`,
+#' or `"line"`), the conditional integral representation (`"double"`, or `"conditional"`) and, for a fixed start
+#' `g0 != 0` in cases DU and DT only, the contour integral representation (`"contour"`): a double integral from the
+#' inversion formula on paths around the singularities of the moment generating function, with the integral over
 #' v in closed form and the paths in s and t deformed, an explicit integrand where the line integral needs a noncentral
 #' kernel that is itself an integral.
 #'
@@ -145,7 +145,8 @@ ltratio_icdf <- function(p, cas, c = 0, c0 = 0, g0 = 0, method = "auto", tol = 1
 #'
 #' The moments \eqn{E[\tau^j]}{E[tau^j]}, \eqn{j = 1, \dots, p}{j = 1..p}, of the limit
 #' \eqn{\tau = (U - c_0 V)/\sqrt{V}}{tau = (U - c0 V)/sqrt(V)} of [ltratio_cdf()], as one-dimensional integrals of
-#' the joint moment generating function of \eqn{(U, V)} (Proposition S1 of the Supplementary Material of the paper).
+#' the joint moment generating function of \eqn{(U, V)} (the moments of the limit in the Supplementary Material of the
+#' paper).
 #' Not available for case DG.
 #'
 #' @inheritParams ltratio_cdf
