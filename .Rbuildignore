@@ -10,3 +10,4 @@
 ^dflimit_.*\.tar\.gz$
 ^dflimit\.Rcheck$
 ^CITATION\.cff$
+^\.zenodo\.json$
