@@ -37,7 +37,8 @@ static int len(SEXP a, const char *name)
 static void engine_error(int rc, const char *err) { if (rc) Rf_errorcall(R_NilValue, "%s", err[0] ? err : "the engine failed"); }
 
 /* .Call("dfl_r_dist", kind, x, model, c, c0, g0, stat, method, verified): list(value, nstatus, the brittle-regime message
- * of the one-evaluation default, "" if none) */
+ * of the one-evaluation default, "" if none, the warning of the points that the line integral refused, dfl_warning, ""
+ * if none) */
 static SEXP dfl_r_dist(SEXP kind, SEXP x, SEXP model, SEXP c, SEXP c0, SEXP g0, SEXP stat, SEXP method, SEXP verified)
 {
     int n = len(x, "x"), ns = 0, k = int1(kind, "kind"), m = int1(model, "model"), st = int1(stat, "stat"), me = int1(method, "method"), ve = int1(verified, "verified");
@@ -47,16 +48,18 @@ static SEXP dfl_r_dist(SEXP kind, SEXP x, SEXP model, SEXP c, SEXP c0, SEXP g0, 
     dfl_double_opts dv; dfl_double_defaults(&dv); dv.verified = ve != 0;
     int rc = dfl_dist(k, n, REAL(x), m, cc, cc0, gg0, st != 0, me, NULL, &dv, REAL(out), &ns, err, sizeof err);
     engine_error(rc, err);
-    const char *bm = ve ? NULL : dfl_brittle(k, m, cc, cc0, gg0, st != 0, me);
-    SEXP res = PROTECT(Rf_allocVector(VECSXP, 3));
+    const char *bm = ve ? NULL : dfl_brittle(k, m, cc, cc0, gg0, st != 0, me), *wm = dfl_warning();
+    SEXP res = PROTECT(Rf_allocVector(VECSXP, 4));
     SET_VECTOR_ELT(res, 0, out);
     SET_VECTOR_ELT(res, 1, Rf_ScalarInteger(ns));
     SET_VECTOR_ELT(res, 2, Rf_mkString(bm ? bm : ""));
+    SET_VECTOR_ELT(res, 3, Rf_mkString(wm ? wm : ""));
     UNPROTECT(2);
     return res;
 }
 
-/* .Call("dfl_r_icdf", p, model, c, c0, g0, stat, method, tol, verified): list(q, F, iter, conv, message) */
+/* .Call("dfl_r_icdf", p, model, c, c0, g0, stat, method, tol, verified): list(q, F, iter, conv, message, the warning of
+ * the points that the line integral refused) */
 static SEXP dfl_r_icdf(SEXP p, SEXP model, SEXP c, SEXP c0, SEXP g0, SEXP stat, SEXP method, SEXP tol, SEXP verified)
 {
     int n = len(p, "p"), m = int1(model, "model"), st = int1(stat, "stat"), me = int1(method, "method"), ve = int1(verified, "verified");
@@ -67,10 +70,11 @@ static SEXP dfl_r_icdf(SEXP p, SEXP model, SEXP c, SEXP c0, SEXP g0, SEXP stat, 
     dfl_double_opts dv; dfl_double_defaults(&dv); dv.verified = ve != 0;
     int rc = dfl_icdf(n, REAL(p), m, cc, cc0, gg0, st != 0, me, tl, NULL, &dv, REAL(q), REAL(F), INTEGER(it), LOGICAL(cv), err, sizeof err);
     engine_error(rc, err);
-    const char *bm = ve ? NULL : dfl_brittle(2, m, cc, cc0, gg0, st != 0, me);
-    SEXP res = PROTECT(Rf_allocVector(VECSXP, 5));
+    const char *bm = ve ? NULL : dfl_brittle(2, m, cc, cc0, gg0, st != 0, me), *wm = dfl_warning();
+    SEXP res = PROTECT(Rf_allocVector(VECSXP, 6));
     SET_VECTOR_ELT(res, 0, q); SET_VECTOR_ELT(res, 1, F); SET_VECTOR_ELT(res, 2, it); SET_VECTOR_ELT(res, 3, cv);
     SET_VECTOR_ELT(res, 4, Rf_mkString(bm ? bm : ""));
+    SET_VECTOR_ELT(res, 5, Rf_mkString(wm ? wm : ""));
     UNPROTECT(5);
     return res;
 }

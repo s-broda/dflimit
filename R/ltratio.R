@@ -59,6 +59,16 @@
 #'
 #' In case DK with `c0 > 0` the density is infinite at `x = -sqrt(2 c0)`, and `Inf` is returned there.
 #'
+#' In two regions the line integral would need more quadrature nodes than the engine allows: with `c0 < 0` near zero
+#' and `x > 0`, where a root of the parabola \eqn{X(v) = c_0 v^2 + x v + 1/2}{X(v) = c0 v^2 + x v + 1/2} lies far out
+#' (near `x/|c0|`), more than two million nodes on one path of its inner integrals (from `c0 = -1e-4` at `x = 0.05`,
+#' at `c0 = -1e-3` near `x = 1.5`, at `c0 = -0.01` in places, at `c0 = -0.1` only far above the unit root, as at
+#' `c = 5`, `x = 14`), and above the unit root
+#' at large `x`, a Gauss-Legendre rule of more than 4096 nodes (at `c = 7` from `x` of about 660 to 780). The line
+#' integral refuses such a point before evaluating it: `"auto"` takes the conditional integral there, with its checks,
+#' and warns where such a value near `c0 = 0` is flagged; `method = "single"`, and case DG, which has the line integral
+#' only, raise an error that names the arguments.
+#'
 #' The computation runs on the engine's worker threads; see [ltratio_threads()].
 #'
 #' @param x Numeric vector or array of points. `-Inf`, `Inf` and `NaN` give 0, 1 (density 0) and `NaN`.
@@ -71,8 +81,9 @@
 #' @param verified `FALSE` (the default): one evaluation by one method; `TRUE`: the checked computation (see the
 #'   section Methods and ranges).
 #' @return A numeric vector with the attributes (`dim`, `dimnames`, `names`) of `x`. A warning is given in a regime
-#'   in which one evaluation is known to be brittle, and, with `verified = TRUE` and `method = "double"` or
-#'   `"contour"`, if the integral reports at some points that its error estimate is not met.
+#'   in which one evaluation is known to be brittle, where points that the line integral refuses get flagged values
+#'   from the conditional integral (see the section Methods and ranges), and, with `verified = TRUE` and
+#'   `method = "double"` or `"contour"`, if the integral reports at some points that its error estimate is not met.
 #' @references Bao, Y., Broda, S. A. and Kan, R., "The Exact Limiting Distribution of the Dickey-Fuller t-Ratio
 #'   and Some Related Statistics", working paper, 2026, \url{https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7725619}.
 #'
@@ -106,6 +117,7 @@ dfl_dist <- function(kind, x, cas, c, c0, g0, method, verified) {
                     if (me == 2L) "conditional" else "contour", r[[2]], length(x)), call. = FALSE)
   }
   if (nzchar(r[[3]])) warning(r[[3]], call. = FALSE)
+  if (nzchar(r[[4]])) warning(r[[4]], call. = FALSE)
   dfl_shape(r[[1]], x)
 }
 
@@ -131,6 +143,7 @@ ltratio_icdf <- function(p, cas, c = 0, c0 = 0, g0 = 0, method = "auto", tol = 1
   r <- .Call(C_dfl_r_icdf, dfl_real(p, "p"), k$model, dfl_num(c, "c"), dfl_num(c0, "c0"), dfl_num(g0, "g0"),
              k$stat, dfl_method(method), dfl_num(tol, "tol"), dfl_flag(verified, "verified"))
   if (nzchar(r[[5]])) warning(r[[5]], call. = FALSE)
+  if (nzchar(r[[6]])) warning(r[[6]], call. = FALSE)
   r <- r[1:4]
   names(r) <- c("q", "F", "iter", "conv")
   if (!all(r$conv)) {

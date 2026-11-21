@@ -28,8 +28,9 @@ section Methods and ranges).}
 }
 \value{
 A numeric vector with the attributes (`dim`, `dimnames`, `names`) of `x`. A warning is given in a regime
-  in which one evaluation is known to be brittle, and, with `verified = TRUE` and `method = "double"` or
-  `"contour"`, if the integral reports at some points that its error estimate is not met.
+  in which one evaluation is known to be brittle, where points that the line integral refuses get flagged values
+  from the conditional integral (see the section Methods and ranges), and, with `verified = TRUE` and
+  `method = "double"` or `"contour"`, if the integral reports at some points that its error estimate is not met.
 }
 \description{
 `ltratio_cdf()` and `ltratio_pdf()` give the distribution function and the density of the limit, as the sample
@@ -94,6 +95,16 @@ for `c <= 2`, `|g0| <= 2` (`|g0| <= 1` for `c > 0`), in case DU for `-100 <= c <
 `(c g0)^2/2 <= 4050`, in case DT for `-100 <= c <= 2`, `|g0| <= 3` and `(c g0)^2/2 <= 7200`.
 
 In case DK with `c0 > 0` the density is infinite at `x = -sqrt(2 c0)`, and `Inf` is returned there.
+
+In two regions the line integral would need more quadrature nodes than the engine allows: with `c0 < 0` near zero
+and `x > 0`, where a root of the parabola \eqn{X(v) = c_0 v^2 + x v + 1/2}{X(v) = c0 v^2 + x v + 1/2} lies far out
+(near `x/|c0|`), more than two million nodes on one path of its inner integrals (from `c0 = -1e-4` at `x = 0.05`,
+at `c0 = -1e-3` near `x = 1.5`, at `c0 = -0.01` in places, at `c0 = -0.1` only far above the unit root, as at
+`c = 5`, `x = 14`), and above the unit root
+at large `x`, a Gauss-Legendre rule of more than 4096 nodes (at `c = 7` from `x` of about 660 to 780). The line
+integral refuses such a point before evaluating it: `"auto"` takes the conditional integral there, with its checks,
+and warns where such a value near `c0 = 0` is flagged; `method = "single"`, and case DG, which has the line integral
+only, raise an error that names the arguments.
 
 The computation runs on the engine's worker threads; see [ltratio_threads()].
 }
