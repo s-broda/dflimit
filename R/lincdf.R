@@ -16,6 +16,14 @@
 #' trapezoidal rule in \eqn{u = \sinh v}{u = sinh(v)} with 60000 steps up to \eqn{u = 4000}, as `ltratio_lincdf` of
 #' the MATLAB and Julia programs.
 #'
+#' Where the transform has not fallen below 5e-9 by the end of that grid, or `c > 0` (\eqn{|a|} below about 0.3 to 3,
+#' depending on `c`, which includes `a = 0`, the law of \eqn{U} alone), that inversion is not accurate, and the
+#' probability comes from a conditional integral instead: in case DK that of the region
+#' \eqn{U \le aV + b}{U <= aV + b} ([ltratio_region()]), in case DG the conditional integral given \eqn{U + 1/2}, whose
+#' law is a gamma law of shape 1/2 under every tilt in \eqn{V}; \eqn{P(V \le b)}{P(V <= b)} takes a longer grid for
+#' `c <= -50` and a finer one for `c > 2`. The values are accurate to about 1e-10 and lie in [0, 1]. `c` must be at least -550, in case DG at most
+#' about 3.5 (at `cbar = -13.5`; less for `cbar` nearer 0), and for `a = NaN` at most about 7.
+#'
 #' @param b Numeric vector or array of points. `-Inf`, `Inf` and `NaN` give 0, 1 and `NaN`.
 #' @param a The coefficient of \eqn{V}, a single number; `NaN` for the distribution of \eqn{V} (case DK).
 #' @param cas The case, `"DK"` or `"DG"`.
@@ -51,7 +59,9 @@ ltratio_lincdf <- function(b, a, cas, c = 0, cbar = -13.5) {
 #' DG, where the limit of the invariant statistic of Elliott, Rothenberg and Stock is
 #' \eqn{\bar c^2 V + (1 - \bar c) J(1)^2}{cbar^2 V + (1 - cbar) J(1)^2}, \eqn{J(1)^2 = 2U + 1}: its critical value is the `alpha`-quantile at `c = 0`, found by bisection on
 #' \eqn{[-50, 50]} to the width 1e-9, and the envelope is its power at \eqn{\bar c = c}{cbar = c}; `alpha` for
-#' `c >= 0`. As `power_envelope` of the MATLAB and Julia programs.
+#' `c >= 0`. Near `c = 0`, where `a` is small and that inversion is not accurate, the critical value and the power come
+#' from the conditional integral of [ltratio_lincdf()], the critical value by bisection in \eqn{b + 1/2} to
+#' 1e-12 of its scale. As `power_envelope` of the MATLAB and Julia programs.
 #'
 #' @param c Numeric vector or array of the local-to-unity parameters. `NaN` gives `NaN`.
 #' @param cas The case, `"DK"`, `"DU"` (the same as `"DK"`) or `"DG"`.

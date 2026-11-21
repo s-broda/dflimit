@@ -37,6 +37,14 @@ The probability is computed by the inversion formula of Gil-Pelaez,
 int_0^Inf Im[phi(u) exp(-iub)]/u du}, from the joint moment generating function of \eqn{(U, V)}, by the
 trapezoidal rule in \eqn{u = \sinh v}{u = sinh(v)} with 60000 steps up to \eqn{u = 4000}, as `ltratio_lincdf` of
 the MATLAB and Julia programs.
+
+Where the transform has not fallen below 5e-9 by the end of that grid, or `c > 0` (\eqn{|a|} below about 0.3 to 3,
+depending on `c`, which includes `a = 0`, the law of \eqn{U} alone), that inversion is not accurate, and the
+probability comes from a conditional integral instead: in case DK that of the region \eqn{U \le aV + b}{U <= aV + b}
+([ltratio_region()]), in case DG the conditional integral given \eqn{U + 1/2}, whose law is a gamma law of shape 1/2
+under every tilt in \eqn{V}; \eqn{P(V \le b)}{P(V <= b)} takes a longer grid for `c <= -50` and a finer one for
+`c > 2`. The values are accurate to about 1e-10 and lie in [0, 1]. `c` must be at least -550, in case DG at most about
+3.5 (at `cbar = -13.5`; less for `cbar` nearer 0), and for `a = NaN` at most about 7.
 }
 \examples{
 ltratio_lincdf(-0.2639, -3.5, "DK", 0)    # 0.05: the size of the point-optimal test at cbar = -7

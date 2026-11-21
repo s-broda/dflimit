@@ -32,3 +32,25 @@ test_that("the two representations agree", {
   expect_equal(ltratio_region(list(type = "line", a = -3.5, b = -0.2639), "DK", -5),
                ltratio_lincdf(-0.2639, -3.5, "DK", -5), tolerance = 1e-10)
 })
+
+test_that("the linear form near a = 0 and outside its support", {
+  # a = 0: P(U <= b) = P(chi^2_1 <= 2 kappa (b + 1/2)), kappa = 2c/(e^{2c} - 1) (1 at c = 0), zero below the support
+  for (c in c(-50, -5, 0, 2)) {
+    kap <- if (c == 0) 1 else 2 * c / expm1(2 * c)
+    b <- -0.5 + c(-0.1, 0, 1e-6, 1e-3, 0.05, 0.5, 2) / kap
+    expect_equal(ltratio_lincdf(b, 0, "DK", c), pchisq(pmax(2 * kap * (b + 0.5), 0), 1), tolerance = 1e-13)
+  }
+  expect_identical(ltratio_lincdf(-0.6, 0, "DK", -5), 0)
+  # small |a| and c > 0, against the Julia values (the conditional integral given U in case DG)
+  expect_equal(ltratio_lincdf(-0.51, 0.3, "DG", -5), 0.291315235195, tolerance = 1e-11)
+  expect_equal(ltratio_lincdf(-0.51, 0.3, "DG", 0), 0.287795093100, tolerance = 1e-11)
+  P <- ltratio_lincdf(seq(-0.7, 1, by = 0.1), 1e-3, "DG", 2)
+  expect_true(all(P >= 0 & P <= 1) && all(diff(P) >= 0))
+  # the power envelope near c = 0: alpha + O(c^2)
+  expect_equal(power_envelope(-0.01), 0.050249919491, tolerance = 1e-10)
+  e <- power_envelope(-1e-3, "DG")
+  expect_true(e > 0.05 && e < 0.05 + 1e-8)
+  # the ends of the range
+  expect_error(ltratio_lincdf(0, 0, "DK", -600), "at least -550")
+  expect_error(ltratio_lincdf(0, 0, "DG", 6), "case DG is available for c up to about 3.5")
+})

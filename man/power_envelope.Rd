@@ -28,7 +28,9 @@ The test against \eqn{\bar c}{cbar} rejects for small \eqn{U - aV} ([ltratio_lin
 DG, where the limit of the invariant statistic of Elliott, Rothenberg and Stock is
 \eqn{\bar c^2 V + (1 - \bar c) J(1)^2}{cbar^2 V + (1 - cbar) J(1)^2}, \eqn{J(1)^2 = 2U + 1}: its critical value is the `alpha`-quantile at `c = 0`, found by bisection on
 \eqn{[-50, 50]} to the width 1e-9, and the envelope is its power at \eqn{\bar c = c}{cbar = c}; `alpha` for
-`c >= 0`. As `power_envelope` of the MATLAB and Julia programs.
+`c >= 0`. Near `c = 0`, where `a` is small and that inversion is not accurate, the critical value and the power come
+from the conditional integral of [ltratio_lincdf()], the critical value by bisection in \eqn{b + 1/2} to
+1e-12 of its scale. As `power_envelope` of the MATLAB and Julia programs.
 }
 \examples{
 power_envelope(-7, "DK")                   # 0.4994: at c = -7 the envelope has power one half
