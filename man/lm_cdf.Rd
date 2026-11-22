@@ -30,9 +30,10 @@ A numeric vector with the attributes of `x`, `p` or `c`.
 The limit of the LM (score) statistic of Schmidt and Phillips (1992) and Amsler and Lee (1995), with the breaks of
 the design, under \eqn{\phi = 1 + c/n}{phi = 1 + c/n}, zero start: its limit is \eqn{-1/(2\sqrt{V})}{-1/(2
 sqrt(V))} with \eqn{V} the integral of the square of the detrended partial sums, whose law is one inversion of the
-transform of \eqn{V}. The design ([dfl_design]) must contain a linear trend. `lm_cdf()` gives the distribution
-function, `lm_quantile()` the quantiles and `lm_power()` the power at `c` of the level-`level` test (its critical
-value at the unit root in the attribute `critical`).
+transform of \eqn{V} on a path of its own. The design ([dfl_design]) must contain a linear trend. `lm_cdf()` gives the
+distribution function, `lm_quantile()` the quantiles and `lm_power()` the power at `c` of the level-`level` test (its
+critical value at the unit root in the attribute `critical`). `c` must be at most 10 (above, the inversion is not
+accurate: off by 2e-7 at `c = 12` and by 3e-5 at `c = 15`), and an error is raised beyond.
 }
 \examples{
 lm_quantile(0.05, dfl_trend(1))       # -3.0230: the 5\% critical value, linear trend

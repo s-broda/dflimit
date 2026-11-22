@@ -64,6 +64,7 @@ A numeric vector with the attributes of `b`, `p` or `v`.
 `b0`), and `v_cdf()` and `v_pdf()` the law of \eqn{V} (`a = NaN` in `lin_cdf()`), by the inversion on paths around
 the roots of the general engine, which takes \eqn{U - aV \le b}{U - aV <= b} as the event below a parabola in
 \eqn{\sqrt{V}}{sqrt(V)}. [ltratio_lincdf()] with a design is the same where the classical engine does not take it.
+The law of \eqn{V} is 0 at `v <= 0` (\eqn{V > 0}).
 }
 \examples{
 D <- dfl_trend(1)

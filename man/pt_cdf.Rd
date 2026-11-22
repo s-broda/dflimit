@@ -47,8 +47,16 @@ GLS-detrended at \eqn{\bar c}{cbar}), whose law is computed by one inversion of 
 function and density at `q` under \eqn{\phi = 1 + c/n}{phi = 1 + c/n}, `pt_quantile()` its quantiles at the unit
 root, `pt_power()` the power at `c` of the level-`level` test against `cbar`, and `pt_envelope()` the Gaussian
 power envelope of the design: the power at `c` of the point-optimal test against `c` itself (`level` for
-`c >= 0`). For the intercept and the linear trend it is the envelope of Elliott, Rothenberg and Stock
-([power_envelope()]).
+`c >= 0`, `NaN` at `NaN`). For the intercept and the linear trend it is the envelope of Elliott, Rothenberg and
+Stock ([power_envelope()]).
+}
+\details{
+The inversion is refused with an error where its grid does not resolve the transform: far above the unit root, where
+the singularity of the transform of \eqn{Q} nearest to the real line comes closer than the step of the grid allows
+(with the default grid from about `c = 3.7` with a linear trend at `cbar = -13.5`, `c = 3.1` with an intercept at
+`cbar = -7`; the message names the `N` that would do), and at \eqn{|q|} beyond \eqn{0.15 N/\mathrm{asinh}(u_{max})}{0.15
+N/asinh(umax)} (1000 with the default grid). `-Inf`, `Inf` and `NaN` give 0, 1 (density 0) and `NaN`; `p` and `level`
+must lie in (0, 1).
 }
 \examples{
 D <- dfl_trend(1)

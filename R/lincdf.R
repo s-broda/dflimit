@@ -27,7 +27,7 @@
 #' In place of the case a design of the general engine ([dfl_design]) may be given, with its start (`g0`, `start`)
 #' and GLS detrending (`gls`); `engine` chooses between the two engines as in [ltratio_cdf()] (its section Engines):
 #' with a case code and no `engine` given the classical engine computes as before; `dfl_trend(-1)` (case DK) and
-#' `dfl_trend(1)` with `gls = -13.5` (case DG) are classical cases (with `engine = "auto"` the general engine for the law
+#' `dfl_trend(1)` with `gls = -13.5` (case DG), with a zero start, are classical cases (with `engine = "auto"` the general engine for the law
 #' of \eqn{V} in case DK and in case DG above the unit root), every other design takes the general engine
 #' ([lin_cdf()]).
 #'
@@ -59,8 +59,8 @@ ltratio_lincdf <- function(b, a, cas, c = 0, cbar = -13.5, engine = c("auto", "c
   }
   if (dfl_is_design(cas)) {
     tg <- dfl_target(cas, g0, start, gls)
-    # (the classical cases of the linear form: DK, and DG detrended at -13.5, zero start)
-    cls <- !is.null(tg$case) && tg$case %in% c("DK", "DG")
+    # (the classical cases of the linear form: DK, and DG detrended at -13.5, with a zero start)
+    cls <- !is.null(tg$case) && tg$case %in% c("DK", "DG") && tg$start == 0L
     if (engine == "classical" && !cls) dfl_no_classical("the linear form of the classical engine has the cases DK and DG only")
     if (engine == "general" || !cls) {
       G <- dfl_general_target(tg)
@@ -76,7 +76,7 @@ ltratio_lincdf <- function(b, a, cas, c = 0, cbar = -13.5, engine = c("auto", "c
   if (given && engine != "classical") {
     pl <- list(spec = list(NULL, 1L, 0L, 0, NaN), engine = dfl_engine_code(engine))
     P <- dfl_route_call("lin", dfl_real(b, "b"), pl, c(as.double(a), k$model, dfl_num(c, "c"), dfl_num(cbar, "cbar")))
-    return(dfl_vneg(dfl_shape(P, b), b, as.double(a)))
+    return(dfl_shape(P, b))
   }
   P <- .Call(C_dfl_r_lincdf, dfl_real(b, "b"), as.double(a), k$model, dfl_num(c, "c"), dfl_num(cbar, "cbar"))
   dfl_shape(P, b)

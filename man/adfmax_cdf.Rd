@@ -12,7 +12,8 @@ adfmax_cdf(
   c = 0,
   info = FALSE,
   engine = c("auto", "classical", "general"),
-  start = NULL
+  start = NULL,
+  g0 = 0
 )
 
 adfmax_pdf(
@@ -21,7 +22,8 @@ adfmax_pdf(
   c = 0,
   info = FALSE,
   engine = c("auto", "classical", "general"),
-  start = NULL
+  start = NULL,
+  g0 = 0
 )
 
 adfmax_icdf(
@@ -31,7 +33,8 @@ adfmax_icdf(
   tol = 1e-10,
   x0 = -2,
   engine = c("auto", "classical", "general"),
-  start = NULL
+  start = NULL,
+  g0 = 0
 )
 }
 \arguments{
@@ -47,7 +50,11 @@ adfmax_icdf(
 \item{engine}{`"auto"`, `"classical"` or `"general"` (see the section Engines). Not given: the classical engine
 for a case code, `"auto"` for a design.}
 
-\item{start}{With a design: `"zero"` (the default, `NULL`) or `"stationary"`.}
+\item{start}{With a design: `"zero"`, `"fixed"` (with `g0`) or `"stationary"`; `NULL` (the default) is `"fixed"`
+where `g0` is not 0 and `"zero"` otherwise.}
+
+\item{g0}{A fixed start \eqn{J(0) = g_0}{J(0) = g0} (with a case code, of cases DU and DT), which takes the general
+engine.}
 
 \item{p}{Numeric vector or array of probabilities in (0, 1).}
 
@@ -73,10 +80,13 @@ The cases are `"DU"` and `"DT"` (a constant, or a constant and a trend, zero sta
 same with a stationary start, `c <= -1e-4`). The values are accurate to about 1e-11.
 
 In place of the case a design of the general engine ([dfl_design]) may be given, with `start = "stationary"` for a
-stationary start; `engine` chooses between the two engines as in [ltratio_cdf()] (its section Engines): with a case
-code and no `engine` given the classical engine computes as before; a design of one of the four cases takes the
-classical engine (with `engine = "auto"` the general engine with a stationary start for `c <= -0.1`, with the values
-below 1e-3 from the classical engine), every other design the general engine.
+stationary start or a fixed start `g0`; `engine` chooses between the two engines as in [ltratio_cdf()] (its section
+Engines): with a case code, no fixed start and no `engine` given the classical engine computes as before; the four
+cases with a zero or a stationary start, as codes or as designs, take the classical engine (with `engine = "auto"` the
+general engine with a stationary start for `c <= -0.1`, with the values below 1e-3 from the classical engine), a
+fixed start `g0 != 0` and every other design the general engine (the classical ADFmax has no fixed start, and
+`engine = "classical"` is then an error). ADFmax is computed with least-squares detrending and at the null value
+\eqn{\phi = 1}{phi = 1} only.
 
 `adfmax_icdf()` has no entry point of its own in the C engine: as `adfmax_icdf` of the MATLAB and Julia
   programs, it finds each quantile by Newton's method on `adfmax_cdf()` with `adfmax_pdf()` as the derivative,

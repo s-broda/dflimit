@@ -18,7 +18,7 @@ ltratio_region(
 \arguments{
 \item{bnd}{The boundary, a list as described above.}
 
-\item{cas}{The case: `"DK"` only, or a design ([dfl_design]).}
+\item{cas}{The case: `"DK"` only (with `g0` a fixed start), or a design ([dfl_design]).}
 
 \item{c}{The local-to-unity parameter.}
 
@@ -60,9 +60,9 @@ type `"fun"` of the MATLAB programs (any function \eqn{g}) is not available: the
 above only.
 
 In place of the case a design of the general engine ([dfl_design]) may be given, with its start (`g0`, `start`)
-and GLS detrending (`gls`): `dfl_trend(-1)` with a zero start is case DK, and every other design, or
-`engine = "general"`, takes the general engine, for the types `"line"` and `"parabola"` without `v0` and `brks`
-([region_prob()]).
+and GLS detrending (`gls`): `dfl_trend(-1)` with a zero start is case DK, and every other design, a fixed start
+`g0 != 0` (also with the case code `"DK"`), or `engine = "general"`, takes the general engine, for the types `"line"`
+and `"parabola"` without `v0` and `brks` ([region_prob()]); the classical engine has the zero start only.
 }
 \examples{
 # the weighted-average-power test of the paper: size 0.05

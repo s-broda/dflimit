@@ -23,7 +23,10 @@
 #' warning where the last two still differ. The points of one call share the paths of the inversion, so a vector of
 #' points is much cheaper in one call than point by point. The engine is checked for `c` from -480 to 10; designs
 #' whose roots run far out on the vertical line (above the unit root, and some unusual designs) can need several
-#' gigabytes of memory. The engine warns where its estimate of the rounding error of a value is large.
+#' gigabytes of memory; where the paths around the roots of one node of the outer contour would need more than a million
+#' nodes the engine stops with an error (for instance the design \eqn{(1 + r, 1\{r \le 0.4\})}{(1 + r, 1{r <= 0.4})},
+#' without a proper intercept, at every `c`). The engine warns where its estimate of the rounding error of a value is
+#' large.
 #'
 #' `dist_quantile()` finds each quantile by Newton's method from `x0` (the safeguarded search where it does not
 #' converge); [ltratio_icdf()] with a design starts it at the normal approximation from the moments. `dist_moments()`
@@ -159,6 +162,7 @@ local_power <- function(c, D, level = 0.05, statistic = c("tratio", "coef"), c0 
 #' `b0`), and `v_cdf()` and `v_pdf()` the law of \eqn{V} (`a = NaN` in `lin_cdf()`), by the inversion on paths around
 #' the roots of the general engine, which takes \eqn{U - aV \le b}{U - aV <= b} as the event below a parabola in
 #' \eqn{\sqrt{V}}{sqrt(V)}. [ltratio_lincdf()] with a design is the same where the classical engine does not take it.
+#' The law of \eqn{V} is 0 at `v <= 0` (\eqn{V > 0}).
 #'
 #' @inheritParams dist_cdf
 #' @param b Numeric vector or array of points. `-Inf`, `Inf` and `NaN` give 0, 1 (density 0) and `NaN`.
@@ -175,15 +179,13 @@ local_power <- function(c, D, level = 0.05, statistic = c("tratio", "coef"), c0 
 #' v_cdf(c(0.02, 0.2), dfl_perron("B", 0.5), -5)
 #' @export
 lin_cdf <- function(b, a, D, c = 0, start = NULL, gamma0 = 0, gls = NULL, verified = FALSE) {
-  a <- dfl_a(a)
-  dfl_vneg(dfl_det_finite("lincdf", D, b, c(a, dfl_num(c, "c")), dfl_opts(0, start, gamma0, gls, verified)), b, a)
+  dfl_det_finite("lincdf", D, b, c(dfl_a(a), dfl_num(c, "c")), dfl_opts(0, start, gamma0, gls, verified))
 }
 
 #' @rdname lin_cdf
 #' @export
 lin_pdf <- function(b, a, D, c = 0, start = NULL, gamma0 = 0, gls = NULL, verified = FALSE) {
-  a <- dfl_a(a)
-  dfl_vneg(dfl_det_finite("linpdf", D, b, c(a, dfl_num(c, "c")), dfl_opts(0, start, gamma0, gls, verified), hi = 0), b, a)
+  dfl_det_finite("linpdf", D, b, c(dfl_a(a), dfl_num(c, "c")), dfl_opts(0, start, gamma0, gls, verified), hi = 0)
 }
 
 #' @rdname lin_cdf
@@ -266,9 +268,4 @@ dfl_a <- function(a) {
     stop("a must be a single number (NaN: the distribution of V)", call. = FALSE)
   }
   as.double(a)
-}
-# the law of V (a = NaN) below its support: 0 (the engine's inversion of the law of V gives NaN at b < 0)
-dfl_vneg <- function(out, b, a) {
-  if (is.nan(a)) out[!is.na(b) & b < 0] <- 0
-  out
 }

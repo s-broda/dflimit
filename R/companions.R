@@ -8,8 +8,15 @@
 #' function and density at `q` under \eqn{\phi = 1 + c/n}{phi = 1 + c/n}, `pt_quantile()` its quantiles at the unit
 #' root, `pt_power()` the power at `c` of the level-`level` test against `cbar`, and `pt_envelope()` the Gaussian
 #' power envelope of the design: the power at `c` of the point-optimal test against `c` itself (`level` for
-#' `c >= 0`). For the intercept and the linear trend it is the envelope of Elliott, Rothenberg and Stock
-#' ([power_envelope()]).
+#' `c >= 0`, `NaN` at `NaN`). For the intercept and the linear trend it is the envelope of Elliott, Rothenberg and
+#' Stock ([power_envelope()]).
+#'
+#' The inversion is refused with an error where its grid does not resolve the transform: far above the unit root, where
+#' the singularity of the transform of \eqn{Q} nearest to the real line comes closer than the step of the grid allows
+#' (with the default grid from about `c = 3.7` with a linear trend at `cbar = -13.5`, `c = 3.1` with an intercept at
+#' `cbar = -7`; the message names the `N` that would do), and at \eqn{|q|} beyond \eqn{0.15 N/\mathrm{asinh}(u_{max})}{0.15
+#' N/asinh(umax)} (1000 with the default grid). `-Inf`, `Inf` and `NaN` give 0, 1 (density 0) and `NaN`; `p` and `level`
+#' must lie in (0, 1).
 #'
 #' @param q Numeric vector or array of points of the statistic.
 #' @param p Numeric vector or array of probabilities in (0, 1).
@@ -73,9 +80,10 @@ pt_envelope <- function(c, D, level = 0.05, N = 60000, umax = 4000) {
 #' The limit of the LM (score) statistic of Schmidt and Phillips (1992) and Amsler and Lee (1995), with the breaks of
 #' the design, under \eqn{\phi = 1 + c/n}{phi = 1 + c/n}, zero start: its limit is \eqn{-1/(2\sqrt{V})}{-1/(2
 #' sqrt(V))} with \eqn{V} the integral of the square of the detrended partial sums, whose law is one inversion of the
-#' transform of \eqn{V}. The design ([dfl_design]) must contain a linear trend. `lm_cdf()` gives the distribution
-#' function, `lm_quantile()` the quantiles and `lm_power()` the power at `c` of the level-`level` test (its critical
-#' value at the unit root in the attribute `critical`).
+#' transform of \eqn{V} on a path of its own. The design ([dfl_design]) must contain a linear trend. `lm_cdf()` gives the
+#' distribution function, `lm_quantile()` the quantiles and `lm_power()` the power at `c` of the level-`level` test (its
+#' critical value at the unit root in the attribute `critical`). `c` must be at most 10 (above, the inversion is not
+#' accurate: off by 2e-7 at `c = 12` and by 3e-5 at `c = 15`), and an error is raised beyond.
 #'
 #' @param x Numeric vector or array of points. `-Inf`, `Inf` and `NaN` give 0, 1 and `NaN`.
 #' @param p Numeric vector or array of probabilities in (0, 1).

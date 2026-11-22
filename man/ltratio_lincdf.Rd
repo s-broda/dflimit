@@ -65,7 +65,7 @@ about 3.5 (at `cbar = -13.5`; less for `cbar` nearer 0), and for `a = NaN` at mo
 In place of the case a design of the general engine ([dfl_design]) may be given, with its start (`g0`, `start`)
 and GLS detrending (`gls`); `engine` chooses between the two engines as in [ltratio_cdf()] (its section Engines):
 with a case code and no `engine` given the classical engine computes as before; `dfl_trend(-1)` (case DK) and
-`dfl_trend(1)` with `gls = -13.5` (case DG) are classical cases (with `engine = "auto"` the general engine for the law
+`dfl_trend(1)` with `gls = -13.5` (case DG), with a zero start, are classical cases (with `engine = "auto"` the general engine for the law
 of \eqn{V} in case DK and in case DG above the unit root), every other design takes the general engine
 ([lin_cdf()]).
 }

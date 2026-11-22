@@ -24,12 +24,12 @@
 #' above only.
 #'
 #' In place of the case a design of the general engine ([dfl_design]) may be given, with its start (`g0`, `start`)
-#' and GLS detrending (`gls`): `dfl_trend(-1)` with a zero start is case DK, and every other design, or
-#' `engine = "general"`, takes the general engine, for the types `"line"` and `"parabola"` without `v0` and `brks`
-#' ([region_prob()]).
+#' and GLS detrending (`gls`): `dfl_trend(-1)` with a zero start is case DK, and every other design, a fixed start
+#' `g0 != 0` (also with the case code `"DK"`), or `engine = "general"`, takes the general engine, for the types `"line"`
+#' and `"parabola"` without `v0` and `brks` ([region_prob()]); the classical engine has the zero start only.
 #'
 #' @param bnd The boundary, a list as described above.
-#' @param cas The case: `"DK"` only, or a design ([dfl_design]).
+#' @param cas The case: `"DK"` only (with `g0` a fixed start), or a design ([dfl_design]).
 #' @param engine `"auto"` (the default; the classical engine for case DK), `"classical"` or `"general"`.
 #' @param start,g0,gls With a design: its start (`"zero"`, `"fixed"` with the fixed start `g0`, `"stationary"`) and
 #'   GLS detrending (`NULL`: least squares); see [ltratio_cdf()].
@@ -51,15 +51,23 @@ ltratio_region <- function(bnd, cas = "DK", c = 0, info = FALSE, engine = c("aut
   engine <- dfl_engine(engine)
   if (dfl_is_design(cas)) {
     tg <- dfl_target(cas, g0, start, gls)
-    if (identical(tg$case, "DK") && engine != "general") return(ltratio_region(bnd, "DK", c, info))
-    if (engine == "classical") dfl_no_classical("the regions of the classical engine have case DK only")
+    # (the classical regions: case DK with a zero start)
+    if (identical(tg$case, "DK") && tg$start == 0L && engine != "general") return(ltratio_region(bnd, "DK", c, info))
+    if (engine == "classical") dfl_no_classical("the regions of the classical engine have case DK only, with a zero start")
     return(dfl_region_general(bnd, list(path = "router", spec = dfl_spec(tg, FALSE), engine = 2L), c, info))
   }
   if (!is.character(cas) || length(cas) != 1L || toupper(cas) != "DK") {
-    stop("the case must be DK (zero start)", call. = FALSE)
+    stop("the case must be DK", call. = FALSE)
   }
-  if (dfl_num(g0, "g0") != 0 || !is.null(start) || !is.null(gls)) {
-    stop("start, g0 and gls apply to a design; case DK has a zero start", call. = FALSE)
+  if (!is.null(start) || !is.null(gls)) {
+    stop("start and gls apply to a design; the case code DK takes a fixed start by g0", call. = FALSE)
+  }
+  g0 <- dfl_num(g0, "g0")
+  if (g0 != 0) {
+    # (a fixed start: the classical regions have the zero start only; the router takes the general engine, and with
+    # engine = "classical" it refuses)
+    return(dfl_region_general(bnd, list(path = "router", spec = list(NULL, 1L, 1L, g0, NaN), engine = dfl_engine_code(engine)),
+                              c, info))
   }
   if (engine == "general") {
     return(dfl_region_general(bnd, list(path = "router", spec = list(NULL, 1L, 0L, 0, NaN), engine = 2L), c, info))

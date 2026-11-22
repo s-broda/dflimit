@@ -12,14 +12,20 @@
 #' same with a stationary start, `c <= -1e-4`). The values are accurate to about 1e-11.
 #'
 #' In place of the case a design of the general engine ([dfl_design]) may be given, with `start = "stationary"` for a
-#' stationary start; `engine` chooses between the two engines as in [ltratio_cdf()] (its section Engines): with a case
-#' code and no `engine` given the classical engine computes as before; a design of one of the four cases takes the
-#' classical engine (with `engine = "auto"` the general engine with a stationary start for `c <= -0.1`, with the values
-#' below 1e-3 from the classical engine), every other design the general engine.
+#' stationary start or a fixed start `g0`; `engine` chooses between the two engines as in [ltratio_cdf()] (its section
+#' Engines): with a case code, no fixed start and no `engine` given the classical engine computes as before; the four
+#' cases with a zero or a stationary start, as codes or as designs, take the classical engine (with `engine = "auto"` the
+#' general engine with a stationary start for `c <= -0.1`, with the values below 1e-3 from the classical engine), a
+#' fixed start `g0 != 0` and every other design the general engine (the classical ADFmax has no fixed start, and
+#' `engine = "classical"` is then an error). ADFmax is computed with least-squares detrending and at the null value
+#' \eqn{\phi = 1}{phi = 1} only.
 #'
 #' @inheritParams ltratio_cdf
 #' @param cas The case, one of `"DU"`, `"DT"`, `"SU"`, `"ST"`, or a design ([dfl_design]).
-#' @param start With a design: `"zero"` (the default, `NULL`) or `"stationary"`.
+#' @param start With a design: `"zero"`, `"fixed"` (with `g0`) or `"stationary"`; `NULL` (the default) is `"fixed"`
+#'   where `g0` is not 0 and `"zero"` otherwise.
+#' @param g0 A fixed start \eqn{J(0) = g_0}{J(0) = g0} (with a case code, of cases DU and DT), which takes the general
+#'   engine.
 #' @param info If `TRUE`, return a list with the values `value`, the error estimates `err` and the statuses
 #'   `status` (nonzero: the error estimate is not met) of the conditional integral (`NA` where the router computes).
 #' @return A numeric vector with the attributes of `x` (or the list described under `info`). A warning is given if
@@ -32,35 +38,40 @@
 #' adfmax_pdf(c(-3, -2), "DT", -5)
 #' adfmax_cdf(-3, dfl_perron("A", 0.5))
 #' @export
-adfmax_cdf <- function(x, cas, c = 0, info = FALSE, engine = c("auto", "classical", "general"), start = NULL) {
-  dfl_adfmax(2L, x, cas, c, info, dfl_engine(engine), !missing(engine), start)
+adfmax_cdf <- function(x, cas, c = 0, info = FALSE, engine = c("auto", "classical", "general"), start = NULL, g0 = 0) {
+  dfl_adfmax(2L, x, cas, c, info, dfl_engine(engine), !missing(engine), start, g0)
 }
 
 #' @rdname adfmax_cdf
 #' @export
-adfmax_pdf <- function(x, cas, c = 0, info = FALSE, engine = c("auto", "classical", "general"), start = NULL) {
-  dfl_adfmax(1L, x, cas, c, info, dfl_engine(engine), !missing(engine), start)
+adfmax_pdf <- function(x, cas, c = 0, info = FALSE, engine = c("auto", "classical", "general"), start = NULL, g0 = 0) {
+  dfl_adfmax(1L, x, cas, c, info, dfl_engine(engine), !missing(engine), start, g0)
 }
 
 dfl_adfmax_cases <- c("DU", "DT", "SU", "ST")
-# the path of ADFmax: "legacy" (the classical entry point), or the router with the spec (for a design: the design,
-# which the C router gives to the classical engine where it is one of the four cases)
-dfl_adfmax_plan <- function(cas, engine, given, start) {
-  tg <- dfl_target(cas, 0, start, NULL, dfl_adfmax_cases)
-  cls <- !is.null(tg$case) && tg$case %in% dfl_adfmax_cases
+# the path of ADFmax: "legacy" (the classical entry point: one of the four cases with a zero or a stationary start),
+# or the router with the spec (a fixed start, and every design, where the C router decides: the classical engine for
+# the four cases without a fixed start, the general engine otherwise; with engine = "classical" a fixed start is the
+# router's error)
+dfl_adfmax_plan <- function(cas, engine, given, start, g0 = 0) {
+  tg <- dfl_target(cas, g0, start, NULL, dfl_adfmax_cases)
+  if (is.null(tg$D) && tg$start == 2L && tg$g0 != 0) {
+    stop("a stationary start (cases SU, ST) and a fixed start g0 != 0 exclude each other", call. = FALSE)
+  }
+  cls <- !is.null(tg$case) && tg$case %in% dfl_adfmax_cases && tg$start != 1L
   if (is.null(tg$D)) {
-    if (!given || engine == "classical") return(list(path = "legacy", case = tg$case))
-    return(list(path = "router", spec = dfl_spec(tg), engine = dfl_engine_code(engine)))
+    if (cls && (!given || engine == "classical")) return(list(path = "legacy", case = tg$case, tg = tg))
+    return(list(path = "router", spec = dfl_spec(tg), engine = dfl_engine_code(engine), tg = tg))
   }
   if (engine == "classical") {
-    if (!cls) dfl_no_classical("ADFmax of the classical engine has the cases DU, DT, SU, ST only")
-    return(list(path = "legacy", case = tg$case))
+    if (!cls) dfl_no_classical("ADFmax of the classical engine has the cases DU, DT, SU, ST only, with a zero or a stationary start")
+    return(list(path = "legacy", case = tg$case, tg = tg))
   }
   list(path = "router", spec = dfl_spec(tg, FALSE), engine = dfl_engine_code(engine), tg = tg)
 }
 
-dfl_adfmax <- function(kind, x, cas, c, info, engine = "auto", given = FALSE, start = NULL) {
-  pl <- dfl_adfmax_plan(cas, engine, given, start)
+dfl_adfmax <- function(kind, x, cas, c, info, engine = "auto", given = FALSE, start = NULL, g0 = 0) {
+  pl <- dfl_adfmax_plan(cas, engine, given, start, g0)
   if (pl$path == "router") {
     v <- dfl_route_call(if (kind == 2L) "adf" else "adfpdf", dfl_real(x, "x"), pl, dfl_num(c, "c"))
     v <- dfl_shape(v, x)
@@ -90,26 +101,30 @@ dfl_adfmax <- function(kind, x, cas, c, info, engine = "auto", given = FALSE, st
 #' @examples
 #' adfmax_icdf(0.05, "DT")          # -3.11891 (the quantiles of the ADFmax statistic in the paper)
 #' @export
-adfmax_icdf <- function(p, cas, c = 0, tol = 1e-10, x0 = -2, engine = c("auto", "classical", "general"), start = NULL) {
+adfmax_icdf <- function(p, cas, c = 0, tol = 1e-10, x0 = -2, engine = c("auto", "classical", "general"), start = NULL,
+                        g0 = 0) {
   p0 <- p
   p <- dfl_real(p, "p")
   if (!all(!is.na(p) & p > 0 & p < 1)) stop("p must lie in (0, 1)", call. = FALSE)
   given <- !missing(engine)
   engine <- dfl_engine(engine)
-  pl <- dfl_adfmax_plan(cas, engine, given, start)
+  pl <- dfl_adfmax_plan(cas, engine, given, start, g0)
   c <- dfl_num(c, "c")
   tol <- dfl_num(tol, "tol")
   x0 <- dfl_num(x0, "x0")
   if (pl$path == "router") {
-    tg <- dfl_target(cas, 0, start, NULL, dfl_adfmax_cases)
-    if (engine == "general" || is.null(tg$case) || !tg$case %in% dfl_adfmax_cases) {
-      # (the general engine's own search, from x0)
+    tg <- pl$tg
+    if (engine == "classical" && tg$start == 1L) {
+      dfl_no_classical("ADFmax of the classical engine has the cases DU, DT, SU, ST only, with a zero or a stationary start")
+    }
+    if (engine == "general" || is.null(tg$case) || !tg$case %in% dfl_adfmax_cases || tg$start == 1L) {
+      # (the general engine's own search, from x0: least-squares detrending, the null value phi = 1)
       G <- dfl_general_target(tg)
-      return(dfl_shape(dfl_det_call("adfquantile", G$D, p, c(c, x0, tol), dfl_opts(0, G$start, 0, NULL))[[1]], p0))
+      return(dfl_shape(dfl_det_call("adfquantile", G$D, p, c(c, x0, tol), dfl_opts(0, G$start, G$g0, NULL))[[1]], p0))
     }
   }
-  cdf <- function(y) adfmax_cdf(y, cas, c, engine = engine, start = start)
-  pdf <- function(y) adfmax_pdf(y, cas, c, engine = engine, start = start)
+  cdf <- function(y) adfmax_cdf(y, cas, c, engine = engine, start = start, g0 = g0)
+  pdf <- function(y) adfmax_pdf(y, cas, c, engine = engine, start = start, g0 = g0)
   if (pl$path == "legacy") {
     cas <- pl$case
     cdf <- function(y) adfmax_cdf(y, cas, c)
