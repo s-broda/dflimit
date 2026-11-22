@@ -1,5 +1,6 @@
-/* dflimit_r.c: the R gateway to the C engine (the other files of src/ are copied from c/ of dflimit-matlab by
- * tools/sync-engine.sh and are not edited here).  Plain .Call entry points, registered in R_init_dflimit; the R
+/* dflimit_r.c: the R gateway to the classical engine (the files of src/ other than dflimit_r.c, dflimit_r_det.c and
+ * dflimit_r.h are copied from c/ of dflimit-matlab by tools/sync-engine.sh and are not edited here).  Plain .Call entry
+ * points, registered in R_init_dflimit (also those of the general engine and of the router, in dflimit_r_det.c); the R
  * functions in R/ check and convert the arguments (the case code to the model and the start, the method name to its
  * number), this file checks their types again and calls the engine.
  *
@@ -7,34 +8,8 @@
  * and the outputs allocated before the call, and an error of the engine (a return code with a message in err[])
  * becomes an R error on the main thread after the call has returned.  Scratch space is taken with R_alloc, which R
  * releases also when an error is raised. */
-#include "dflimit.h"
-#include <string.h>
-#include <limits.h>
-#define R_NO_REMAP
-#include <R.h>
-#include <Rinternals.h>
+#include "dflimit_r.h"
 #include <R_ext/Rdynload.h>
-
-#define ERRLEN 512
-
-static double num1(SEXP a, const char *name)
-{
-    if (!Rf_isReal(a) || XLENGTH(a) != 1) Rf_error("%s must be a single number", name);
-    return REAL(a)[0];
-}
-static int int1(SEXP a, const char *name)
-{
-    if (!Rf_isInteger(a) || XLENGTH(a) != 1 || INTEGER(a)[0] == NA_INTEGER) Rf_error("%s must be a single integer", name);
-    return INTEGER(a)[0];
-}
-static int len(SEXP a, const char *name)
-{
-    if (!Rf_isReal(a)) Rf_error("%s must be a double vector", name);
-    if (XLENGTH(a) > INT_MAX / 2) Rf_error("%s is too long", name);
-    return (int) XLENGTH(a);
-}
-/* (no call in the message: the R functions check their arguments and report with call. = FALSE as well) */
-static void engine_error(int rc, const char *err) { if (rc) Rf_errorcall(R_NilValue, "%s", err[0] ? err : "the engine failed"); }
 
 /* .Call("dfl_r_dist", kind, x, model, c, c0, g0, stat, method, verified): list(value, nstatus, the brittle-regime message
  * of the one-evaluation default, "" if none, the warning of the points that the line integral refused, dfl_warning, ""
@@ -170,6 +145,12 @@ static const R_CallMethodDef call_methods[] = {
     {"dfl_r_lincdf", (DL_FUNC) &dfl_r_lincdf, 5},
     {"dfl_r_envelope", (DL_FUNC) &dfl_r_envelope, 3},
     {"dfl_r_threads", (DL_FUNC) &dfl_r_threads, 1},
+    {"dfl_r_design", (DL_FUNC) &dfl_r_design, 6},
+    {"dfl_r_regmat", (DL_FUNC) &dfl_r_regmat, 2},
+    {"dfl_r_det", (DL_FUNC) &dfl_r_det, 5},
+    {"dfl_r_route", (DL_FUNC) &dfl_r_route, 5},
+    {"dfl_r_check", (DL_FUNC) &dfl_r_check, 5},
+    {"dfl_r_empty_caches", (DL_FUNC) &dfl_r_empty_caches, 0},
     {NULL, NULL, 0}
 };
 
