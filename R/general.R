@@ -1,0 +1,267 @@
+#' The t-ratio by the general engine
+#'
+#' The distribution function, density, quantiles and moments of the limit of the Dickey-Fuller t-ratio for any design
+#' of deterministic terms ([dfl_design]), computed by the general engine: the joint moment generating function of
+#' \eqn{(U, V)} as a small determinant and the inversion formula on paths around its singularities in the first
+#' argument (the inversion on paths around the roots), the same representation for every design.
+#'
+#' The statistic is the t-ratio of the hypothesis \eqn{\phi = \phi_0 = 1 + c_0/n}{phi = phi0 = 1 + c0/n} in the
+#' regression of \eqn{y_t} on the regressors \eqn{d(t/n)} of the design and \eqn{y_{t-1}}, under
+#' \eqn{\phi = 1 + c/n}{phi = 1 + c/n}; its limit is \eqn{(U - c_0 V)/\sqrt{V}}{(U - c0 V)/sqrt(V)} with
+#' \eqn{U = \int_0^1 \tilde J\,dJ}{U = int J~ dJ} and \eqn{V = \int_0^1 \tilde J^2\,dr}{V = int J~^2 dr},
+#' \eqn{J} the Ornstein-Uhlenbeck process \eqn{dJ = cJ\,dr + dW}{dJ = cJ dr + dW} and \eqn{\tilde J}{J~} its residual
+#' on the design (by least squares, or with `gls` by GLS detrending at \eqn{\bar\alpha = 1 + \bar c/n}{abar = 1 +
+#' cbar/n}, as Elliott, Rothenberg and Stock (1996) detrend; with [dfl_detrend_first()] the statistic that detrends
+#' first). The start is \eqn{J(0) = 0} (`start = "zero"`), \eqn{J(0) = \gamma_0}{J(0) = gamma0} (`"fixed"`, the
+#' initial observation \eqn{y_0 = \gamma_0 \sigma \sqrt{n}}{y_0 = gamma0 sigma sqrt(n)}) or a draw from the
+#' stationary law \eqn{N(0, -1/(2c))} (`"stationary"`, `c < 0`). [ltratio_cdf()] with a design is the same
+#' computation where the classical engine does not take it (see its section Engines); the functions here always use
+#' the general engine.
+#'
+#' By default (`verified = FALSE`) every value is one evaluation; `verified = TRUE` evaluates it a second time with
+#' other rules on a steeper path, and a third time with doubled rules where the two differ by more than 1e-9, with a
+#' warning where the last two still differ. The points of one call share the paths of the inversion, so a vector of
+#' points is much cheaper in one call than point by point. The engine is checked for `c` from -480 to 10; designs
+#' whose roots run far out on the vertical line (above the unit root, and some unusual designs) can need several
+#' gigabytes of memory. The engine warns where its estimate of the rounding error of a value is large.
+#'
+#' `dist_quantile()` finds each quantile by Newton's method from `x0` (the safeguarded search where it does not
+#' converge); [ltratio_icdf()] with a design starts it at the normal approximation from the moments. `dist_moments()`
+#' gives \eqn{E[\tau^j]}{E[tau^j]}, \eqn{j = 1, \dots, p}{j = 1..p}, by the trapezoidal rule in the logarithm of the
+#' argument of an integral of the moment generating function (not for the statistic that detrends first).
+#'
+#' @param x Numeric vector or array of points. `-Inf`, `Inf` and `NaN` give 0, 1 (density 0) and `NaN`.
+#' @param p `dist_quantile()`: numeric vector or array of probabilities in (0, 1). `dist_moments()`: the number of
+#'   moments.
+#' @param D A design ([dfl_design]).
+#' @param c The local-to-unity parameter, \eqn{\phi = 1 + c/n}{phi = 1 + c/n}.
+#' @param c0 The local null value, \eqn{\phi_0 = 1 + c_0/n}{phi0 = 1 + c0/n}.
+#' @param start The start: `"zero"`, `"fixed"` (with `gamma0`) or `"stationary"` (`c < 0`); `NULL` (the default) is
+#'   `"fixed"` where `gamma0` is not 0 and `"zero"` otherwise.
+#' @param gamma0 The fixed start \eqn{J(0) = \gamma_0}{J(0) = gamma0}.
+#' @param gls `NULL` (the default) for least squares detrending, or \eqn{\bar c < 0}{cbar < 0} for GLS detrending at
+#'   \eqn{1 + \bar c/n}{1 + cbar/n}.
+#' @param verified `FALSE` (the default): one evaluation; `TRUE`: the checked computation (see Details).
+#' @param x0 The starting point of the search.
+#' @param tol The tolerance of the search.
+#' @param info `dist_moments()`: if `TRUE`, a list with the moments `m` and the differences `err` to the rule of
+#'   twice the step.
+#' @return `dist_cdf()`, `dist_pdf()`, `dist_quantile()`: a numeric vector with the attributes of `x` or `p`;
+#'   `dist_moments()`: a numeric vector of length `p` (or the list described under `info`).
+#' @references Elliott, G., Rothenberg, T. J. and Stock, J. H. (1996), "Efficient Tests for an Autoregressive Unit
+#'   Root", Econometrica 64, 813-836.
+#' @seealso [dfl_design], [ltratio_cdf()], [coef_pdf()], [lin_cdf()], [local_power()], [pt_cdf()].
+#' @examples
+#' D <- dfl_perron("C", 0.5)               # a break in level and slope at mid-sample
+#' dist_cdf(c(-5, -4.5, -4), D)            # the left tail at the unit root
+#' dist_quantile(0.05, D, x0 = -4.5)       # the 5% critical value
+#' dist_cdf(-4, D, -10, start = "stationary")
+#' dist_moments(2, dfl_trend(1), -5)
+#' @export
+dist_cdf <- function(x, D, c = 0, c0 = 0, start = NULL, gamma0 = 0, gls = NULL, verified = FALSE) {
+  dfl_det_finite("cdf", D, x, dfl_num(c, "c"), dfl_opts(c0, start, gamma0, gls, verified))
+}
+
+#' @rdname dist_cdf
+#' @export
+dist_pdf <- function(x, D, c = 0, c0 = 0, start = NULL, gamma0 = 0, gls = NULL, verified = FALSE) {
+  dfl_det_finite("pdf", D, x, dfl_num(c, "c"), dfl_opts(c0, start, gamma0, gls, verified), hi = 0)
+}
+
+#' @rdname dist_cdf
+#' @export
+dist_quantile <- function(p, D, c = 0, c0 = 0, start = NULL, gamma0 = 0, gls = NULL, x0 = -2, tol = 1e-9) {
+  pv <- dfl_prob(p)
+  dfl_shape(dfl_det_call("quantile", D, pv, c(dfl_num(c, "c"), dfl_num(x0, "x0"), dfl_num(tol, "tol")),
+                         dfl_opts(c0, start, gamma0, gls))[[1]], p)
+}
+
+#' @rdname dist_cdf
+#' @export
+dist_moments <- function(p, D, c = 0, c0 = 0, start = NULL, gamma0 = 0, gls = NULL, info = FALSE) {
+  p <- dfl_int(p, "p")
+  if (p < 1L) stop("p must be a positive integer", call. = FALSE)
+  r <- dfl_det_call("moments", D, 0, c(dfl_num(c, "c"), p), dfl_opts(c0, start, gamma0, gls))
+  if (isTRUE(info)) list(m = r[[1]], err = r[[2]]) else r[[1]]
+}
+
+#' The coefficient statistic by the general engine
+#'
+#' The limit \eqn{(U - c_0 V)/V}{(U - c0 V)/V} of the coefficient statistic \eqn{n(\hat\phi - \phi_0)}{n(phi^ -
+#' phi0)} for any design ([dfl_design]), by the general engine (the notation of [dist_cdf()]):
+#' `coef_pdf()` its density, `coef_quantile()` its quantiles (Newton's method from `y0`), `coef_cdf_gp()` its
+#' distribution function by the inversion formula of Gil-Pelaez on the trapezoidal rule in \eqn{u = \sinh v}{u =
+#' sinh(v)} with `N` steps up to `umax`, a check of the contour integral. The distribution function by the
+#' inversion on paths around the roots is [coef_cdf()] with a design (or with `engine = "general"`).
+#'
+#' @inheritParams dist_cdf
+#' @param y Numeric vector or array of points. `-Inf`, `Inf` and `NaN` give 0, 1 (density 0) and `NaN`.
+#' @param p Numeric vector or array of probabilities in (0, 1).
+#' @param y0 The starting point of the search.
+#' @param N,umax The number of steps and the end of the grid of the inversion formula of Gil-Pelaez.
+#' @return A numeric vector with the attributes of `y` or `p`.
+#' @seealso [coef_cdf()], [dist_cdf()].
+#' @examples
+#' D <- dfl_perron("A", 0.3)
+#' coef_pdf(c(-20, -10), D)
+#' coef_quantile(0.05, D)
+#' coef_cdf_gp(-12, dfl_trend(0))           # = coef_cdf(-12, "DU")
+#' @export
+coef_pdf <- function(y, D, c = 0, c0 = 0, start = NULL, gamma0 = 0, gls = NULL, verified = FALSE) {
+  dfl_det_finite("coefpdf", D, y, dfl_num(c, "c"), dfl_opts(c0, start, gamma0, gls, verified), hi = 0)
+}
+
+#' @rdname coef_pdf
+#' @export
+coef_quantile <- function(p, D, c = 0, c0 = 0, start = NULL, gamma0 = 0, gls = NULL, y0 = -10, tol = 1e-9) {
+  pv <- dfl_prob(p)
+  dfl_shape(dfl_det_call("coefquantile", D, pv, c(dfl_num(c, "c"), dfl_num(y0, "y0"), dfl_num(tol, "tol")),
+                         dfl_opts(c0, start, gamma0, gls))[[1]], p)
+}
+
+#' @rdname coef_pdf
+#' @export
+coef_cdf_gp <- function(y, D, c = 0, c0 = 0, start = NULL, gamma0 = 0, gls = NULL, N = 60000, umax = 4000) {
+  dfl_det_finite("coefgp", D, y, c(dfl_num(c, "c"), dfl_int(N, "N"), dfl_num(umax, "umax")),
+                 dfl_opts(c0, start, gamma0, gls))
+}
+
+#' Local power by the general engine
+#'
+#' The asymptotic local power at each `c` of the level-`level` test of \eqn{\phi = 1 + c_0/n}{phi = 1 + c0/n} that
+#' rejects for small values of the t-ratio (`statistic = "tratio"`) or of the coefficient statistic (`"coef"`), for
+#' any design ([dfl_design]): the critical value is the `level`-quantile of the limit at `c = c0`
+#' ([dist_quantile()], [coef_quantile()]), the power its distribution function at `c` ([dist_cdf()], [coef_cdf()]).
+#'
+#' @inheritParams dist_cdf
+#' @param c Numeric vector or array of the local-to-unity parameters at which the power is computed.
+#' @param level The level of the test.
+#' @param statistic `"tratio"` (the default) or `"coef"`.
+#' @return The power, with the attributes of `c`.
+#' @seealso [dist_cdf()], [pt_envelope()], [power_envelope()].
+#' @examples
+#' local_power(c(-5, -10), dfl_perron("C", 0.5))
+#' local_power(-10, dfl_trend(1), statistic = "coef")
+#' @export
+local_power <- function(c, D, level = 0.05, statistic = c("tratio", "coef"), c0 = 0, start = NULL, gamma0 = 0,
+                        gls = NULL, verified = FALSE) {
+  statistic <- match.arg(statistic)
+  cv <- dfl_real(c, "c")
+  if (!all(is.finite(cv))) stop("c must be finite", call. = FALSE)
+  dfl_shape(dfl_det_call("power", D, cv, c(dfl_num(level, "level"), if (statistic == "coef") 1 else 0),
+                         dfl_opts(c0, start, gamma0, gls, verified))[[1]], c)
+}
+
+#' The linear form U - aV by the general engine
+#'
+#' `lin_cdf()` and `lin_pdf()` give the limit of \eqn{P(U - aV \le b)}{P(U - aV <= b)} and its density for any design
+#' ([dfl_design]; \eqn{U} and \eqn{V} as in [dist_cdf()]), `lin_quantile()` its quantiles (Newton's method from
+#' `b0`), and `v_cdf()` and `v_pdf()` the law of \eqn{V} (`a = NaN` in `lin_cdf()`), by the inversion on paths around
+#' the roots of the general engine, which takes \eqn{U - aV \le b}{U - aV <= b} as the event below a parabola in
+#' \eqn{\sqrt{V}}{sqrt(V)}. [ltratio_lincdf()] with a design is the same where the classical engine does not take it.
+#'
+#' @inheritParams dist_cdf
+#' @param b Numeric vector or array of points. `-Inf`, `Inf` and `NaN` give 0, 1 (density 0) and `NaN`.
+#' @param a The coefficient of \eqn{V}, a single number; `NaN` for the law of \eqn{V}.
+#' @param p Numeric vector or array of probabilities in (0, 1).
+#' @param b0 The starting point of the search.
+#' @param v Numeric vector or array of points of \eqn{V}.
+#' @return A numeric vector with the attributes of `b`, `p` or `v`.
+#' @seealso [ltratio_lincdf()], [pt_cdf()], [dist_cdf()].
+#' @examples
+#' D <- dfl_trend(1)
+#' lin_cdf(c(-0.6, 0, 0.5), -7.3, D, gls = -13.5)   # the trend case GLS-detrended at -13.5
+#' lin_quantile(0.05, -3.5, dfl_trend(-1))         # -0.2639: the point-optimal test against -7
+#' v_cdf(c(0.02, 0.2), dfl_perron("B", 0.5), -5)
+#' @export
+lin_cdf <- function(b, a, D, c = 0, start = NULL, gamma0 = 0, gls = NULL, verified = FALSE) {
+  dfl_det_finite("lincdf", D, b, c(dfl_a(a), dfl_num(c, "c")), dfl_opts(0, start, gamma0, gls, verified))
+}
+
+#' @rdname lin_cdf
+#' @export
+lin_pdf <- function(b, a, D, c = 0, start = NULL, gamma0 = 0, gls = NULL, verified = FALSE) {
+  dfl_det_finite("linpdf", D, b, c(dfl_a(a), dfl_num(c, "c")), dfl_opts(0, start, gamma0, gls, verified), hi = 0)
+}
+
+#' @rdname lin_cdf
+#' @export
+lin_quantile <- function(p, a, D, c = 0, start = NULL, gamma0 = 0, gls = NULL, b0 = 0, tol = 1e-10) {
+  pv <- dfl_prob(p)
+  a <- dfl_num(a, "a")
+  dfl_shape(dfl_det_call("linquantile", D, pv, c(a, dfl_num(c, "c"), dfl_num(b0, "b0"), dfl_num(tol, "tol")),
+                         dfl_opts(0, start, gamma0, gls))[[1]], p)
+}
+
+#' @rdname lin_cdf
+#' @export
+v_cdf <- function(v, D, c = 0, start = NULL, gamma0 = 0, gls = NULL) {
+  dfl_det_finite("lincdf", D, v, c(NaN, dfl_num(c, "c")), dfl_opts(0, start, gamma0, gls))
+}
+
+#' @rdname lin_cdf
+#' @export
+v_pdf <- function(v, D, c = 0, start = NULL, gamma0 = 0, gls = NULL) {
+  dfl_det_finite("linpdf", D, v, c(NaN, dfl_num(c, "c")), dfl_opts(0, start, gamma0, gls), hi = 0)
+}
+
+#' ADFmax and regions by the general engine
+#'
+#' `adfmax_quantile()` gives the quantiles of the limit of the ADFmax statistic of Leybourne (1995) for any design
+#' ([dfl_design]), by Newton's method from `x0` on the distribution function of the general engine (which
+#' [adfmax_cdf()] and [adfmax_pdf()] give with a design or with `engine = "general"`). `region_prob()` gives
+#' \eqn{P\{U \le g(V)\}}{P{U <= g(V)}} for the boundaries that the general engine has: the line
+#' \eqn{g(v) = b + a v} (`bnd = list(type = "line", a = , b = )`) and the parabola of the t-ratio
+#' \eqn{g(v) = x \sqrt{v} + c_0 v}{g(v) = x sqrt(v) + c0 v} (`list(type = "parabola", x = , c0 = 0)`).
+#'
+#' @inheritParams dist_cdf
+#' @param p Numeric vector or array of probabilities in (0, 1).
+#' @param bnd The boundary, a list (see Details).
+#' @return `adfmax_quantile()`: the quantiles, with the attributes of `p`; `region_prob()`: the probability.
+#' @references Leybourne, S. J. (1995), "Testing for Unit Roots Using Forward and Reverse Dickey-Fuller
+#'   Regressions", Oxford Bulletin of Economics and Statistics 57, 559-571.
+#' @seealso [adfmax_cdf()], [ltratio_region()].
+#' @examples
+#' adfmax_quantile(0.05, dfl_perron("A", 0.5))
+#' region_prob(list(type = "line", a = -3.5, b = -0.2639), dfl_trend(-1))   # 0.05
+#' @export
+adfmax_quantile <- function(p, D, c = 0, start = NULL, gamma0 = 0, x0 = -2, tol = 1e-10) {
+  pv <- dfl_prob(p)
+  dfl_shape(dfl_det_call("adfquantile", D, pv, c(dfl_num(c, "c"), dfl_num(x0, "x0"), dfl_num(tol, "tol")),
+                         dfl_opts(0, start, gamma0, NULL))[[1]], p)
+}
+
+#' @rdname adfmax_quantile
+#' @export
+region_prob <- function(bnd, D, c = 0, start = NULL, gamma0 = 0, gls = NULL, verified = FALSE) {
+  if (!is.list(bnd) || is.null(bnd$type)) stop("bnd must be a list with the element type", call. = FALSE)
+  type <- match(tolower(bnd$type), c("line", "parabola"))
+  if (is.na(type)) {
+    stop("the boundary type must be \"line\" or \"parabola\" (the kernels of the general engine are in closed form for boundaries quadratic in sqrt(V) only)",
+         call. = FALSE)
+  }
+  el <- function(name, default = NULL) {
+    v <- bnd[[name]]
+    if (is.null(v)) {
+      if (is.null(default)) stop(sprintf("a boundary of type %s needs the element %s", bnd$type, name), call. = FALSE)
+      v <- default
+    }
+    dfl_num(v, paste0("bnd$", name))
+  }
+  par <- if (type == 1L) c(el("a"), el("b")) else c(el("x"), el("c0", 0))
+  dfl_det_call("region", D, 0, c(type, par, dfl_num(c, "c")), dfl_opts(0, start, gamma0, gls, verified))[[1]]
+}
+
+# probabilities in (0, 1), as a double vector
+dfl_prob <- function(p) {
+  pv <- dfl_real(p, "p")
+  if (!all(!is.na(pv) & pv > 0 & pv < 1)) stop("p must lie in (0, 1)", call. = FALSE)
+  pv
+}
+# the coefficient a of the linear form (NaN: the law of V)
+dfl_a <- function(a) {
+  if (!is.numeric(a) || length(a) != 1L || (is.na(a) && !is.nan(a))) {
+    stop("a must be a single number (NaN: the distribution of V)", call. = FALSE)
+  }
+  as.double(a)
+}
