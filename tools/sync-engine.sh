@@ -12,7 +12,10 @@
 #      requires and that should go upstream into c/ of dflimit-matlab; once it is upstream, delete the patch file; there
 #      are none at present),
 #   4. records the upstream commit in inst/UPSTREAM.
-# Left out: the test programs (dfl_test_*.c), dfl_probe.c, gen_tables.jl, the MEX gateway (c/mex/) and c/test/.
+# The engine has two parts: the classical engine (dfl_api.c to tables.c) and the general engine for any deterministic
+# terms (dfl_det_*.c with the internal header dfl_det_int.h; dfl_det_tables.c holds its generated tables).
+# Left out: the test programs (dfl_test_*.c), dfl_probe.c, gen_tables.jl, gen_det_tables.jl, the MEX gateway (c/mex/)
+# and c/test/.
 set -e
 
 if [ $# -ne 1 ]; then echo "usage: sh tools/sync-engine.sh /path/to/dflimit-matlab" >&2; exit 2; fi
@@ -22,7 +25,9 @@ PKG=$(cd "$(dirname "$0")/.." && pwd)
 [ -f "$PKG/DESCRIPTION" ] || { echo "$PKG is not the package root" >&2; exit 1; }
 
 ENGINE="dflimit.h dfl_lock.h dfl_vmath.h dfl_api.c dfl_double.c dfl_gen.c dfl_gilpelaez.c dfl_mgf.c dfl_moments.c
-        dfl_single.c dfl_special.c dfl_threads.c tables.c"
+        dfl_single.c dfl_special.c dfl_threads.c tables.c
+        dfl_det_int.h dfl_det_api.c dfl_det_design.c dfl_det_inner.c dfl_det_la.c dfl_det_mgf.c dfl_det_paper2.c
+        dfl_det_path.c dfl_det_route.c dfl_det_tables.c"
 FADDEEVA="Faddeeva.cc Faddeeva.h faddeeva_shim.cpp"
 
 lf() { tr -d '\r' < "$1" > "$2"; }
