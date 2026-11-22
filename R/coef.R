@@ -30,12 +30,13 @@
 #' @export
 coef_cdf <- function(y, cas, c = 0, c0 = 0, g0 = 0, method = "auto", verified = FALSE,
                      engine = c("auto", "classical", "general"), start = NULL, gls = NULL) {
-  given <- !missing(engine)
   engine <- dfl_engine(engine)
   tg <- dfl_target(cas, g0, start, gls)
   me <- dfl_method(method)
   ve <- dfl_flag(verified, "verified")
-  pl <- dfl_plan(tg, engine, given, dfl_num(c, "c"), dfl_num(c0, "c0"), me, ve)
+  c <- dfl_num(c, "c")
+  c0 <- dfl_num(c0, "c0")
+  pl <- dfl_plan(tg, engine, c, c0, me, ve)
   if (pl$path == "legacy") return(dfl_once(coef_cdf_(y, pl$case, c, c0, pl$g0, method, verified)))
   if (me != 0L) stop("method names a representation of the classical engine; it does not apply with the general engine", call. = FALSE)
   if (ve == 1L) {
@@ -56,7 +57,7 @@ coef_cdf_ <- function(y, cas, c, c0, g0, method, verified) {
     if (is.nan(yk) || is.na(yk)) NaN
     else if (yk == Inf) 1
     else if (yk == -Inf) 0
-    else ltratio_cdf(0, cas, c, c0 = c0 + yk, g0 = g0, method = method, verified = verified)
+    else ltratio_cdf(0, cas, c, c0 = c0 + yk, g0 = g0, method = method, verified = verified, engine = "classical")
   }, 0)
   dfl_shape(F, y)
 }
@@ -67,12 +68,13 @@ coef_cdf_ <- function(y, cas, c, c0, g0, method, verified) {
 #' @export
 coef_icdf <- function(p, cas, c = 0, c0 = 0, g0 = 0, method = "auto", tol = 1e-9, verified = FALSE,
                       engine = c("auto", "classical", "general"), start = NULL, gls = NULL) {
-  given <- !missing(engine)
   engine <- dfl_engine(engine)
   tg <- dfl_target(cas, g0, start, gls)
   me <- dfl_method(method)
   ve <- dfl_flag(verified, "verified")
-  pl <- dfl_plan(tg, engine, given, dfl_num(c, "c"), dfl_num(c0, "c0"), me, ve)
+  c <- dfl_num(c, "c")
+  c0 <- dfl_num(c0, "c0")
+  pl <- dfl_plan(tg, engine, c, c0, me, ve)
   if (pl$path == "legacy") return(dfl_once(coef_icdf_(p, pl$case, c, c0, pl$g0, method, tol, verified)))
   if (me != 0L) stop("method names a representation of the classical engine; it does not apply with the general engine", call. = FALSE)
   pv <- dfl_real(p, "p")

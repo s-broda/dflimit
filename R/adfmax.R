@@ -13,9 +13,9 @@
 #'
 #' In place of the case a design of the general engine ([dfl_design]) may be given, with `start = "stationary"` for a
 #' stationary start or a fixed start `g0`; `engine` chooses between the two engines as in [ltratio_cdf()] (its section
-#' Engines): with a case code, no fixed start and no `engine` given the classical engine computes as before; the four
-#' cases with a zero or a stationary start, as codes or as designs, take the classical engine (with `engine = "auto"` the
-#' general engine with a stationary start for `c <= -0.1`, with the values below 1e-3 from the classical engine), a
+#' Engines): by default (`engine = "auto"`) the four cases with a zero or a stationary start, as codes or as designs, take
+#' the classical engine, except with a stationary start for `c <= -0.1`, where the general engine computes and the values
+#' below 1e-3 come from the classical engine (`engine = "classical"` gives the classical values throughout), a
 #' fixed start `g0 != 0` and every other design the general engine (the classical ADFmax has no fixed start, and
 #' `engine = "classical"` is then an error). ADFmax is computed with least-squares detrending and at the null value
 #' \eqn{\phi = 1}{phi = 1} only.
@@ -39,13 +39,13 @@
 #' adfmax_cdf(-3, dfl_perron("A", 0.5))
 #' @export
 adfmax_cdf <- function(x, cas, c = 0, info = FALSE, engine = c("auto", "classical", "general"), start = NULL, g0 = 0) {
-  dfl_adfmax(2L, x, cas, c, info, dfl_engine(engine), !missing(engine), start, g0)
+  dfl_adfmax(2L, x, cas, c, info, dfl_engine(engine), start, g0)
 }
 
 #' @rdname adfmax_cdf
 #' @export
 adfmax_pdf <- function(x, cas, c = 0, info = FALSE, engine = c("auto", "classical", "general"), start = NULL, g0 = 0) {
-  dfl_adfmax(1L, x, cas, c, info, dfl_engine(engine), !missing(engine), start, g0)
+  dfl_adfmax(1L, x, cas, c, info, dfl_engine(engine), start, g0)
 }
 
 dfl_adfmax_cases <- c("DU", "DT", "SU", "ST")
@@ -53,14 +53,14 @@ dfl_adfmax_cases <- c("DU", "DT", "SU", "ST")
 # or the router with the spec (a fixed start, and every design, where the C router decides: the classical engine for
 # the four cases without a fixed start, the general engine otherwise; with engine = "classical" a fixed start is the
 # router's error)
-dfl_adfmax_plan <- function(cas, engine, given, start, g0 = 0) {
+dfl_adfmax_plan <- function(cas, engine, start, g0 = 0) {
   tg <- dfl_target(cas, g0, start, NULL, dfl_adfmax_cases)
   if (is.null(tg$D) && tg$start == 2L && tg$g0 != 0) {
     stop("a stationary start (cases SU, ST) and a fixed start g0 != 0 exclude each other", call. = FALSE)
   }
   cls <- !is.null(tg$case) && tg$case %in% dfl_adfmax_cases && tg$start != 1L
   if (is.null(tg$D)) {
-    if (cls && (!given || engine == "classical")) return(list(path = "legacy", case = tg$case, tg = tg))
+    if (cls && engine == "classical") return(list(path = "legacy", case = tg$case, tg = tg))
     return(list(path = "router", spec = dfl_spec(tg), engine = dfl_engine_code(engine), tg = tg))
   }
   if (engine == "classical") {
@@ -70,8 +70,8 @@ dfl_adfmax_plan <- function(cas, engine, given, start, g0 = 0) {
   list(path = "router", spec = dfl_spec(tg, FALSE), engine = dfl_engine_code(engine), tg = tg)
 }
 
-dfl_adfmax <- function(kind, x, cas, c, info, engine = "auto", given = FALSE, start = NULL, g0 = 0) {
-  pl <- dfl_adfmax_plan(cas, engine, given, start, g0)
+dfl_adfmax <- function(kind, x, cas, c, info, engine = "auto", start = NULL, g0 = 0) {
+  pl <- dfl_adfmax_plan(cas, engine, start, g0)
   if (pl$path == "router") {
     v <- dfl_route_call(if (kind == 2L) "adf" else "adfpdf", dfl_real(x, "x"), pl, dfl_num(c, "c"))
     v <- dfl_shape(v, x)
@@ -106,9 +106,8 @@ adfmax_icdf <- function(p, cas, c = 0, tol = 1e-10, x0 = -2, engine = c("auto", 
   p0 <- p
   p <- dfl_real(p, "p")
   if (!all(!is.na(p) & p > 0 & p < 1)) stop("p must lie in (0, 1)", call. = FALSE)
-  given <- !missing(engine)
   engine <- dfl_engine(engine)
-  pl <- dfl_adfmax_plan(cas, engine, given, start, g0)
+  pl <- dfl_adfmax_plan(cas, engine, start, g0)
   c <- dfl_num(c, "c")
   tol <- dfl_num(tol, "tol")
   x0 <- dfl_num(x0, "x0")
@@ -127,8 +126,8 @@ adfmax_icdf <- function(p, cas, c = 0, tol = 1e-10, x0 = -2, engine = c("auto", 
   pdf <- function(y) adfmax_pdf(y, cas, c, engine = engine, start = start, g0 = g0)
   if (pl$path == "legacy") {
     cas <- pl$case
-    cdf <- function(y) adfmax_cdf(y, cas, c)
-    pdf <- function(y) adfmax_pdf(y, cas, c)
+    cdf <- function(y) adfmax_cdf(y, cas, c, engine = "classical")
+    pdf <- function(y) adfmax_pdf(y, cas, c, engine = "classical")
   }
   q <- vapply(p, function(pk) {
     lo <- x0 - 1

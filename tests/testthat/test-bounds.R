@@ -9,9 +9,10 @@ test_that("large x above the unit root goes to the conditional integral (the eng
 })
 
 test_that("c0 < 0 near zero with x > 0 goes to the conditional integral (more than 2 GB before)", {
-  expect_warning(F <- ltratio_cdf(0.05, "SK", -1e-3, c0 = -1e-3), "flags some of them", fixed = TRUE)
+  # (the classical engine: the default takes the general engine with a stationary start and c0 != 0 for c <= -3e-3)
+  expect_warning(F <- ltratio_cdf(0.05, "SK", -1e-3, c0 = -1e-3, engine = "classical"), "flags some of them", fixed = TRUE)
   expect_equal(F, 0.54749158678338294, tolerance = 1e-10)
-  expect_warning(F <- ltratio_cdf(1, "SK", -1e-2, c0 = -1e-2), "flags some of them", fixed = TRUE)
+  expect_warning(F <- ltratio_cdf(1, "SK", -1e-2, c0 = -1e-2, engine = "classical"), "flags some of them", fixed = TRUE)
   expect_equal(F, 0.87075930276798486, tolerance = 1e-10)
   expect_warning(F <- ltratio_cdf(c(-1, 0.05, 0.5, 1, 1.5), "SK", -1e-4, c0 = -1e-4), "exceed the bounds of the engine",
                  fixed = TRUE)

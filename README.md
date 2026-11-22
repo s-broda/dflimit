@@ -99,8 +99,9 @@ that is a classical case is that case (`dfl_trend(0)` is case DU, with `start = 
 `dfl_trend(1)` with `gls = -13.5` case DG). Their argument `engine` chooses the engine: `"auto"` takes, for what the
 classical engine accepts, the faster of the two engines at the same accuracy by a rule measured on both (for the
 t-ratio point by point) and the general engine for every other design; `"classical"` and `"general"` force one of
-them. **With a case code and no `engine` argument the classical engine computes, exactly as before**; with a design and
-no `engine` argument `"auto"` applies.
+them. **`"auto"` is the default, for a case code as for a design**: where it takes the general engine for a case code
+the two engines agree to about 1e-9, so that values can move in the tenth digit against the versions before 0.5.0;
+`engine = "classical"` gives the values of the classical engine, those of the earlier versions.
 
 The general engine's own functions, with all its options (`c`, `c0`, `start`, `gamma0`, `gls`, `verified`), are
 `dist_cdf`, `dist_pdf`, `dist_quantile`, `dist_moments` (the t-ratio), `coef_pdf`, `coef_quantile`, `coef_cdf_gp`

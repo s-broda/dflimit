@@ -27,8 +27,7 @@ ltratio_lincdf(
 
 \item{cbar}{The detrending parameter \eqn{\bar c}{cbar} of case DG (-13.5: the DF-GLS tests); not used in case DK.}
 
-\item{engine}{`"auto"`, `"classical"` or `"general"`. Not given: the classical engine for a case code, `"auto"` for
-a design.}
+\item{engine}{`"auto"` (the default), `"classical"` or `"general"`; see the section Engines of [ltratio_cdf()].}
 
 \item{start, g0, gls}{With a design: its start (`"zero"`, `"fixed"` with the fixed start `g0`, `"stationary"`) and
 GLS detrending (`NULL`: least squares); see [ltratio_cdf()].}
@@ -64,10 +63,11 @@ about 3.5 (at `cbar = -13.5`; less for `cbar` nearer 0), and for `a = NaN` at mo
 
 In place of the case a design of the general engine ([dfl_design]) may be given, with its start (`g0`, `start`)
 and GLS detrending (`gls`); `engine` chooses between the two engines as in [ltratio_cdf()] (its section Engines):
-with a case code and no `engine` given the classical engine computes as before; `dfl_trend(-1)` (case DK) and
-`dfl_trend(1)` with `gls = -13.5` (case DG), with a zero start, are classical cases (with `engine = "auto"` the general engine for the law
-of \eqn{V} in case DK and in case DG above the unit root), every other design takes the general engine
-([lin_cdf()]).
+`dfl_trend(-1)` (case DK) and `dfl_trend(1)` with `gls = -13.5` (case DG), with a zero start, are the classical cases;
+by default (`engine = "auto"`) the rule of the C router chooses for them (the general engine for the law of \eqn{V} in
+case DK and in case DG with `a != 0` above the unit root for `cbar >= -5`, and beyond `c = 2`, the classical engine
+elsewhere), and `engine = "classical"` gives the classical values throughout; every other design takes the general
+engine ([lin_cdf()]).
 }
 \examples{
 ltratio_lincdf(-0.2639, -3.5, "DK", 0)    # 0.05: the size of the point-optimal test at cbar = -7

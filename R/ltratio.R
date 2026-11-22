@@ -89,9 +89,10 @@
 #' integral, whose error is relative), and the general engine for every other design. `"classical"` forces the classical
 #' engine (an error for a design it does not have) and `"general"` the general one (without the classical engine's
 #' checks; `method` must then be `"auto"`). With `engine = "auto"`, a `method` other than `"auto"` and `verified = TRUE`
-#' keep the classical engine for a classical case. With a case code and no `engine` given, the classical engine
-#' computes, and the values are those of the earlier versions of the package; with a design and no `engine` given,
-#' `"auto"` applies. The functions of the general engine itself, with all its options, are [dist_cdf()] and the others
+#' keep the classical engine for a classical case. `"auto"` is the default, for a case code as for a design: where it takes
+#' the general engine for a case code the two engines agree to about 1e-9 (the values move in the tenth digit or below
+#' against the earlier versions of the package), and `engine = "classical"` gives the values of the classical engine, those
+#' of the earlier versions. The functions of the general engine itself, with all its options, are [dist_cdf()] and the others
 #' listed there.
 #'
 #' @param x Numeric vector or array of points. `-Inf`, `Inf` and `NaN` give 0, 1 (density 0) and `NaN`.
@@ -104,8 +105,7 @@
 #'   in cases DU, DT only); see the section Methods and ranges.
 #' @param verified `FALSE` (the default): one evaluation by one method; `TRUE`: the checked computation (see the
 #'   section Methods and ranges; with the general engine, a second evaluation by other rules, see [dist_cdf()]).
-#' @param engine `"auto"`, `"classical"` or `"general"` (see the section Engines). Not given: the classical engine
-#'   for a case code, `"auto"` for a design.
+#' @param engine `"auto"` (the default), `"classical"` or `"general"` (see the section Engines).
 #' @param start With a design: the start, `"zero"`, `"fixed"` (with `g0`) or `"stationary"`; `NULL` (the default) is
 #'   `"fixed"` where `g0` is not 0 and `"zero"` otherwise. With a case code it must be `NULL` (the code names the
 #'   start).
@@ -131,24 +131,23 @@
 #' @export
 ltratio_cdf <- function(x, cas, c = 0, c0 = 0, g0 = 0, method = "auto", verified = FALSE,
                         engine = c("auto", "classical", "general"), start = NULL, gls = NULL) {
-  dfl_dist(2L, x, cas, c, c0, g0, method, verified, dfl_engine(engine), !missing(engine), start, gls)
+  dfl_dist(2L, x, cas, c, c0, g0, method, verified, dfl_engine(engine), start, gls)
 }
 
 #' @rdname ltratio_cdf
 #' @export
 ltratio_pdf <- function(x, cas, c = 0, c0 = 0, g0 = 0, method = "auto", verified = FALSE,
                         engine = c("auto", "classical", "general"), start = NULL, gls = NULL) {
-  dfl_dist(1L, x, cas, c, c0, g0, method, verified, dfl_engine(engine), !missing(engine), start, gls)
+  dfl_dist(1L, x, cas, c, c0, g0, method, verified, dfl_engine(engine), start, gls)
 }
 
-dfl_dist <- function(kind, x, cas, c, c0, g0, method, verified, engine = "auto", given = FALSE, start = NULL,
-                     gls = NULL) {
+dfl_dist <- function(kind, x, cas, c, c0, g0, method, verified, engine = "auto", start = NULL, gls = NULL) {
   tg <- dfl_target(cas, g0, start, gls)
   me <- dfl_method(method)
   ve <- dfl_flag(verified, "verified")
   c <- dfl_num(c, "c")
   c0 <- dfl_num(c0, "c0")
-  pl <- dfl_plan(tg, engine, given, c, c0, me, ve)
+  pl <- dfl_plan(tg, engine, c, c0, me, ve)
   if (pl$path == "router") {
     return(dfl_shape(dfl_route_call(if (kind == 2L) "cdf" else "pdf", dfl_real(x, "x"), pl, c(c, c0, me, ve)), x))
   }
@@ -185,7 +184,6 @@ dfl_dist <- function(kind, x, cas, c, c0, g0, method, verified, engine = "auto",
 #' @export
 ltratio_icdf <- function(p, cas, c = 0, c0 = 0, g0 = 0, method = "auto", tol = 1e-10, info = FALSE, verified = FALSE,
                          engine = c("auto", "classical", "general"), start = NULL, gls = NULL) {
-  given <- !missing(engine)
   engine <- dfl_engine(engine)
   tg <- dfl_target(cas, g0, start, gls)
   me <- dfl_method(method)
@@ -193,7 +191,7 @@ ltratio_icdf <- function(p, cas, c = 0, c0 = 0, g0 = 0, method = "auto", tol = 1
   c <- dfl_num(c, "c")
   c0 <- dfl_num(c0, "c0")
   tol <- dfl_num(tol, "tol")
-  pl <- dfl_plan(tg, engine, given, c, c0, me, ve)
+  pl <- dfl_plan(tg, engine, c, c0, me, ve)
   if (pl$path == "router") {
     pv <- dfl_real(p, "p")
     if (!all(!is.na(pv) & pv > 0 & pv < 1)) stop("p must lie in (0, 1)", call. = FALSE)
@@ -244,12 +242,11 @@ ltratio_mom <- function(p, cas, c = 0, c0 = 0, g0 = 0, info = FALSE, engine = c(
   if (!is.numeric(p) || length(p) != 1L || is.na(p) || p != round(p) || p < 1) {
     stop("p must be a positive integer", call. = FALSE)
   }
-  given <- !missing(engine)
   engine <- dfl_engine(engine)
   tg <- dfl_target(cas, g0, start, gls)
   c <- dfl_num(c, "c")
   c0 <- dfl_num(c0, "c0")
-  pl <- dfl_plan(tg, engine, given, c, c0)
+  pl <- dfl_plan(tg, engine, c, c0)
   # (a design of case DG, which has no moments in the classical engine: the general engine)
   if (pl$path == "router" && identical(tg$case, "DG") && !is.null(tg$D)) pl <- list(path = "router", spec = dfl_spec(tg, FALSE), engine = 2L)
   if (pl$path == "router") {

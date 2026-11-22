@@ -50,8 +50,7 @@ in cases DU, DT only); see the section Methods and ranges.}
 \item{verified}{`FALSE` (the default): one evaluation by one method; `TRUE`: the checked computation (see the
 section Methods and ranges; with the general engine, a second evaluation by other rules, see [dist_cdf()]).}
 
-\item{engine}{`"auto"`, `"classical"` or `"general"` (see the section Engines). Not given: the classical engine
-for a case code, `"auto"` for a design.}
+\item{engine}{`"auto"` (the default), `"classical"` or `"general"` (see the section Engines).}
 
 \item{start}{With a design: the start, `"zero"`, `"fixed"` (with `g0`) or `"stationary"`; `NULL` (the default) is
 `"fixed"` where `g0` is not 0 and `"zero"` otherwise. With a case code it must be `NULL` (the code names the
@@ -120,9 +119,10 @@ unit root, and far below it; the values below 1e-3 of the general engine go back
 integral, whose error is relative), and the general engine for every other design. `"classical"` forces the classical
 engine (an error for a design it does not have) and `"general"` the general one (without the classical engine's
 checks; `method` must then be `"auto"`). With `engine = "auto"`, a `method` other than `"auto"` and `verified = TRUE`
-keep the classical engine for a classical case. With a case code and no `engine` given, the classical engine
-computes, and the values are those of the earlier versions of the package; with a design and no `engine` given,
-`"auto"` applies. The functions of the general engine itself, with all its options, are [dist_cdf()] and the others
+keep the classical engine for a classical case. `"auto"` is the default, for a case code as for a design: where it takes
+the general engine for a case code the two engines agree to about 1e-9 (the values move in the tenth digit or below
+against the earlier versions of the package), and `engine = "classical"` gives the values of the classical engine, those
+of the earlier versions. The functions of the general engine itself, with all its options, are [dist_cdf()] and the others
 listed there.
 }
 

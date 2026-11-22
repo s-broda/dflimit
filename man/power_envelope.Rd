@@ -18,8 +18,7 @@ power_envelope(
 
 \item{alpha}{The level of the tests.}
 
-\item{engine}{`"auto"`, `"classical"` or `"general"`. Not given: the classical engine for a case code, `"auto"` for
-a design.}
+\item{engine}{`"auto"` (the default), `"classical"` or `"general"`; see the section Engines of [ltratio_cdf()].}
 }
 \value{
 The envelope, with the attributes of `c`.
@@ -42,8 +41,9 @@ from the conditional integral of [ltratio_lincdf()], the critical value by bisec
 
 In place of the case a design of the general engine ([dfl_design]) may be given: `dfl_trend(-1)` and
 `dfl_trend(0)` are case DK, `dfl_trend(1)` case DG, and every other design has the envelope of the point-optimal
-statistic of the design ([pt_envelope()]). `engine` chooses between the two engines as in [ltratio_cdf()]: with a
-case code and no `engine` given the classical engine computes as before.
+statistic of the design ([pt_envelope()]). `engine` chooses between the two engines as in [ltratio_cdf()]; by default
+(`engine = "auto"`) the rule of the C router keeps the classical engine for the cases DK and DG (1.6 to 11 times
+faster; its critical value is bisected to 1e-9).
 }
 \examples{
 power_envelope(-7, "DK")                   # 0.4994: at c = -7 the envelope has power one half

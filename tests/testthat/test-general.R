@@ -204,22 +204,35 @@ test_that("the starts, GLS detrending and the options are checked", {
   expect_error(ltratio_region(list(type = "line", a = 1, b = 0, v0 = 0.1), "DK", engine = "general"), "v0")
 })
 
-test_that("with a case code and no engine the classical engine computes as before", {
-  # (values computed by separate calls are compared to rounding: with threads the order of summation may differ by one
-  # ulp)
+test_that("engine = classical gives the classical values; the default (auto) agrees with them", {
+  # (i) engine = "classical" for a case code is the classical entry point, the values of the earlier versions, and a
+  # design of a classical case gives the same; (ii) the default, engine = "auto" also for a case code, agrees with them to
+  # the accuracy of the reference values (1e-9; values computed by separate calls are compared to rounding: with threads
+  # the order of summation may differ by one ulp)
   expect_identical <- function(a, b) expect_equal(a, b, tolerance = 1e-14)
+  expect_close <- function(a, b) expect_lt(max(abs(a - b)), 1e-9)
   x <- c(-3, -2, -1)
-  F <- ltratio_cdf(x, "DU", -5)
-  expect_identical(ltratio_cdf(x, "DU", -5, engine = "classical"), F)
+  F <- ltratio_cdf(x, "DU", -5, engine = "classical")
   expect_identical(ltratio_cdf(x, dfl_trend(0), -5, engine = "classical"), F)
-  expect_identical(ltratio_pdf(x, "ST", -5, engine = "classical"), ltratio_pdf(x, "ST", -5))
-  expect_identical(ltratio_pdf(x, dfl_trend(1), -5, start = "stationary", engine = "classical"), ltratio_pdf(x, "ST", -5))
-  expect_identical(ltratio_cdf(x, dfl_trend(1), -5, gls = -13.5, engine = "classical"), ltratio_cdf(x, "DG", -5))
-  expect_identical(ltratio_mom(2, dfl_trend(-1), -5, g0 = 1, engine = "classical"), ltratio_mom(2, "DK", -5, g0 = 1))
-  expect_identical(coef_cdf(-10, dfl_trend(0), engine = "classical"), coef_cdf(-10, "DU"))
+  expect_identical(ltratio_pdf(x, dfl_trend(1), -5, start = "stationary", engine = "classical"), ltratio_pdf(x, "ST", -5, engine = "classical"))
+  expect_identical(ltratio_cdf(x, dfl_trend(1), -5, gls = -13.5, engine = "classical"), ltratio_cdf(x, "DG", -5, engine = "classical"))
+  expect_identical(ltratio_mom(2, dfl_trend(-1), -5, g0 = 1, engine = "classical"), ltratio_mom(2, "DK", -5, g0 = 1, engine = "classical"))
+  expect_identical(coef_cdf(-10, dfl_trend(0), engine = "classical"), coef_cdf(-10, "DU", engine = "classical"))
   expect_identical(ltratio_lincdf(-0.2639, -3.5, dfl_trend(-1), -7, engine = "classical"),
-                   ltratio_lincdf(-0.2639, -3.5, "DK", -7))
-  expect_identical(power_envelope(-7, dfl_trend(0), engine = "classical"), power_envelope(-7, "DK"))
+                   ltratio_lincdf(-0.2639, -3.5, "DK", -7, engine = "classical"))
+  expect_identical(power_envelope(-7, dfl_trend(0), engine = "classical"), power_envelope(-7, "DK", engine = "classical"))
+  # (ii) on the same calls the default agrees with the classical engine
+  expect_close(ltratio_cdf(x, "DU", -5), F)
+  expect_close(ltratio_pdf(x, "ST", -5), ltratio_pdf(x, "ST", -5, engine = "classical"))
+  expect_close(ltratio_cdf(x, "DG", -5), ltratio_cdf(x, "DG", -5, engine = "classical"))
+  expect_close(ltratio_mom(2, "DK", -5, g0 = 1) / ltratio_mom(2, "DK", -5, g0 = 1, engine = "classical"), 1)
+  expect_close(coef_cdf(-10, "DU"), coef_cdf(-10, "DU", engine = "classical"))
+  expect_close(ltratio_lincdf(-0.2639, -3.5, "DK", -7), ltratio_lincdf(-0.2639, -3.5, "DK", -7, engine = "classical"))
+  expect_close(power_envelope(-7, "DK"), power_envelope(-7, "DK", engine = "classical"))
+  expect_close(ltratio_icdf(c(0.05, 0.5), "DT"), ltratio_icdf(c(0.05, 0.5), "DT", engine = "classical"))
+  expect_close(adfmax_cdf(-2.5, "DU", -5), adfmax_cdf(-2.5, "DU", -5, engine = "classical"))
+  # the default for a case code is engine = "auto", as for a design
+  expect_identical(ltratio_cdf(x, "DU", -5), ltratio_cdf(x, "DU", -5, engine = "auto"))
   # a design that is a classical case takes the router's rule, as the case code with engine = "auto"
   expect_identical(ltratio_cdf(x, dfl_trend(0), -5), ltratio_cdf(x, "DU", -5, engine = "auto"))
   expect_identical(ltratio_cdf(x, dfl_trend(0), -5, c0 = 2), ltratio_cdf(x, "DU", -5, c0 = 2, engine = "auto"))
@@ -302,6 +315,22 @@ test_that("the guard on the nodes of the paths around the roots stops a design w
                       name = "(1 + r, 1{r <= 0.4})"), class = "dfl_design")
   t <- system.time(expect_error(dist_cdf(-2, D, 1), "the U-shapes of the zero start"))[["elapsed"]]
   expect_lt(t, 1)
+})
+
+test_that("the general engine and the router at non-finite arguments: a limit or an error that names the argument", {
+  D <- dfl_trend(0)
+  expect_identical(coef_cdf_gp(c(Inf, -Inf, NaN), D, -5), c(1, 0, NaN))
+  expect_error(dist_quantile(0.05, D, -5, x0 = Inf), "x0 must be a finite")
+  expect_error(coef_quantile(0.05, D, -5, y0 = -Inf), "y0 must be a finite")
+  expect_error(lin_quantile(0.05, -3.5, D, -5, b0 = Inf), "b0 must be a finite")
+  expect_error(adfmax_quantile(0.05, D, -5, x0 = -Inf), "x0 must be a finite")
+  expect_error(lin_cdf(-0.26, Inf, D, -5), "a must be a finite")
+  expect_error(pt_cdf(4, dfl_trend(1), -13.5, Inf), "c must be a finite")
+  expect_error(dist_cdf(-2, dfl_trend(1), -5, gls = -Inf), "cbar < 0")
+  expect_identical(power_envelope(c(-Inf, NaN, Inf), "DK"), c(1, NaN, 0.05))
+  expect_identical(vapply(c(Inf, -Inf), function(b) ltratio_region(list(type = "line", a = -3.5, b = b), "DK", -5), 0), c(1, 0))
+  expect_error(ltratio_region(list(type = "line", a = Inf, b = -0.26), "DK", -5), "slope a of the line")
+  expect_error(ltratio_lincdf(-0.26, Inf, "DK", -5), "a must be")
 })
 
 test_that("the shapes of the inputs are kept and non-finite points have their limits", {

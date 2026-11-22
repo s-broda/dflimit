@@ -193,11 +193,13 @@ dfl_classical_valid <- function(tg, c, c0, method = 0L) {
 # the path of a computation: "legacy" (the classical engine's own entry points, as before the router: with a case code
 # and no engine named, engine = "classical", or a method or the checked computation with engine = "auto") or "router"
 # (dfl_engine_* of the C engine, with the spec and the engine code)
-dfl_plan <- function(tg, engine, given, c, c0, method = 0L, verified = 0L) {
+dfl_plan <- function(tg, engine, c, c0, method = 0L, verified = 0L) {
   legacy <- function() list(path = "legacy", case = tg$case, g0 = tg$g0)
   router <- function(case, e = engine) list(path = "router", spec = dfl_spec(tg, case), engine = dfl_engine_code(e))
   if (is.null(tg$D)) {
-    if (!given || engine == "classical") return(legacy())
+    # (a case code: the router's rule, as for a design; engine = "classical" the classical entry points, with the values
+    # of the earlier versions; a method other than "auto" and verified = TRUE keep the classical engine, as in Julia)
+    if (engine == "classical") return(legacy())
     if (engine == "auto" && (method != 0L || verified != 0L)) return(legacy())
     return(router(TRUE))
   }

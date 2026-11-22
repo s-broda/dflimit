@@ -15,8 +15,11 @@ test_that("the power at c = -5 is the distribution function at the critical valu
 })
 
 test_that("the quantiles invert the distribution function", {
-  r <- ltratio_icdf(c(0.1, 0.9), "ST", -10, info = TRUE)
+  # (the convergence flags are those of the classical search; the router's search, the default, reports F at q only)
+  r <- ltratio_icdf(c(0.1, 0.9), "ST", -10, info = TRUE, engine = "classical")
   expect_true(all(r$conv))
+  expect_equal(r$F, c(0.1, 0.9), tolerance = 1e-9)
+  r <- ltratio_icdf(c(0.1, 0.9), "ST", -10, info = TRUE)
   expect_equal(r$F, c(0.1, 0.9), tolerance = 1e-9)
   expect_equal(ltratio_cdf(r$q, "ST", -10), c(0.1, 0.9), tolerance = 1e-9)
   expect_equal(adfmax_cdf(adfmax_icdf(0.05, "DU"), "DU"), 0.05, tolerance = 1e-9)

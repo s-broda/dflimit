@@ -25,7 +25,8 @@ test_that("errors of the engine become R errors", {
   expect_error(ltratio_cdf(0, "DU", -600), "at least -550")
   expect_error(ltratio_cdf(0, "SU", 1), "requires c <= -1e-4", fixed = TRUE)
   expect_error(ltratio_cdf(0, "DU", -5, g0 = 3), "fixed start")
-  expect_error(ltratio_cdf(0, "SU", -5, g0 = 1), "applies to cases DK, DU, DT")
+  expect_error(ltratio_cdf(0, "SU", -5, g0 = 1, engine = "classical"), "applies to cases DK, DU, DT")
+  expect_error(ltratio_cdf(0, "SU", -5, g0 = 1), "exclude each other")
   expect_error(ltratio_mom(2, "DG"), "not available")
   expect_error(ltratio_cdf(0, "DG", method = "double"), "single integral only")
   expect_error(ltratio_icdf(1, "DU"), "(0, 1)", fixed = TRUE)
@@ -42,7 +43,8 @@ test_that("errors of the engine become R errors", {
   expect_error(ltratio_lincdf(0, NA, "DK"), "a must be a single number")
   expect_error(ltratio_lincdf(0, 1, "DK", c = Inf), "finite")
   expect_error(power_envelope(-5, "DT"), "the case must be one of DK, DU, DG")
-  expect_error(power_envelope(-5, alpha = 2), "no sign change")
+  expect_error(power_envelope(-5, alpha = 2, engine = "classical"), "no sign change")
+  expect_error(power_envelope(-5, alpha = 2), "the level must lie in (0, 1)", fixed = TRUE)
 })
 
 test_that("the number of threads can be set and does not change the values", {

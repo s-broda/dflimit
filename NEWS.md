@@ -14,8 +14,10 @@
 * The functions of the classical engine (`ltratio_cdf()` and the others) take a design in place of the case code, with
   the new arguments `start` and `gls`, and the new argument `engine = c("auto", "classical", "general")`: `"auto"`
   takes the faster engine at the same accuracy where the classical engine accepts the computation (the rule of the C
-  router, measured on both engines) and the general engine elsewhere. With a case code and no `engine` argument the
-  classical engine computes, and the values are those of before, bit for bit. `adfmax_cdf()`, `adfmax_pdf()`,
+  router, measured on both engines) and the general engine elsewhere. `"auto"` is the default, for a case code as for a
+  design: where it takes the general engine for a case code the two engines agree to about 1e-9, and the values move
+  in the tenth digit or below against 0.4.x; `engine = "classical"` gives the classical values, bit for bit those of
+  before. `adfmax_cdf()`, `adfmax_pdf()`,
   `adfmax_icdf()` and `ltratio_region()` take a fixed start `g0` (also with a case code), which the classical engine
   does not have: the general engine computes it (`engine = "classical"` is then an error).
 * The general engine refuses, with an error, what it does not compute accurately: the LM statistic above `c = 10`, the

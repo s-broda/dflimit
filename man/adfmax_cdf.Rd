@@ -47,8 +47,7 @@ adfmax_icdf(
 \item{info}{If `TRUE`, return a list with the values `value`, the error estimates `err` and the statuses
 `status` (nonzero: the error estimate is not met) of the conditional integral (`NA` where the router computes).}
 
-\item{engine}{`"auto"`, `"classical"` or `"general"` (see the section Engines). Not given: the classical engine
-for a case code, `"auto"` for a design.}
+\item{engine}{`"auto"` (the default), `"classical"` or `"general"` (see the section Engines).}
 
 \item{start}{With a design: `"zero"`, `"fixed"` (with `g0`) or `"stationary"`; `NULL` (the default) is `"fixed"`
 where `g0` is not 0 and `"zero"` otherwise.}
@@ -81,9 +80,9 @@ same with a stationary start, `c <= -1e-4`). The values are accurate to about 1e
 
 In place of the case a design of the general engine ([dfl_design]) may be given, with `start = "stationary"` for a
 stationary start or a fixed start `g0`; `engine` chooses between the two engines as in [ltratio_cdf()] (its section
-Engines): with a case code, no fixed start and no `engine` given the classical engine computes as before; the four
-cases with a zero or a stationary start, as codes or as designs, take the classical engine (with `engine = "auto"` the
-general engine with a stationary start for `c <= -0.1`, with the values below 1e-3 from the classical engine), a
+Engines): by default (`engine = "auto"`) the four cases with a zero or a stationary start, as codes or as designs, take
+the classical engine, except with a stationary start for `c <= -0.1`, where the general engine computes and the values
+below 1e-3 come from the classical engine (`engine = "classical"` gives the classical values throughout), a
 fixed start `g0 != 0` and every other design the general engine (the classical ADFmax has no fixed start, and
 `engine = "classical"` is then an error). ADFmax is computed with least-squares detrending and at the null value
 \eqn{\phi = 1}{phi = 1} only.
