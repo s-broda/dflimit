@@ -14,23 +14,18 @@
  * errors in the function and passes back NULL, and the design is then freed and the error raised).
  *
  * Warnings: the general engine's warning of a call (dfl_det_warning) and, for the router, the classical engine's
- * warning of the points that the line integral refused (dfl_warning) are thread-local and are cleared here before each
- * call (the router does not call both engines every time, and a warning left from an earlier call would otherwise be
- * given again); the R functions give them as R warnings. */
+ * warning of the points that the line integral refused (dfl_warning) are thread-local; they are cleared here before
+ * each call (dfl_det_warning_clear, dfl_warning_clear), and the R functions give them as R warnings. */
 #include "dflimit_r.h"
 #include <stdlib.h>
 #include <math.h>
 
-/* (dfl_det_la.c, declared in the engine's internal header dfl_det_int.h: clears the general engine's warning on the
- * calling thread; the public header has no function for it) */
-void det_warn_clear(void);
-
-/* the classical engine's warning (dfl_warning) is cleared at the start of dfl_dist; a call with no points clears it */
+/* both warnings of the calling thread cleared before a call whose warnings are read (dfl_det_warning_clear also drops a
+ * hold that an earlier call may have left) */
 static void clear_warnings(void)
 {
-    double x = 0, out = 0; char err[ERRLEN];
-    det_warn_clear();
-    dfl_dist(2, 0, &x, 1, 0.0, 0.0, 0.0, false, 0, NULL, NULL, &out, NULL, err, sizeof err);
+    dfl_det_warning_clear();
+    dfl_warning_clear();
 }
 static SEXP mkstr(const char *s) { return Rf_mkString(s ? s : ""); }
 
@@ -134,7 +129,7 @@ SEXP dfl_r_design(SEXP kind, SEXP a1, SEXP a2, SEXP a3, SEXP a4, SEXP a5)
     dfl_design *D = design_new(&h);
     PROTECT(h);
     int rc = 1;
-    det_warn_clear();
+    clear_warnings();
     if (!strcmp(k, "trend")) rc = dfl_design_trend(int1(a1, "p"), D, err, sizeof err);
     else if (!strcmp(k, "ltrend")) rc = dfl_design_ltrend(int1(a1, "p"), D, err, sizeof err);
     else if (!strcmp(k, "perron")) {
