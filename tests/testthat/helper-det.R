@@ -12,8 +12,10 @@ det_ref_lines <- function() {
 det_designs <- function(lines = det_ref_lines()) {
   fd <- list(sincos = function(r) c(sin(2 * pi * r), cos(2 * pi * r)),
              perronC04 = function(r) c(1, r, if (r > 0.4) 1 else 0, max(r - 0.4, 0)),
-             expr = function(r) exp(r))
-  fb <- list(sincos = numeric(0), perronC04 = 0.4, expr = numeric(0))
+             expr = function(r) exp(r),
+             trig = function(r) c(1, sin(2 * pi * r), cos(2 * pi * r)),
+             rlin = function(r) r)
+  fb <- list(sincos = numeric(0), perronC04 = 0.4, expr = numeric(0), trig = numeric(0), rlin = numeric(0))
   D <- list()
   for (l in lines[startsWith(lines, "design ")]) {
     w <- strsplit(l, " ", fixed = TRUE)[[1]]
@@ -59,16 +61,19 @@ det_parse_err <- function(l) {
 det_start <- function(st) c("zero", "fixed", "stationary")[st + 1L]
 det_gls <- function(cb) if (is.nan(cb)) NULL else cb
 
-# the value of a line 'val' by the functions of the general engine
+# the value of a line 'val' by the functions of the general engine ('cdf@line', 'pdf@paths', 'quant@auto': the method of
+# the t-ratio)
 det_eval_val <- function(v, D) {
   d <- D[[v$id]]
   st <- det_start(v$st)
   gl <- det_gls(v$cb)
   x <- v$x
-  switch(v$fn,
-    cdf = dist_cdf(x, d, v$c, v$c0, st, v$g0, gl, v$ver),
-    pdf = dist_pdf(x, d, v$c, v$c0, st, v$g0, gl, v$ver),
-    quant = dist_quantile(x, d, v$c, v$c0, st, v$g0, gl, x0 = v$par, tol = 1e-9),
+  fm <- strsplit(v$fn, "@", fixed = TRUE)[[1]]
+  me <- if (length(fm) > 1L) fm[2] else "auto"
+  switch(fm[1],
+    cdf = dist_cdf(x, d, v$c, v$c0, st, v$g0, gl, v$ver, method = me),
+    pdf = dist_pdf(x, d, v$c, v$c0, st, v$g0, gl, v$ver, method = me),
+    quant = dist_quantile(x, d, v$c, v$c0, st, v$g0, gl, x0 = v$par, tol = 1e-9, method = me),
     coefcdf = coef_cdf(x, d, v$c, v$c0, v$g0, verified = v$ver, engine = "general", start = st, gls = gl),
     coefpdf = coef_pdf(x, d, v$c, v$c0, st, v$g0, gl, v$ver),
     coefq = coef_quantile(x, d, v$c, v$c0, st, v$g0, gl, y0 = v$par, tol = 1e-9),

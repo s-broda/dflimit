@@ -3,7 +3,8 @@
 #' The distribution function, density, quantiles and moments of the limit of the Dickey-Fuller t-ratio for any design
 #' of deterministic terms ([dfl_design]), computed by the general engine: the joint moment generating function of
 #' \eqn{(U, V)} as a small determinant and the inversion formula on paths around its singularities in the first
-#' argument (the inversion on paths around the roots), the same representation for every design.
+#' argument (the inversion on paths around the roots), the same representation for every design; and, for the designs
+#' whose numerator has rank one or two, the line integral with the explicit kernel (see `method`).
 #'
 #' The statistic is the t-ratio of the hypothesis \eqn{\phi = \phi_0 = 1 + c_0/n}{phi = phi0 = 1 + c0/n} in the
 #' regression of \eqn{y_t} on the regressors \eqn{d(t/n)} of the design and \eqn{y_{t-1}}, under
@@ -45,6 +46,15 @@
 #' @param gls `NULL` (the default) for least squares detrending, or \eqn{\bar c < 0}{cbar < 0} for GLS detrending at
 #'   \eqn{1 + \bar c/n}{1 + cbar/n}.
 #' @param verified `FALSE` (the default): one evaluation; `TRUE`: the checked computation (see Details).
+#' @param method `"auto"` (the default), `"line"` or `"paths"`: the line integral with the explicit kernel (the
+#'   classical engine's line integral with \eqn{P(t)} and the two roots supplied by the general engine's transform) or
+#'   the inversion on paths around the roots. The line integral covers the designs whose numerator has rank one or
+#'   two: no deterministic terms, continuous designs that do not vanish at the origin and whose span is closed under
+#'   differentiation (polynomial trends of any order, an intercept with sines and cosines), and [dfl_detrend_first()]
+#'   of a continuous design that does not vanish at the origin, with a zero or a stationary start and least squares
+#'   detrending. `"auto"` takes it at `c0 = 0` for `c >= -20`, where it is 2.2 to 3.5 times faster than the paths per
+#'   value and 1.8 to 2.7 times per quantile, and the paths otherwise; `"line"` stops with the reason where it does not
+#'   cover the design, the start or the options (GLS detrending, a fixed start, a jump).
 #' @param x0 The starting point of the search.
 #' @param tol The tolerance of the search.
 #' @param info `dist_moments()`: if `TRUE`, a list with the moments `m` and the differences `err` to the rule of
@@ -61,22 +71,25 @@
 #' dist_cdf(-4, D, -10, start = "stationary")
 #' dist_moments(2, dfl_trend(1), -5)
 #' @export
-dist_cdf <- function(x, D, c = 0, c0 = 0, start = NULL, gamma0 = 0, gls = NULL, verified = FALSE) {
-  dfl_det_finite("cdf", D, x, dfl_num(c, "c"), dfl_opts(c0, start, gamma0, gls, verified))
+dist_cdf <- function(x, D, c = 0, c0 = 0, start = NULL, gamma0 = 0, gls = NULL, verified = FALSE,
+                     method = c("auto", "line", "paths")) {
+  dfl_det_finite("cdf", D, x, dfl_num(c, "c"), dfl_opts(c0, start, gamma0, gls, verified, method[1]))
 }
 
 #' @rdname dist_cdf
 #' @export
-dist_pdf <- function(x, D, c = 0, c0 = 0, start = NULL, gamma0 = 0, gls = NULL, verified = FALSE) {
-  dfl_det_finite("pdf", D, x, dfl_num(c, "c"), dfl_opts(c0, start, gamma0, gls, verified), hi = 0)
+dist_pdf <- function(x, D, c = 0, c0 = 0, start = NULL, gamma0 = 0, gls = NULL, verified = FALSE,
+                     method = c("auto", "line", "paths")) {
+  dfl_det_finite("pdf", D, x, dfl_num(c, "c"), dfl_opts(c0, start, gamma0, gls, verified, method[1]), hi = 0)
 }
 
 #' @rdname dist_cdf
 #' @export
-dist_quantile <- function(p, D, c = 0, c0 = 0, start = NULL, gamma0 = 0, gls = NULL, x0 = -2, tol = 1e-9) {
+dist_quantile <- function(p, D, c = 0, c0 = 0, start = NULL, gamma0 = 0, gls = NULL, x0 = -2, tol = 1e-9,
+                          method = c("auto", "line", "paths")) {
   pv <- dfl_prob(p)
   dfl_shape(dfl_det_call("quantile", D, pv, c(dfl_num(c, "c"), dfl_num(x0, "x0"), dfl_num(tol, "tol")),
-                         dfl_opts(c0, start, gamma0, gls))[[1]], p)
+                         dfl_opts(c0, start, gamma0, gls, method = method[1]))[[1]], p)
 }
 
 #' @rdname dist_cdf

@@ -103,7 +103,19 @@ them. **`"auto"` is the default, for a case code as for a design**: where it tak
 the two engines agree to about 1e-9, so that values can move in the tenth digit against the versions before 0.5.0;
 `engine = "classical"` gives the values of the classical engine, those of the earlier versions.
 
-The general engine's own functions, with all its options (`c`, `c0`, `start`, `gamma0`, `gls`, `verified`), are
+For the designs whose numerator has rank one or two (polynomial trends of any order, an intercept with sines and
+cosines, `dfl_detrend_first()` of a continuous design that does not vanish at the origin; a zero or a stationary start
+and least squares detrending) the general engine also has the line integral with the explicit kernel: the classical line
+integral with P(t) and the two roots supplied by the general engine's transform. `dist_cdf()`, `dist_pdf()` and
+`dist_quantile()` choose by `method`: `"auto"` (the default) takes it at `c0 = 0` for `c >= -20`, where it is 2.2 to 3.5
+times faster than the inversion on paths per value and 1.8 to 2.7 times per quantile, and the paths otherwise; `"line"`
+forces it (an error with the reason where it does not cover the design) and `"paths"` the paths. `ltratio_cdf()`,
+`ltratio_pdf()` and `ltratio_icdf()` with a design pass `method = "line"` or `"paths"` on (for a design that is a
+classical case, `"line"` is the classical line integral). The classical engine's line integral takes its inner
+integrals on fixed node layouts at `c <= 0`, `c0 = 0` (8 to 20 times faster than the adaptive rules in case DK, 2 to 3
+times in the other cases).
+
+The general engine's own functions, with all its options (`c`, `c0`, `start`, `gamma0`, `gls`, `verified`, `method`), are
 `dist_cdf`, `dist_pdf`, `dist_quantile`, `dist_moments` (the t-ratio), `coef_pdf`, `coef_quantile`, `coef_cdf_gp`
 (the coefficient statistic), `local_power`, `lin_cdf`, `lin_pdf`, `lin_quantile`, `v_cdf`, `v_pdf` (the linear form
 U - aV and the law of V), `adfmax_quantile` and `region_prob`. The companions of the t-ratio for any design are the

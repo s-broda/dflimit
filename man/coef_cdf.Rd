@@ -45,7 +45,9 @@ design of the general engine ([dfl_design]; see the section Engines).}
 \item{g0}{The fixed start, \eqn{y_0 = g_0 \sigma \sqrt{n}}{y_0 = g0 sigma sqrt(n)} (cases DK, DU, DT).}
 
 \item{method}{`"auto"`, `"single"` (or `"line"`), `"double"` (or `"conditional"`) or `"contour"` (a fixed start
-in cases DU, DT only); see the section Methods and ranges.}
+in cases DU, DT only); see the section Methods and ranges. With a design, or `engine = "general"`, [ltratio_cdf()],
+[ltratio_pdf()] and [ltratio_icdf()] also take `"paths"` (the general engine's inversion on paths; see the section
+Engines).}
 
 \item{verified}{`FALSE` (the default): one evaluation by one method; `TRUE`: the checked computation (see the
 section Methods and ranges; with the general engine, a second evaluation by other rules, see [dist_cdf()]).}
@@ -118,8 +120,11 @@ point: the general engine for instance with a stationary start and `c0 != 0`, wi
 unit root, and far below it; the values below 1e-3 of the general engine go back to the classical conditional
 integral, whose error is relative), and the general engine for every other design. `"classical"` forces the classical
 engine (an error for a design it does not have) and `"general"` the general one (without the classical engine's
-checks; `method` must then be `"auto"`). With `engine = "auto"`, a `method` other than `"auto"` and `verified = TRUE`
-keep the classical engine for a classical case. `"auto"` is the default, for a case code as for a design: where it takes
+checks; `method` then names the general engine's own: `"auto"`, `"line"`, the line integral with the explicit kernel,
+or `"paths"`, the inversion on paths around the roots, see [dist_cdf()]). With `engine = "auto"`, a `method` other than
+`"auto"` and `verified = TRUE` keep the classical engine for a classical case; for a design the classical engine does
+not have, `method = "line"` or `"paths"` forces the general engine's line integral or its paths, and for a design that
+is a classical case `"line"` is the classical line integral and `"paths"` the general engine's paths. `"auto"` is the default, for a case code as for a design: where it takes
 the general engine for a case code the two engines agree to about 1e-9 (the values move in the tenth digit or below
 against the earlier versions of the package), and `engine = "classical"` gives the values of the classical engine, those
 of the earlier versions. The functions of the general engine itself, with all its options, are [dist_cdf()] and the others

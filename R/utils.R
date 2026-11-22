@@ -26,11 +26,12 @@ dfl_num <- function(v, name) {
 
 # the method: 0 automatic, 1 the line (single) integral, 2 the conditional (double) integral, 3 the contour integral
 dfl_method <- function(method) {
-  msg <- "method must be \"auto\", \"single\" (\"line\"), \"double\" (\"conditional\") or \"contour\""
+  msg <- paste0("method must be \"auto\", \"single\" (\"line\"), \"double\" (\"conditional\") or \"contour\" ",
+                "(\"paths\", the general engine's inversion on paths around the roots, with a design or engine = \"general\")")
   if (!is.character(method) || length(method) != 1L) stop(msg, call. = FALSE)
-  m <- match(tolower(method), c("auto", "single", "line", "double", "conditional", "contour"))
+  m <- match(tolower(method), c("auto", "single", "line", "double", "conditional", "contour", "paths"))
   if (is.na(m)) stop(msg, call. = FALSE)
-  c(0L, 1L, 1L, 2L, 2L, 3L)[m]
+  c(0L, 1L, 1L, 2L, 2L, 3L, 4L)[m]
 }
 
 dfl_real <- function(x, name) {
@@ -108,10 +109,21 @@ dfl_gls <- function(gls, name = "gls") {
 }
 
 # the options of the general engine's functions: c(c0, start, gamma0, gls, verified)
-dfl_opts <- function(c0 = 0, start = NULL, gamma0 = 0, gls = NULL, verified = FALSE) {
+dfl_opts <- function(c0 = 0, start = NULL, gamma0 = 0, gls = NULL, verified = FALSE, method = NULL) {
   c0 <- dfl_num(c0, "c0")
   gamma0 <- dfl_num(gamma0, "gamma0")
-  c(c0, dfl_start(start, gamma0), gamma0, dfl_gls(gls), dfl_flag(verified, "verified"))
+  o <- c(c0, dfl_start(start, gamma0), gamma0, dfl_gls(gls), dfl_flag(verified, "verified"))
+  if (!is.null(method)) o <- c(o, dfl_gmethod(method))
+  o
+}
+# the method of the general engine's t-ratio (dist_cdf, dist_pdf, dist_quantile): 0 "auto", 1 "line" (the line integral
+# with the explicit kernel), 2 "paths" (the inversion on paths around the roots)
+dfl_gmethod <- function(method) {
+  msg <- "method must be \"auto\", \"line\" (the line integral with the explicit kernel) or \"paths\" (the inversion on paths around the roots)"
+  if (!is.character(method) || length(method) != 1L) stop(msg, call. = FALSE)
+  m <- match(tolower(method), c("auto", "line", "paths"))
+  if (is.na(m)) stop(msg, call. = FALSE)
+  m - 1L
 }
 
 # a function of the general engine (dfl_r_det): the value, with the warnings of the engine given
@@ -185,6 +197,7 @@ dfl_classical_valid <- function(tg, c, c0, method = 0L) {
   if (is.null(tg$case)) return(FALSE)
   k <- dfl_case(tg$case)
   if (nzchar(.Call(C_dfl_r_check, k$model, as.double(c), as.double(c0), as.double(tg$g0), k$stat))) return(FALSE)
+  if (method == 4L) return(FALSE)        # (the general engine's inversion on paths)
   if (k$model == 4L && method == 2L) return(FALSE)
   if (method == 3L && !(k$model %in% 2:3 && tg$g0 != 0 && k$stat == 0L)) return(FALSE)
   TRUE

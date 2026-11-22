@@ -15,7 +15,8 @@ dist_cdf(
   start = NULL,
   gamma0 = 0,
   gls = NULL,
-  verified = FALSE
+  verified = FALSE,
+  method = c("auto", "line", "paths")
 )
 
 dist_pdf(
@@ -26,7 +27,8 @@ dist_pdf(
   start = NULL,
   gamma0 = 0,
   gls = NULL,
-  verified = FALSE
+  verified = FALSE,
+  method = c("auto", "line", "paths")
 )
 
 dist_quantile(
@@ -38,7 +40,8 @@ dist_quantile(
   gamma0 = 0,
   gls = NULL,
   x0 = -2,
-  tol = 1e-09
+  tol = 1e-09,
+  method = c("auto", "line", "paths")
 )
 
 dist_moments(
@@ -71,6 +74,16 @@ dist_moments(
 
 \item{verified}{`FALSE` (the default): one evaluation; `TRUE`: the checked computation (see Details).}
 
+\item{method}{`"auto"` (the default), `"line"` or `"paths"`: the line integral with the explicit kernel (the
+classical engine's line integral with \eqn{P(t)} and the two roots supplied by the general engine's transform) or
+the inversion on paths around the roots. The line integral covers the designs whose numerator has rank one or
+two: no deterministic terms, continuous designs that do not vanish at the origin and whose span is closed under
+differentiation (polynomial trends of any order, an intercept with sines and cosines), and [dfl_detrend_first()]
+of a continuous design that does not vanish at the origin, with a zero or a stationary start and least squares
+detrending. `"auto"` takes it at `c0 = 0` for `c >= -20`, where it is 2.2 to 3.5 times faster than the paths per
+value and 1.8 to 2.7 times per quantile, and the paths otherwise; `"line"` stops with the reason where it does not
+cover the design, the start or the options (GLS detrending, a fixed start, a jump).}
+
 \item{p}{`dist_quantile()`: numeric vector or array of probabilities in (0, 1). `dist_moments()`: the number of
 moments.}
 
@@ -89,7 +102,8 @@ twice the step.}
 The distribution function, density, quantiles and moments of the limit of the Dickey-Fuller t-ratio for any design
 of deterministic terms ([dfl_design]), computed by the general engine: the joint moment generating function of
 \eqn{(U, V)} as a small determinant and the inversion formula on paths around its singularities in the first
-argument (the inversion on paths around the roots), the same representation for every design.
+argument (the inversion on paths around the roots), the same representation for every design; and, for the designs
+whose numerator has rank one or two, the line integral with the explicit kernel (see `method`).
 }
 \details{
 The statistic is the t-ratio of the hypothesis \eqn{\phi = \phi_0 = 1 + c_0/n}{phi = phi0 = 1 + c0/n} in the

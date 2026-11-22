@@ -178,13 +178,16 @@ SEXP dfl_r_regmat(SEXP Ds, SEXP n)
     return X;
 }
 
-/* the options of the general engine from c(c0, start, gamma0, gls, verified) (gls NaN: least squares) */
+/* the options of the general engine from c(c0, start, gamma0, gls, verified) or c(c0, start, gamma0, gls, verified,
+ * method) (gls NaN: least squares; method 0 auto, 1 the line integral with the explicit kernel, 2 the inversion on paths) */
 static dfl_det_opts opts_in(SEXP o)
 {
-    if (len(o, "the options") != 5) Rf_error("the options are c0, start, gamma0, gls and verified");
+    int no = len(o, "the options");
+    if (no != 5 && no != 6) Rf_error("the options are c0, start, gamma0, gls, verified and (optionally) method");
     const double *v = REAL(o);
     dfl_det_opts d; dfl_det_defaults(&d);
     d.c0 = v[0]; d.start = (int) v[1]; d.gamma0 = v[2]; d.gls = v[3]; d.verified = v[4] != 0;
+    if (no == 6) d.method = (int) v[5];
     return d;
 }
 
