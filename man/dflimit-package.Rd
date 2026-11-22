@@ -20,7 +20,13 @@ MATLAB and Julia).
   \item{[ltratio_region()]}{the probability of a region \eqn{\{U \le g(V)\}}{{U <= g(V)}}, case DK;}
   \item{[ltratio_lincdf()]}{the distribution of the linear form \eqn{U - aV}, cases DK and DG;}
   \item{[power_envelope()]}{the asymptotic power envelope of Elliott, Rothenberg and Stock (1996);}
-  \item{[ltratio_threads()]}{the number of worker threads.}
+  \item{[ltratio_threads()]}{the number of worker threads;}
+  \item{[dfl_design]}{the designs of the general engine (any deterministic terms), which the functions above take in
+    place of the case code (with the argument `engine`; see the section Engines of [ltratio_cdf()]);}
+  \item{[dist_cdf()], [coef_pdf()], [lin_cdf()], [local_power()], [adfmax_quantile()]}{the general engine's own
+    functions;}
+  \item{[pt_cdf()], [lm_cdf()], [mza_cdf()]}{the companions for any design: the point-optimal statistic and the
+    power envelope, the LM statistic, MZ_alpha and MSB.}
 }
 }
 \references{

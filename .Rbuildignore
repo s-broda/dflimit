@@ -11,3 +11,4 @@
 ^dflimit\.Rcheck$
 ^CITATION\.cff$
 ^\.zenodo\.json$
+^scratch$

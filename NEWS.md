@@ -1,5 +1,24 @@
 # dflimit 0.5.0
 
+* The general engine (the C engine of dflimit-matlab, branch general-engine): the limits of the Dickey-Fuller statistics
+  for any piecewise smooth deterministic design, by the inversion on paths around the roots of the moment generating
+  function. Designs are made by `dfl_trend()` (polynomial trends of any order), `dfl_perron()` (Perron's models A, B,
+  C with several breaks), `dfl_fdesign()` (regressors given by a function), `dfl_ltrend()`, `dfl_design_from_matrix()`
+  (the regressor matrix of a sample, breaks given or detected) and `dfl_detrend_first()` (the statistic that detrends
+  first), with a zero, fixed or stationary start, GLS detrending and a local null value. The general engine's own
+  functions: `dist_cdf()`, `dist_pdf()`, `dist_quantile()`, `dist_moments()`, `coef_pdf()`, `coef_quantile()`,
+  `coef_cdf_gp()`, `local_power()`, `lin_cdf()`, `lin_pdf()`, `lin_quantile()`, `v_cdf()`, `v_pdf()`,
+  `adfmax_quantile()`, `region_prob()`, and the companions for any design: the point-optimal statistic and the power
+  envelope (`pt_cdf()`, `pt_pdf()`, `pt_quantile()`, `pt_power()`, `pt_envelope()`), the LM statistic (`lm_cdf()`,
+  `lm_quantile()`, `lm_power()`), MZ_alpha and MSB (`mza_cdf()`, `mza_quantile()`, `msb_cdf()`, `msb_quantile()`).
+* The functions of the classical engine (`ltratio_cdf()` and the others) take a design in place of the case code, with
+  the new arguments `start` and `gls`, and the new argument `engine = c("auto", "classical", "general")`: `"auto"`
+  takes the faster engine at the same accuracy where the classical engine accepts the computation (the rule of the C
+  router, measured on both engines) and the general engine elsewhere. With a case code and no `engine` argument the
+  classical engine computes, and the values are those of before, bit for bit.
+* The tests compare the general engine and the router with the values of the Julia engine (DFLimit.jl), a subset of
+  them on CRAN; the reference values are copied from dflimit-matlab by `tools/det-ref-subset.R`.
+
 Four errors of the engine are repaired (the C engine of dflimit-matlab 0.5.0, the repairs of DFLimit.jl 0.5.0). Values
 outside the regions named below are unchanged.
 
