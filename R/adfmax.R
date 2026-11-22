@@ -11,10 +11,17 @@
 #' The cases are `"DU"` and `"DT"` (a constant, or a constant and a trend, zero start) and `"SU"` and `"ST"` (the
 #' same with a stationary start, `c <= -1e-4`). The values are accurate to about 1e-11.
 #'
+#' In place of the case a design of the general engine ([dfl_design]) may be given, with `start = "stationary"` for a
+#' stationary start; `engine` chooses between the two engines as in [ltratio_cdf()] (its section Engines): with a case
+#' code and no `engine` given the classical engine computes as before; a design of one of the four cases takes the
+#' classical engine (with `engine = "auto"` the general engine with a stationary start for `c <= -0.1`, with the values
+#' below 1e-3 from the classical engine), every other design the general engine.
+#'
 #' @inheritParams ltratio_cdf
-#' @param cas The case, one of `"DU"`, `"DT"`, `"SU"`, `"ST"`.
+#' @param cas The case, one of `"DU"`, `"DT"`, `"SU"`, `"ST"`, or a design ([dfl_design]).
+#' @param start With a design: `"zero"` (the default, `NULL`) or `"stationary"`.
 #' @param info If `TRUE`, return a list with the values `value`, the error estimates `err` and the statuses
-#'   `status` (nonzero: the error estimate is not met) of the conditional integral.
+#'   `status` (nonzero: the error estimate is not met) of the conditional integral (`NA` where the router computes).
 #' @return A numeric vector with the attributes of `x` (or the list described under `info`). A warning is given if
 #'   the conditional integral reports, at some points, that its error estimate is not met.
 #' @references Leybourne, S. J. (1995), "Testing for Unit Roots Using Forward and Reverse Dickey-Fuller
@@ -23,19 +30,45 @@
 #' @examples
 #' adfmax_cdf(-2.43542, "DU")       # 0.05 (the quantiles of the ADFmax statistic in the paper)
 #' adfmax_pdf(c(-3, -2), "DT", -5)
+#' adfmax_cdf(-3, dfl_perron("A", 0.5))
 #' @export
-adfmax_cdf <- function(x, cas, c = 0, info = FALSE) {
-  dfl_adfmax(2L, x, cas, c, info)
+adfmax_cdf <- function(x, cas, c = 0, info = FALSE, engine = c("auto", "classical", "general"), start = NULL) {
+  dfl_adfmax(2L, x, cas, c, info, dfl_engine(engine), !missing(engine), start)
 }
 
 #' @rdname adfmax_cdf
 #' @export
-adfmax_pdf <- function(x, cas, c = 0, info = FALSE) {
-  dfl_adfmax(1L, x, cas, c, info)
+adfmax_pdf <- function(x, cas, c = 0, info = FALSE, engine = c("auto", "classical", "general"), start = NULL) {
+  dfl_adfmax(1L, x, cas, c, info, dfl_engine(engine), !missing(engine), start)
 }
 
-dfl_adfmax <- function(kind, x, cas, c, info) {
-  k <- dfl_case(cas, c("DU", "DT", "SU", "ST"))
+dfl_adfmax_cases <- c("DU", "DT", "SU", "ST")
+# the path of ADFmax: "legacy" (the classical entry point), or the router with the spec (for a design: the design,
+# which the C router gives to the classical engine where it is one of the four cases)
+dfl_adfmax_plan <- function(cas, engine, given, start) {
+  tg <- dfl_target(cas, 0, start, NULL, dfl_adfmax_cases)
+  cls <- !is.null(tg$case) && tg$case %in% dfl_adfmax_cases
+  if (is.null(tg$D)) {
+    if (!given || engine == "classical") return(list(path = "legacy", case = tg$case))
+    return(list(path = "router", spec = dfl_spec(tg), engine = dfl_engine_code(engine)))
+  }
+  if (engine == "classical") {
+    if (!cls) dfl_no_classical("ADFmax of the classical engine has the cases DU, DT, SU, ST only")
+    return(list(path = "legacy", case = tg$case))
+  }
+  list(path = "router", spec = dfl_spec(tg, FALSE), engine = dfl_engine_code(engine), tg = tg)
+}
+
+dfl_adfmax <- function(kind, x, cas, c, info, engine = "auto", given = FALSE, start = NULL) {
+  pl <- dfl_adfmax_plan(cas, engine, given, start)
+  if (pl$path == "router") {
+    v <- dfl_route_call(if (kind == 2L) "adf" else "adfpdf", dfl_real(x, "x"), pl, dfl_num(c, "c"))
+    v <- dfl_shape(v, x)
+    if (!isTRUE(info)) return(v)
+    na <- dfl_shape(rep(NA_real_, length(v)), x)
+    return(list(value = v, err = na, status = dfl_shape(rep(NA_integer_, length(v)), x)))
+  }
+  k <- dfl_case(pl$case, dfl_adfmax_cases)
   r <- .Call(C_dfl_r_adfmax, kind, dfl_real(x, "x"), k$model, dfl_num(c, "c"), k$stat)
   names(r) <- c("value", "err", "status")
   if (any(r$status != 0L)) {
@@ -52,19 +85,36 @@ dfl_adfmax <- function(kind, x, cas, c, info) {
 #' @param x0 The starting point of the search.
 #' @details `adfmax_icdf()` has no entry point of its own in the C engine: as `adfmax_icdf` of the MATLAB and Julia
 #'   programs, it finds each quantile by Newton's method on `adfmax_cdf()` with `adfmax_pdf()` as the derivative,
-#'   safeguarded by bisection on a bracket grown from `[x0 - 1, x0 + 1]`.
+#'   safeguarded by bisection on a bracket grown from `[x0 - 1, x0 + 1]`; where the general engine computes (a design
+#'   other than the four cases, or `engine = "general"`), by its own search from `x0` ([adfmax_quantile()]).
 #' @examples
 #' adfmax_icdf(0.05, "DT")          # -3.11891 (the quantiles of the ADFmax statistic in the paper)
 #' @export
-adfmax_icdf <- function(p, cas, c = 0, tol = 1e-10, x0 = -2) {
+adfmax_icdf <- function(p, cas, c = 0, tol = 1e-10, x0 = -2, engine = c("auto", "classical", "general"), start = NULL) {
   p0 <- p
   p <- dfl_real(p, "p")
   if (!all(!is.na(p) & p > 0 & p < 1)) stop("p must lie in (0, 1)", call. = FALSE)
-  dfl_case(cas, c("DU", "DT", "SU", "ST"))
+  given <- !missing(engine)
+  engine <- dfl_engine(engine)
+  pl <- dfl_adfmax_plan(cas, engine, given, start)
   c <- dfl_num(c, "c")
   tol <- dfl_num(tol, "tol")
   x0 <- dfl_num(x0, "x0")
-  cdf <- function(y) adfmax_cdf(y, cas, c)
+  if (pl$path == "router") {
+    tg <- dfl_target(cas, 0, start, NULL, dfl_adfmax_cases)
+    if (engine == "general" || is.null(tg$case) || !tg$case %in% dfl_adfmax_cases) {
+      # (the general engine's own search, from x0)
+      G <- dfl_general_target(tg)
+      return(dfl_shape(dfl_det_call("adfquantile", G$D, p, c(c, x0, tol), dfl_opts(0, G$start, 0, NULL))[[1]], p0))
+    }
+  }
+  cdf <- function(y) adfmax_cdf(y, cas, c, engine = engine, start = start)
+  pdf <- function(y) adfmax_pdf(y, cas, c, engine = engine, start = start)
+  if (pl$path == "legacy") {
+    cas <- pl$case
+    cdf <- function(y) adfmax_cdf(y, cas, c)
+    pdf <- function(y) adfmax_pdf(y, cas, c)
+  }
   q <- vapply(p, function(pk) {
     lo <- x0 - 1
     hi <- x0 + 1
@@ -73,7 +123,7 @@ adfmax_icdf <- function(p, cas, c = 0, tol = 1e-10, x0 = -2) {
     x <- (lo + hi) / 2
     for (it in 1:100) {
       F <- cdf(x)
-      f <- adfmax_pdf(x, cas, c)
+      f <- pdf(x)
       if (F > pk) hi <- x else lo <- x
       xn <- x - (F - pk) / f
       if (!(is.finite(xn) && lo < xn && xn < hi)) xn <- (lo + hi) / 2

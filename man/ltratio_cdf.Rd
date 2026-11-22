@@ -5,14 +5,37 @@
 \alias{ltratio_pdf}
 \title{Limiting distribution of the Dickey-Fuller t-ratio}
 \usage{
-ltratio_cdf(x, cas, c = 0, c0 = 0, g0 = 0, method = "auto", verified = FALSE)
+ltratio_cdf(
+  x,
+  cas,
+  c = 0,
+  c0 = 0,
+  g0 = 0,
+  method = "auto",
+  verified = FALSE,
+  engine = c("auto", "classical", "general"),
+  start = NULL,
+  gls = NULL
+)
 
-ltratio_pdf(x, cas, c = 0, c0 = 0, g0 = 0, method = "auto", verified = FALSE)
+ltratio_pdf(
+  x,
+  cas,
+  c = 0,
+  c0 = 0,
+  g0 = 0,
+  method = "auto",
+  verified = FALSE,
+  engine = c("auto", "classical", "general"),
+  start = NULL,
+  gls = NULL
+)
 }
 \arguments{
 \item{x}{Numeric vector or array of points. `-Inf`, `Inf` and `NaN` give 0, 1 (density 0) and `NaN`.}
 
-\item{cas}{The case, one of `"DK"`, `"DU"`, `"DT"`, `"SK"`, `"SU"`, `"ST"`, `"DG"` (see the section Cases).}
+\item{cas}{The case, one of `"DK"`, `"DU"`, `"DT"`, `"SK"`, `"SU"`, `"ST"`, `"DG"` (see the section Cases), or a
+design of the general engine ([dfl_design]; see the section Engines).}
 
 \item{c}{The local-to-unity parameter \eqn{c}, \eqn{\phi = 1 + c/n}{phi = 1 + c/n}.}
 
@@ -24,7 +47,17 @@ ltratio_pdf(x, cas, c = 0, c0 = 0, g0 = 0, method = "auto", verified = FALSE)
 in cases DU, DT only); see the section Methods and ranges.}
 
 \item{verified}{`FALSE` (the default): one evaluation by one method; `TRUE`: the checked computation (see the
-section Methods and ranges).}
+section Methods and ranges; with the general engine, a second evaluation by other rules, see [dist_cdf()]).}
+
+\item{engine}{`"auto"`, `"classical"` or `"general"` (see the section Engines). Not given: the classical engine
+for a case code, `"auto"` for a design.}
+
+\item{start}{With a design: the start, `"zero"`, `"fixed"` (with `g0`) or `"stationary"`; `NULL` (the default) is
+`"fixed"` where `g0` is not 0 and `"zero"` otherwise. With a case code it must be `NULL` (the code names the
+start).}
+
+\item{gls}{With a design: `NULL` (the default) for least squares detrending, or \eqn{\bar c < 0}{cbar < 0} for GLS
+detrending at \eqn{1 + \bar c/n}{1 + cbar/n}. With a case code it must be `NULL`.}
 }
 \value{
 A numeric vector with the attributes (`dim`, `dimnames`, `names`) of `x`. A warning is given in a regime
@@ -109,11 +142,38 @@ only, raise an error that names the arguments.
 The computation runs on the engine's worker threads; see [ltratio_threads()].
 }
 
+\section{Engines}{
+
+The package holds two engines. The classical engine computes the cases above by the line, conditional and contour
+integral representations. The general engine computes the same limits for any piecewise smooth deterministic design
+(polynomial trends of any order, breaks in level and slope at several dates, regressors given by a function or by the
+regressor matrix of a sample, GLS detrending, the statistic that detrends first; see [dfl_design]) by the inversion
+formula on paths around the singularities of the moment generating function in its first argument, the inversion on
+paths around the roots. In place of the case code `cas` a design may be given, with the start by `g0` (a fixed start)
+or `start = "stationary"`, and GLS detrending by `gls`; a design that is a classical case is that case:
+`dfl_trend(0)` is case DU, with `start = "stationary"` case SU, and `dfl_trend(1)` with `gls = -13.5` is case DG.
+
+`engine = "auto"` takes, for a computation that the classical engine accepts (a case code, or a design that is a
+classical case within the classical engine's checks of the arguments), the faster of the two engines at the same
+accuracy, or the more accurate where they differ, by a rule measured on the two engines (for the t-ratio point by
+point: the general engine for instance with a stationary start and `c0 != 0`, with a zero start and `c0 > 0` near the
+unit root, and far below it; the values below 1e-3 of the general engine go back to the classical conditional
+integral, whose error is relative), and the general engine for every other design. `"classical"` forces the classical
+engine (an error for a design it does not have) and `"general"` the general one (without the classical engine's
+checks; `method` must then be `"auto"`). With `engine = "auto"`, a `method` other than `"auto"` and `verified = TRUE`
+keep the classical engine for a classical case. With a case code and no `engine` given, the classical engine
+computes, and the values are those of the earlier versions of the package; with a design and no `engine` given,
+`"auto"` applies. The functions of the general engine itself, with all its options, are [dist_cdf()] and the others
+listed there.
+}
+
 \examples{
 ltratio_cdf(-2.86157, "DU", -5)            # limiting power of the 5\% test of tau_mu at c = -5
 ltratio_cdf(-2.86157, "SU", -5)            # the same with a stationary start
 ltratio_cdf(0, "DK", 2, c0 = 2)            # t-ratio centred at the true value
 ltratio_pdf(c(-3, -2, -1), "DT", -5)       # density
+ltratio_cdf(-2.86157, "DU", -5, engine = "auto")     # the engine of the faster representation
+ltratio_cdf(c(-4.5, -4), dfl_perron("C", 0.5))       # a break in level and slope at mid-sample
 }
 \references{
 Bao, Y., Broda, S. A. and Kan, R., "The Exact Limiting Distribution of the Dickey-Fuller t-Ratio

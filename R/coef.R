@@ -11,7 +11,9 @@
 #' `coef_icdf` of the MATLAB programs, `coef_cdf()` evaluates `ltratio_cdf(0, cas, c, c0 = c0 + y, g0, method)` at
 #' each `y`, in every case and with every start and option of [ltratio_cdf()], and `coef_icdf()` finds each quantile
 #' by the Illinois variant of regula falsi on `coef_cdf()`, on a bracket grown from `[-40, 10]` until its width is
-#' below `tol` (about ten evaluations of `coef_cdf()`).
+#' below `tol` (about ten evaluations of `coef_cdf()`). With a design, or with `engine` given, the router of the C
+#' engine computes (the same construction in C, with the engine of each point; the general engine's own functions
+#' where it takes the general engine).
 #'
 #' @inheritParams ltratio_cdf
 #' @param y Numeric vector or array of points. `-Inf`, `Inf` and `NaN` give 0, 1 and `NaN`.
@@ -19,13 +21,29 @@
 #' @return `coef_cdf()`: the distribution function, with the attributes of `y`; `coef_icdf()`: the quantiles, with
 #'   the attributes of `p`.
 #' @inheritSection ltratio_cdf Cases
-#' @seealso [ltratio_cdf()].
+#' @inheritSection ltratio_cdf Engines
+#' @seealso [ltratio_cdf()], [coef_pdf()], [coef_quantile()].
 #' @examples
 #' coef_cdf(-14.0936, "DU", -10)    # power of the 5% coefficient test of rho_mu at c = -10
 #' coef_icdf(0.05, "DK")            # -8.039, the 5% critical value of rho
+#' coef_cdf(-20, dfl_perron("A", 0.5))
 #' @export
-coef_cdf <- function(y, cas, c = 0, c0 = 0, g0 = 0, method = "auto", verified = FALSE) {
-  dfl_once(coef_cdf_(y, cas, c, c0, g0, method, verified))
+coef_cdf <- function(y, cas, c = 0, c0 = 0, g0 = 0, method = "auto", verified = FALSE,
+                     engine = c("auto", "classical", "general"), start = NULL, gls = NULL) {
+  given <- !missing(engine)
+  engine <- dfl_engine(engine)
+  tg <- dfl_target(cas, g0, start, gls)
+  me <- dfl_method(method)
+  ve <- dfl_flag(verified, "verified")
+  pl <- dfl_plan(tg, engine, given, dfl_num(c, "c"), dfl_num(c0, "c0"), me, ve)
+  if (pl$path == "legacy") return(dfl_once(coef_cdf_(y, pl$case, c, c0, pl$g0, method, verified)))
+  if (me != 0L) stop("method names a representation of the classical engine; it does not apply with the general engine", call. = FALSE)
+  if (ve == 1L) {
+    # (the checked computation of the general engine: the router has none for the coefficient statistic)
+    G <- dfl_general_target(tg)
+    return(dfl_det_finite("coefcdf", G$D, y, c, dfl_opts(c0, G$start, G$g0, G$gls, TRUE)))
+  }
+  dfl_once(dfl_shape(dfl_route_call("coef", dfl_real(y, "y"), pl, c(c, c0)), y))
 }
 coef_cdf_ <- function(y, cas, c, c0, g0, method, verified) {
   dfl_case(cas)
@@ -47,8 +65,19 @@ coef_cdf_ <- function(y, cas, c, c0, g0, method, verified) {
 #' @param p Numeric vector or array of probabilities in (0, 1).
 #' @param tol The width of the final bracket.
 #' @export
-coef_icdf <- function(p, cas, c = 0, c0 = 0, g0 = 0, method = "auto", tol = 1e-9, verified = FALSE) {
-  dfl_once(coef_icdf_(p, cas, c, c0, g0, method, tol, verified))
+coef_icdf <- function(p, cas, c = 0, c0 = 0, g0 = 0, method = "auto", tol = 1e-9, verified = FALSE,
+                      engine = c("auto", "classical", "general"), start = NULL, gls = NULL) {
+  given <- !missing(engine)
+  engine <- dfl_engine(engine)
+  tg <- dfl_target(cas, g0, start, gls)
+  me <- dfl_method(method)
+  ve <- dfl_flag(verified, "verified")
+  pl <- dfl_plan(tg, engine, given, dfl_num(c, "c"), dfl_num(c0, "c0"), me, ve)
+  if (pl$path == "legacy") return(dfl_once(coef_icdf_(p, pl$case, c, c0, pl$g0, method, tol, verified)))
+  if (me != 0L) stop("method names a representation of the classical engine; it does not apply with the general engine", call. = FALSE)
+  pv <- dfl_real(p, "p")
+  if (!all(!is.na(pv) & pv > 0 & pv < 1)) stop("p must lie in (0, 1)", call. = FALSE)
+  dfl_once(dfl_shape(dfl_route_call("coefq", pv, pl, c(c, c0, dfl_num(tol, "tol"))), p))
 }
 coef_icdf_ <- function(p, cas, c, c0, g0, method, tol, verified) {
   p0 <- p

@@ -4,17 +4,31 @@
 \alias{ltratio_region}
 \title{Limiting probability of a region of the plane}
 \usage{
-ltratio_region(bnd, cas = "DK", c = 0, info = FALSE)
+ltratio_region(
+  bnd,
+  cas = "DK",
+  c = 0,
+  info = FALSE,
+  engine = c("auto", "classical", "general"),
+  start = NULL,
+  g0 = 0,
+  gls = NULL
+)
 }
 \arguments{
 \item{bnd}{The boundary, a list as described above.}
 
-\item{cas}{The case: `"DK"` only.}
+\item{cas}{The case: `"DK"` only, or a design ([dfl_design]).}
 
 \item{c}{The local-to-unity parameter.}
 
 \item{info}{If `TRUE`, return a list with the probability `P`, the error estimate `err` and the status `status`
 (nonzero: the error estimate is not met).}
+
+\item{engine}{`"auto"` (the default; the classical engine for case DK), `"classical"` or `"general"`.}
+
+\item{start, g0, gls}{With a design: its start (`"zero"`, `"fixed"` with the fixed start `g0`, `"stationary"`) and
+GLS detrending (`NULL`: least squares); see [ltratio_cdf()].}
 }
 \value{
 The probability (or the list described under `info`). A warning is given if the error estimate is not
@@ -44,12 +58,18 @@ and optionally `v0` (\eqn{g = +\infty}{g = +Inf} on \eqn{(0, v_0)}{(0, v0)}, who
 \eqn{P(V < v_0)}{P(V < v0)} is added) and `brks` (kinks of \eqn{g}, breakpoints of the outer rule). The boundary
 type `"fun"` of the MATLAB programs (any function \eqn{g}) is not available: the C engine has the three families
 above only.
+
+In place of the case a design of the general engine ([dfl_design]) may be given, with its start (`g0`, `start`)
+and GLS detrending (`gls`): `dfl_trend(-1)` with a zero start is case DK, and every other design, or
+`engine = "general"`, takes the general engine, for the types `"line"` and `"parabola"` without `v0` and `brks`
+([region_prob()]).
 }
 \examples{
 # the weighted-average-power test of the paper: size 0.05
 ltratio_region(list(type = "wap", k = 3.6658, omega = 10), "DK", 0)
 # the point-optimal test against cbar = -7: size 0.05
 ltratio_region(list(type = "line", a = -3.5, b = -0.2639), "DK", 0)
+ltratio_region(list(type = "line", a = -3.5, b = -0.2639), dfl_perron("A", 0.5), 0)
 }
 \seealso{
 [ltratio_cdf()].

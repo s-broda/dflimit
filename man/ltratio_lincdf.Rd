@@ -4,18 +4,34 @@
 \alias{ltratio_lincdf}
 \title{Limiting distribution of the linear form U - aV}
 \usage{
-ltratio_lincdf(b, a, cas, c = 0, cbar = -13.5)
+ltratio_lincdf(
+  b,
+  a,
+  cas,
+  c = 0,
+  cbar = -13.5,
+  engine = c("auto", "classical", "general"),
+  start = NULL,
+  g0 = 0,
+  gls = NULL
+)
 }
 \arguments{
 \item{b}{Numeric vector or array of points. `-Inf`, `Inf` and `NaN` give 0, 1 and `NaN`.}
 
 \item{a}{The coefficient of \eqn{V}, a single number; `NaN` for the distribution of \eqn{V} (case DK).}
 
-\item{cas}{The case, `"DK"` or `"DG"`.}
+\item{cas}{The case, `"DK"` or `"DG"`, or a design ([dfl_design]).}
 
 \item{c}{The local-to-unity parameter, finite.}
 
 \item{cbar}{The detrending parameter \eqn{\bar c}{cbar} of case DG (-13.5: the DF-GLS tests); not used in case DK.}
+
+\item{engine}{`"auto"`, `"classical"` or `"general"`. Not given: the classical engine for a case code, `"auto"` for
+a design.}
+
+\item{start, g0, gls}{With a design: its start (`"zero"`, `"fixed"` with the fixed start `g0`, `"stationary"`) and
+GLS detrending (`NULL`: least squares); see [ltratio_cdf()].}
 }
 \value{
 The probabilities, with the attributes of `b`.
@@ -40,16 +56,24 @@ the MATLAB and Julia programs.
 
 Where the transform has not fallen below 5e-9 by the end of that grid, or `c > 0` (\eqn{|a|} below about 0.3 to 3,
 depending on `c`, which includes `a = 0`, the law of \eqn{U} alone), that inversion is not accurate, and the
-probability comes from a conditional integral instead: in case DK that of the region \eqn{U \le aV + b}{U <= aV + b}
-([ltratio_region()]), in case DG the conditional integral given \eqn{U + 1/2}, whose law is a gamma law of shape 1/2
-under every tilt in \eqn{V}; \eqn{P(V \le b)}{P(V <= b)} takes a longer grid for `c <= -50` and a finer one for
-`c > 2`. The values are accurate to about 1e-10 and lie in [0, 1]. `c` must be at least -550, in case DG at most about
-3.5 (at `cbar = -13.5`; less for `cbar` nearer 0), and for `a = NaN` at most about 7.
+probability comes from a conditional integral instead: in case DK that of the region
+\eqn{U \le aV + b}{U <= aV + b} ([ltratio_region()]), in case DG the conditional integral given \eqn{U + 1/2}, whose
+law is a gamma law of shape 1/2 under every tilt in \eqn{V}; \eqn{P(V \le b)}{P(V <= b)} takes a longer grid for
+`c <= -50` and a finer one for `c > 2`. The values are accurate to about 1e-10 and lie in [0, 1]. `c` must be at least -550, in case DG at most
+about 3.5 (at `cbar = -13.5`; less for `cbar` nearer 0), and for `a = NaN` at most about 7.
+
+In place of the case a design of the general engine ([dfl_design]) may be given, with its start (`g0`, `start`)
+and GLS detrending (`gls`); `engine` chooses between the two engines as in [ltratio_cdf()] (its section Engines):
+with a case code and no `engine` given the classical engine computes as before; `dfl_trend(-1)` (case DK) and
+`dfl_trend(1)` with `gls = -13.5` (case DG) are classical cases (with `engine = "auto"` the general engine for the law
+of \eqn{V} in case DK and in case DG above the unit root), every other design takes the general engine
+([lin_cdf()]).
 }
 \examples{
 ltratio_lincdf(-0.2639, -3.5, "DK", 0)    # 0.05: the size of the point-optimal test at cbar = -7
 ltratio_lincdf(-0.2639, -3.5, "DK", -7)   # its power at c = -7
 ltratio_lincdf(c(0.1, 0.5, 2), NaN, "DK") # P(V <= b) at the unit root
+ltratio_lincdf(0, -3.5, dfl_perron("A", 0.5), -5)
 }
 \references{
 Elliott, G., Rothenberg, T. J. and Stock, J. H. (1996), "Efficient Tests for an Autoregressive Unit

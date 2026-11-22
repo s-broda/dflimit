@@ -13,13 +13,17 @@ ltratio_icdf(
   method = "auto",
   tol = 1e-10,
   info = FALSE,
-  verified = FALSE
+  verified = FALSE,
+  engine = c("auto", "classical", "general"),
+  start = NULL,
+  gls = NULL
 )
 }
 \arguments{
 \item{p}{Numeric vector or array of probabilities in (0, 1).}
 
-\item{cas}{The case, one of `"DK"`, `"DU"`, `"DT"`, `"SK"`, `"SU"`, `"ST"`, `"DG"` (see the section Cases).}
+\item{cas}{The case, one of `"DK"`, `"DU"`, `"DT"`, `"SK"`, `"SU"`, `"ST"`, `"DG"` (see the section Cases), or a
+design of the general engine ([dfl_design]; see the section Engines).}
 
 \item{c}{The local-to-unity parameter \eqn{c}, \eqn{\phi = 1 + c/n}{phi = 1 + c/n}.}
 
@@ -36,10 +40,21 @@ in cases DU, DT only); see the section Methods and ranges.}
 of iterations `iter` and the convergence flags `conv`.}
 
 \item{verified}{`FALSE` (the default): one evaluation by one method; `TRUE`: the checked computation (see the
-section Methods and ranges).}
+section Methods and ranges; with the general engine, a second evaluation by other rules, see [dist_cdf()]).}
+
+\item{engine}{`"auto"`, `"classical"` or `"general"` (see the section Engines). Not given: the classical engine
+for a case code, `"auto"` for a design.}
+
+\item{start}{With a design: the start, `"zero"`, `"fixed"` (with `g0`) or `"stationary"`; `NULL` (the default) is
+`"fixed"` where `g0` is not 0 and `"zero"` otherwise. With a case code it must be `NULL` (the code names the
+start).}
+
+\item{gls}{With a design: `NULL` (the default) for least squares detrending, or \eqn{\bar c < 0}{cbar < 0} for GLS
+detrending at \eqn{1 + \bar c/n}{1 + cbar/n}. With a case code it must be `NULL`.}
 }
 \value{
-The quantiles, with the attributes of `p` (or the list described under `info`). A warning is given if
+The quantiles, with the attributes of `p` (or the list described under `info`; where the router computes,
+  `F` is the distribution function at `q` by the same engine and `iter` and `conv` are `NA`). A warning is given if
   Newton's method did not converge at some points.
 }
 \description{
@@ -62,9 +77,35 @@ too large for the quadrature, and the functions raise an error) followed by the 
 }
 }
 
+\section{Engines}{
+
+The package holds two engines. The classical engine computes the cases above by the line, conditional and contour
+integral representations. The general engine computes the same limits for any piecewise smooth deterministic design
+(polynomial trends of any order, breaks in level and slope at several dates, regressors given by a function or by the
+regressor matrix of a sample, GLS detrending, the statistic that detrends first; see [dfl_design]) by the inversion
+formula on paths around the singularities of the moment generating function in its first argument, the inversion on
+paths around the roots. In place of the case code `cas` a design may be given, with the start by `g0` (a fixed start)
+or `start = "stationary"`, and GLS detrending by `gls`; a design that is a classical case is that case:
+`dfl_trend(0)` is case DU, with `start = "stationary"` case SU, and `dfl_trend(1)` with `gls = -13.5` is case DG.
+
+`engine = "auto"` takes, for a computation that the classical engine accepts (a case code, or a design that is a
+classical case within the classical engine's checks of the arguments), the faster of the two engines at the same
+accuracy, or the more accurate where they differ, by a rule measured on the two engines (for the t-ratio point by
+point: the general engine for instance with a stationary start and `c0 != 0`, with a zero start and `c0 > 0` near the
+unit root, and far below it; the values below 1e-3 of the general engine go back to the classical conditional
+integral, whose error is relative), and the general engine for every other design. `"classical"` forces the classical
+engine (an error for a design it does not have) and `"general"` the general one (without the classical engine's
+checks; `method` must then be `"auto"`). With `engine = "auto"`, a `method` other than `"auto"` and `verified = TRUE`
+keep the classical engine for a classical case. With a case code and no `engine` given, the classical engine
+computes, and the values are those of the earlier versions of the package; with a design and no `engine` given,
+`"auto"` applies. The functions of the general engine itself, with all its options, are [dist_cdf()] and the others
+listed there.
+}
+
 \examples{
 ltratio_icdf(c(0.01, 0.05, 0.10), "DU")   # asymptotic critical values of tau_mu
+ltratio_icdf(0.05, dfl_trend(2))          # the quadratic trend (the general engine)
 }
 \seealso{
-[ltratio_cdf()].
+[ltratio_cdf()], [dist_quantile()].
 }

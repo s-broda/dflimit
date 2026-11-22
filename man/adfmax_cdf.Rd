@@ -6,21 +6,48 @@
 \alias{adfmax_icdf}
 \title{Limiting distribution of the ADFmax test of Leybourne (1995)}
 \usage{
-adfmax_cdf(x, cas, c = 0, info = FALSE)
+adfmax_cdf(
+  x,
+  cas,
+  c = 0,
+  info = FALSE,
+  engine = c("auto", "classical", "general"),
+  start = NULL
+)
 
-adfmax_pdf(x, cas, c = 0, info = FALSE)
+adfmax_pdf(
+  x,
+  cas,
+  c = 0,
+  info = FALSE,
+  engine = c("auto", "classical", "general"),
+  start = NULL
+)
 
-adfmax_icdf(p, cas, c = 0, tol = 1e-10, x0 = -2)
+adfmax_icdf(
+  p,
+  cas,
+  c = 0,
+  tol = 1e-10,
+  x0 = -2,
+  engine = c("auto", "classical", "general"),
+  start = NULL
+)
 }
 \arguments{
 \item{x}{Numeric vector or array of points. `-Inf`, `Inf` and `NaN` give 0, 1 (density 0) and `NaN`.}
 
-\item{cas}{The case, one of `"DU"`, `"DT"`, `"SU"`, `"ST"`.}
+\item{cas}{The case, one of `"DU"`, `"DT"`, `"SU"`, `"ST"`, or a design ([dfl_design]).}
 
 \item{c}{The local-to-unity parameter \eqn{c}, \eqn{\phi = 1 + c/n}{phi = 1 + c/n}.}
 
 \item{info}{If `TRUE`, return a list with the values `value`, the error estimates `err` and the statuses
-`status` (nonzero: the error estimate is not met) of the conditional integral.}
+`status` (nonzero: the error estimate is not met) of the conditional integral (`NA` where the router computes).}
+
+\item{engine}{`"auto"`, `"classical"` or `"general"` (see the section Engines). Not given: the classical engine
+for a case code, `"auto"` for a design.}
+
+\item{start}{With a design: `"zero"` (the default, `NULL`) or `"stationary"`.}
 
 \item{p}{Numeric vector or array of probabilities in (0, 1).}
 
@@ -45,13 +72,21 @@ numerators \eqn{U} and \eqn{-U - 1}, so that ADFmax converges to \eqn{(|R| - 1/2
 The cases are `"DU"` and `"DT"` (a constant, or a constant and a trend, zero start) and `"SU"` and `"ST"` (the
 same with a stationary start, `c <= -1e-4`). The values are accurate to about 1e-11.
 
+In place of the case a design of the general engine ([dfl_design]) may be given, with `start = "stationary"` for a
+stationary start; `engine` chooses between the two engines as in [ltratio_cdf()] (its section Engines): with a case
+code and no `engine` given the classical engine computes as before; a design of one of the four cases takes the
+classical engine (with `engine = "auto"` the general engine with a stationary start for `c <= -0.1`, with the values
+below 1e-3 from the classical engine), every other design the general engine.
+
 `adfmax_icdf()` has no entry point of its own in the C engine: as `adfmax_icdf` of the MATLAB and Julia
   programs, it finds each quantile by Newton's method on `adfmax_cdf()` with `adfmax_pdf()` as the derivative,
-  safeguarded by bisection on a bracket grown from `[x0 - 1, x0 + 1]`.
+  safeguarded by bisection on a bracket grown from `[x0 - 1, x0 + 1]`; where the general engine computes (a design
+  other than the four cases, or `engine = "general"`), by its own search from `x0` ([adfmax_quantile()]).
 }
 \examples{
 adfmax_cdf(-2.43542, "DU")       # 0.05 (the quantiles of the ADFmax statistic in the paper)
 adfmax_pdf(c(-3, -2), "DT", -5)
+adfmax_cdf(-3, dfl_perron("A", 0.5))
 adfmax_icdf(0.05, "DT")          # -3.11891 (the quantiles of the ADFmax statistic in the paper)
 }
 \references{

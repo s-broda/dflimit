@@ -4,14 +4,22 @@
 \alias{power_envelope}
 \title{Asymptotic power envelope of Elliott, Rothenberg and Stock (1996)}
 \usage{
-power_envelope(c, cas = "DK", alpha = 0.05)
+power_envelope(
+  c,
+  cas = "DK",
+  alpha = 0.05,
+  engine = c("auto", "classical", "general")
+)
 }
 \arguments{
 \item{c}{Numeric vector or array of the local-to-unity parameters. `NaN` gives `NaN`.}
 
-\item{cas}{The case, `"DK"`, `"DU"` (the same as `"DK"`) or `"DG"`.}
+\item{cas}{The case, `"DK"`, `"DU"` (the same as `"DK"`) or `"DG"`, or a design ([dfl_design]).}
 
 \item{alpha}{The level of the tests.}
+
+\item{engine}{`"auto"`, `"classical"` or `"general"`. Not given: the classical engine for a case code, `"auto"` for
+a design.}
 }
 \value{
 The envelope, with the attributes of `c`.
@@ -31,10 +39,16 @@ DG, where the limit of the invariant statistic of Elliott, Rothenberg and Stock 
 `c >= 0`. Near `c = 0`, where `a` is small and that inversion is not accurate, the critical value and the power come
 from the conditional integral of [ltratio_lincdf()], the critical value by bisection in \eqn{b + 1/2} to
 1e-12 of its scale. As `power_envelope` of the MATLAB and Julia programs.
+
+In place of the case a design of the general engine ([dfl_design]) may be given: `dfl_trend(-1)` and
+`dfl_trend(0)` are case DK, `dfl_trend(1)` case DG, and every other design has the envelope of the point-optimal
+statistic of the design ([pt_envelope()]). `engine` chooses between the two engines as in [ltratio_cdf()]: with a
+case code and no `engine` given the classical engine computes as before.
 }
 \examples{
 power_envelope(-7, "DK")                   # 0.4994: at c = -7 the envelope has power one half
 power_envelope(c(-5, -13.5), "DG")
+power_envelope(-10, dfl_perron("C", 0.5))
 }
 \references{
 Elliott, G., Rothenberg, T. J. and Stock, J. H. (1996), "Efficient Tests for an Autoregressive Unit

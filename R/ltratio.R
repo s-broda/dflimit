@@ -71,15 +71,46 @@
 #'
 #' The computation runs on the engine's worker threads; see [ltratio_threads()].
 #'
+#' @section Engines:
+#' The package holds two engines. The classical engine computes the cases above by the line, conditional and contour
+#' integral representations. The general engine computes the same limits for any piecewise smooth deterministic design
+#' (polynomial trends of any order, breaks in level and slope at several dates, regressors given by a function or by the
+#' regressor matrix of a sample, GLS detrending, the statistic that detrends first; see [dfl_design]) by the inversion
+#' formula on paths around the singularities of the moment generating function in its first argument, the inversion on
+#' paths around the roots. In place of the case code `cas` a design may be given, with the start by `g0` (a fixed start)
+#' or `start = "stationary"`, and GLS detrending by `gls`; a design that is a classical case is that case:
+#' `dfl_trend(0)` is case DU, with `start = "stationary"` case SU, and `dfl_trend(1)` with `gls = -13.5` is case DG.
+#'
+#' `engine = "auto"` takes, for a computation that the classical engine accepts (a case code, or a design that is a
+#' classical case within the classical engine's checks of the arguments), the faster of the two engines at the same
+#' accuracy, or the more accurate where they differ, by a rule measured on the two engines (for the t-ratio point by
+#' point: the general engine for instance with a stationary start and `c0 != 0`, with a zero start and `c0 > 0` near the
+#' unit root, and far below it; the values below 1e-3 of the general engine go back to the classical conditional
+#' integral, whose error is relative), and the general engine for every other design. `"classical"` forces the classical
+#' engine (an error for a design it does not have) and `"general"` the general one (without the classical engine's
+#' checks; `method` must then be `"auto"`). With `engine = "auto"`, a `method` other than `"auto"` and `verified = TRUE`
+#' keep the classical engine for a classical case. With a case code and no `engine` given, the classical engine
+#' computes, and the values are those of the earlier versions of the package; with a design and no `engine` given,
+#' `"auto"` applies. The functions of the general engine itself, with all its options, are [dist_cdf()] and the others
+#' listed there.
+#'
 #' @param x Numeric vector or array of points. `-Inf`, `Inf` and `NaN` give 0, 1 (density 0) and `NaN`.
-#' @param cas The case, one of `"DK"`, `"DU"`, `"DT"`, `"SK"`, `"SU"`, `"ST"`, `"DG"` (see the section Cases).
+#' @param cas The case, one of `"DK"`, `"DU"`, `"DT"`, `"SK"`, `"SU"`, `"ST"`, `"DG"` (see the section Cases), or a
+#'   design of the general engine ([dfl_design]; see the section Engines).
 #' @param c The local-to-unity parameter \eqn{c}, \eqn{\phi = 1 + c/n}{phi = 1 + c/n}.
 #' @param c0 The local null value \eqn{c_0}{c0}, \eqn{\phi_0 = 1 + c_0/n}{phi0 = 1 + c0/n}.
 #' @param g0 The fixed start, \eqn{y_0 = g_0 \sigma \sqrt{n}}{y_0 = g0 sigma sqrt(n)} (cases DK, DU, DT).
 #' @param method `"auto"`, `"single"` (or `"line"`), `"double"` (or `"conditional"`) or `"contour"` (a fixed start
 #'   in cases DU, DT only); see the section Methods and ranges.
 #' @param verified `FALSE` (the default): one evaluation by one method; `TRUE`: the checked computation (see the
-#'   section Methods and ranges).
+#'   section Methods and ranges; with the general engine, a second evaluation by other rules, see [dist_cdf()]).
+#' @param engine `"auto"`, `"classical"` or `"general"` (see the section Engines). Not given: the classical engine
+#'   for a case code, `"auto"` for a design.
+#' @param start With a design: the start, `"zero"`, `"fixed"` (with `g0`) or `"stationary"`; `NULL` (the default) is
+#'   `"fixed"` where `g0` is not 0 and `"zero"` otherwise. With a case code it must be `NULL` (the code names the
+#'   start).
+#' @param gls With a design: `NULL` (the default) for least squares detrending, or \eqn{\bar c < 0}{cbar < 0} for GLS
+#'   detrending at \eqn{1 + \bar c/n}{1 + cbar/n}. With a case code it must be `NULL`.
 #' @return A numeric vector with the attributes (`dim`, `dimnames`, `names`) of `x`. A warning is given in a regime
 #'   in which one evaluation is known to be brittle, where points that the line integral refuses get flagged values
 #'   from the conditional integral (see the section Methods and ranges), and, with `verified = TRUE` and
@@ -95,23 +126,34 @@
 #' ltratio_cdf(-2.86157, "SU", -5)            # the same with a stationary start
 #' ltratio_cdf(0, "DK", 2, c0 = 2)            # t-ratio centred at the true value
 #' ltratio_pdf(c(-3, -2, -1), "DT", -5)       # density
+#' ltratio_cdf(-2.86157, "DU", -5, engine = "auto")     # the engine of the faster representation
+#' ltratio_cdf(c(-4.5, -4), dfl_perron("C", 0.5))       # a break in level and slope at mid-sample
 #' @export
-ltratio_cdf <- function(x, cas, c = 0, c0 = 0, g0 = 0, method = "auto", verified = FALSE) {
-  dfl_dist(2L, x, cas, c, c0, g0, method, verified)
+ltratio_cdf <- function(x, cas, c = 0, c0 = 0, g0 = 0, method = "auto", verified = FALSE,
+                        engine = c("auto", "classical", "general"), start = NULL, gls = NULL) {
+  dfl_dist(2L, x, cas, c, c0, g0, method, verified, dfl_engine(engine), !missing(engine), start, gls)
 }
 
 #' @rdname ltratio_cdf
 #' @export
-ltratio_pdf <- function(x, cas, c = 0, c0 = 0, g0 = 0, method = "auto", verified = FALSE) {
-  dfl_dist(1L, x, cas, c, c0, g0, method, verified)
+ltratio_pdf <- function(x, cas, c = 0, c0 = 0, g0 = 0, method = "auto", verified = FALSE,
+                        engine = c("auto", "classical", "general"), start = NULL, gls = NULL) {
+  dfl_dist(1L, x, cas, c, c0, g0, method, verified, dfl_engine(engine), !missing(engine), start, gls)
 }
 
-dfl_dist <- function(kind, x, cas, c, c0, g0, method, verified) {
-  k <- dfl_case(cas)
+dfl_dist <- function(kind, x, cas, c, c0, g0, method, verified, engine = "auto", given = FALSE, start = NULL,
+                     gls = NULL) {
+  tg <- dfl_target(cas, g0, start, gls)
   me <- dfl_method(method)
   ve <- dfl_flag(verified, "verified")
-  r <- .Call(C_dfl_r_dist, kind, dfl_real(x, "x"), k$model, dfl_num(c, "c"), dfl_num(c0, "c0"),
-             dfl_num(g0, "g0"), k$stat, me, ve)
+  c <- dfl_num(c, "c")
+  c0 <- dfl_num(c0, "c0")
+  pl <- dfl_plan(tg, engine, given, c, c0, me, ve)
+  if (pl$path == "router") {
+    return(dfl_shape(dfl_route_call(if (kind == 2L) "cdf" else "pdf", dfl_real(x, "x"), pl, c(c, c0, me, ve)), x))
+  }
+  k <- dfl_case(pl$case)
+  r <- .Call(C_dfl_r_dist, kind, dfl_real(x, "x"), k$model, c, c0, as.double(pl$g0), k$stat, me, ve)
   if (ve == 1L && me >= 2L && r[[2]] > 0L) {
     warning(sprintf("the %s integral did not meet its error estimate at %d of %d points",
                     if (me == 2L) "conditional" else "contour", r[[2]], length(x)), call. = FALSE)
@@ -131,17 +173,39 @@ dfl_dist <- function(kind, x, cas, c, c0, g0, method, verified) {
 #' @param tol The tolerance on the quantile.
 #' @param info If `TRUE`, return a list with the quantiles `q`, the distribution function `F` at `q`, the number
 #'   of iterations `iter` and the convergence flags `conv`.
-#' @return The quantiles, with the attributes of `p` (or the list described under `info`). A warning is given if
+#' @return The quantiles, with the attributes of `p` (or the list described under `info`; where the router computes,
+#'   `F` is the distribution function at `q` by the same engine and `iter` and `conv` are `NA`). A warning is given if
 #'   Newton's method did not converge at some points.
 #' @inheritSection ltratio_cdf Cases
-#' @seealso [ltratio_cdf()].
+#' @inheritSection ltratio_cdf Engines
+#' @seealso [ltratio_cdf()], [dist_quantile()].
 #' @examples
 #' ltratio_icdf(c(0.01, 0.05, 0.10), "DU")   # asymptotic critical values of tau_mu
+#' ltratio_icdf(0.05, dfl_trend(2))          # the quadratic trend (the general engine)
 #' @export
-ltratio_icdf <- function(p, cas, c = 0, c0 = 0, g0 = 0, method = "auto", tol = 1e-10, info = FALSE, verified = FALSE) {
-  k <- dfl_case(cas)
-  r <- .Call(C_dfl_r_icdf, dfl_real(p, "p"), k$model, dfl_num(c, "c"), dfl_num(c0, "c0"), dfl_num(g0, "g0"),
-             k$stat, dfl_method(method), dfl_num(tol, "tol"), dfl_flag(verified, "verified"))
+ltratio_icdf <- function(p, cas, c = 0, c0 = 0, g0 = 0, method = "auto", tol = 1e-10, info = FALSE, verified = FALSE,
+                         engine = c("auto", "classical", "general"), start = NULL, gls = NULL) {
+  given <- !missing(engine)
+  engine <- dfl_engine(engine)
+  tg <- dfl_target(cas, g0, start, gls)
+  me <- dfl_method(method)
+  ve <- dfl_flag(verified, "verified")
+  c <- dfl_num(c, "c")
+  c0 <- dfl_num(c0, "c0")
+  tol <- dfl_num(tol, "tol")
+  pl <- dfl_plan(tg, engine, given, c, c0, me, ve)
+  if (pl$path == "router") {
+    pv <- dfl_real(p, "p")
+    if (!all(!is.na(pv) & pv > 0 & pv < 1)) stop("p must lie in (0, 1)", call. = FALSE)
+    q <- dfl_route_call("icdf", pv, pl, c(c, c0, tol, me))
+    if (!isTRUE(info)) return(dfl_shape(q, p))
+    F <- dfl_route_call("cdf", q, pl, c(c, c0, me, 0))
+    na <- rep(NA_integer_, length(q))
+    return(lapply(list(q = q, F = F, iter = na, conv = as.logical(na)), dfl_shape, x = p))
+  }
+  k <- dfl_case(pl$case)
+  r <- .Call(C_dfl_r_icdf, dfl_real(p, "p"), k$model, c, c0, as.double(pl$g0),
+             k$stat, me, tol, ve)
   if (nzchar(r[[5]])) warning(r[[5]], call. = FALSE)
   if (nzchar(r[[6]])) warning(r[[6]], call. = FALSE)
   r <- r[1:4]
@@ -160,24 +224,40 @@ ltratio_icdf <- function(p, cas, c = 0, c0 = 0, g0 = 0, method = "auto", tol = 1
 #' \eqn{\tau = (U - c_0 V)/\sqrt{V}}{tau = (U - c0 V)/sqrt(V)} of [ltratio_cdf()], as one-dimensional integrals of
 #' the joint moment generating function of \eqn{(U, V)} (the moments of the limit in the Supplementary Material of the
 #' paper).
-#' Not available for case DG.
+#' Not available for case DG in the classical engine (a design of case DG takes the general engine).
 #'
 #' @inheritParams ltratio_cdf
 #' @param p The number of moments, a positive integer.
-#' @param info If `TRUE`, return a list with the moments `m` and the error estimates `err` of the integrals.
+#' @param info If `TRUE`, return a list with the moments `m` and the error estimates `err` of the integrals (`NA`
+#'   where the router computes).
 #' @return A numeric vector of length `p` (or the list described under `info`).
 #' @inheritSection ltratio_cdf Cases
-#' @seealso [ltratio_cdf()].
+#' @inheritSection ltratio_cdf Engines
+#' @seealso [ltratio_cdf()], [dist_moments()].
 #' @examples
 #' ltratio_mom(4, "DT")      # the first four moments of tau_tau
 #' ltratio_mom(2, "DU")[2]   # 3.0559953450 (Nabeya, 1999)
+#' ltratio_mom(2, dfl_perron("A", 0.5))
 #' @export
-ltratio_mom <- function(p, cas, c = 0, c0 = 0, g0 = 0, info = FALSE) {
+ltratio_mom <- function(p, cas, c = 0, c0 = 0, g0 = 0, info = FALSE, engine = c("auto", "classical", "general"),
+                        start = NULL, gls = NULL) {
   if (!is.numeric(p) || length(p) != 1L || is.na(p) || p != round(p) || p < 1) {
     stop("p must be a positive integer", call. = FALSE)
   }
-  k <- dfl_case(cas)
-  r <- .Call(C_dfl_r_moments, as.integer(p), k$model, dfl_num(c, "c"), dfl_num(c0, "c0"), dfl_num(g0, "g0"), k$stat)
+  given <- !missing(engine)
+  engine <- dfl_engine(engine)
+  tg <- dfl_target(cas, g0, start, gls)
+  c <- dfl_num(c, "c")
+  c0 <- dfl_num(c0, "c0")
+  pl <- dfl_plan(tg, engine, given, c, c0)
+  # (a design of case DG, which has no moments in the classical engine: the general engine)
+  if (pl$path == "router" && identical(tg$case, "DG") && !is.null(tg$D)) pl <- list(path = "router", spec = dfl_spec(tg, FALSE), engine = 2L)
+  if (pl$path == "router") {
+    m <- dfl_route_call("mom", 0, pl, c(c, c0, p))
+    return(if (isTRUE(info)) list(m = m, err = rep(NA_real_, length(m))) else m)
+  }
+  k <- dfl_case(pl$case)
+  r <- .Call(C_dfl_r_moments, as.integer(p), k$model, c, c0, as.double(pl$g0), k$stat)
   names(r) <- c("m", "err")
   if (isTRUE(info)) r else r$m
 }

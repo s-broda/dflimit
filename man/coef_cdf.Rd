@@ -5,7 +5,18 @@
 \alias{coef_icdf}
 \title{Limiting distribution of the Dickey-Fuller coefficient statistic}
 \usage{
-coef_cdf(y, cas, c = 0, c0 = 0, g0 = 0, method = "auto", verified = FALSE)
+coef_cdf(
+  y,
+  cas,
+  c = 0,
+  c0 = 0,
+  g0 = 0,
+  method = "auto",
+  verified = FALSE,
+  engine = c("auto", "classical", "general"),
+  start = NULL,
+  gls = NULL
+)
 
 coef_icdf(
   p,
@@ -15,13 +26,17 @@ coef_icdf(
   g0 = 0,
   method = "auto",
   tol = 1e-09,
-  verified = FALSE
+  verified = FALSE,
+  engine = c("auto", "classical", "general"),
+  start = NULL,
+  gls = NULL
 )
 }
 \arguments{
 \item{y}{Numeric vector or array of points. `-Inf`, `Inf` and `NaN` give 0, 1 and `NaN`.}
 
-\item{cas}{The case, one of `"DK"`, `"DU"`, `"DT"`, `"SK"`, `"SU"`, `"ST"`, `"DG"` (see the section Cases).}
+\item{cas}{The case, one of `"DK"`, `"DU"`, `"DT"`, `"SK"`, `"SU"`, `"ST"`, `"DG"` (see the section Cases), or a
+design of the general engine ([dfl_design]; see the section Engines).}
 
 \item{c}{The local-to-unity parameter \eqn{c}, \eqn{\phi = 1 + c/n}{phi = 1 + c/n}.}
 
@@ -33,7 +48,17 @@ coef_icdf(
 in cases DU, DT only); see the section Methods and ranges.}
 
 \item{verified}{`FALSE` (the default): one evaluation by one method; `TRUE`: the checked computation (see the
-section Methods and ranges).}
+section Methods and ranges; with the general engine, a second evaluation by other rules, see [dist_cdf()]).}
+
+\item{engine}{`"auto"`, `"classical"` or `"general"` (see the section Engines). Not given: the classical engine
+for a case code, `"auto"` for a design.}
+
+\item{start}{With a design: the start, `"zero"`, `"fixed"` (with `g0`) or `"stationary"`; `NULL` (the default) is
+`"fixed"` where `g0` is not 0 and `"zero"` otherwise. With a case code it must be `NULL` (the code names the
+start).}
+
+\item{gls}{With a design: `NULL` (the default) for least squares detrending, or \eqn{\bar c < 0}{cbar < 0} for GLS
+detrending at \eqn{1 + \bar c/n}{1 + cbar/n}. With a case code it must be `NULL`.}
 
 \item{p}{Numeric vector or array of probabilities in (0, 1).}
 
@@ -56,7 +81,9 @@ The limit is \eqn{(U - c_0 V)/V}{(U - c0 V)/V}, so that \eqn{P[(U - c_0 V)/V \le
 `coef_icdf` of the MATLAB programs, `coef_cdf()` evaluates `ltratio_cdf(0, cas, c, c0 = c0 + y, g0, method)` at
 each `y`, in every case and with every start and option of [ltratio_cdf()], and `coef_icdf()` finds each quantile
 by the Illinois variant of regula falsi on `coef_cdf()`, on a bracket grown from `[-40, 10]` until its width is
-below `tol` (about ten evaluations of `coef_cdf()`).
+below `tol` (about ten evaluations of `coef_cdf()`). With a design, or with `engine` given, the router of the C
+engine computes (the same construction in C, with the engine of each point; the general engine's own functions
+where it takes the general engine).
 }
 \section{Cases}{
 
@@ -74,10 +101,36 @@ too large for the quadrature, and the functions raise an error) followed by the 
 }
 }
 
+\section{Engines}{
+
+The package holds two engines. The classical engine computes the cases above by the line, conditional and contour
+integral representations. The general engine computes the same limits for any piecewise smooth deterministic design
+(polynomial trends of any order, breaks in level and slope at several dates, regressors given by a function or by the
+regressor matrix of a sample, GLS detrending, the statistic that detrends first; see [dfl_design]) by the inversion
+formula on paths around the singularities of the moment generating function in its first argument, the inversion on
+paths around the roots. In place of the case code `cas` a design may be given, with the start by `g0` (a fixed start)
+or `start = "stationary"`, and GLS detrending by `gls`; a design that is a classical case is that case:
+`dfl_trend(0)` is case DU, with `start = "stationary"` case SU, and `dfl_trend(1)` with `gls = -13.5` is case DG.
+
+`engine = "auto"` takes, for a computation that the classical engine accepts (a case code, or a design that is a
+classical case within the classical engine's checks of the arguments), the faster of the two engines at the same
+accuracy, or the more accurate where they differ, by a rule measured on the two engines (for the t-ratio point by
+point: the general engine for instance with a stationary start and `c0 != 0`, with a zero start and `c0 > 0` near the
+unit root, and far below it; the values below 1e-3 of the general engine go back to the classical conditional
+integral, whose error is relative), and the general engine for every other design. `"classical"` forces the classical
+engine (an error for a design it does not have) and `"general"` the general one (without the classical engine's
+checks; `method` must then be `"auto"`). With `engine = "auto"`, a `method` other than `"auto"` and `verified = TRUE`
+keep the classical engine for a classical case. With a case code and no `engine` given, the classical engine
+computes, and the values are those of the earlier versions of the package; with a design and no `engine` given,
+`"auto"` applies. The functions of the general engine itself, with all its options, are [dist_cdf()] and the others
+listed there.
+}
+
 \examples{
 coef_cdf(-14.0936, "DU", -10)    # power of the 5\% coefficient test of rho_mu at c = -10
 coef_icdf(0.05, "DK")            # -8.039, the 5\% critical value of rho
+coef_cdf(-20, dfl_perron("A", 0.5))
 }
 \seealso{
-[ltratio_cdf()].
+[ltratio_cdf()], [coef_pdf()], [coef_quantile()].
 }
