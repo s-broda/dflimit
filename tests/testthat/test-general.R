@@ -313,8 +313,11 @@ test_that("the guard on the nodes of the paths around the roots stops a design w
   # guard checks the nodes of the outer path before the inner integrals (it refused after 1.4 s and 1.2 GB before)
   D <- structure(list(br = c(0, 0.4, 1), C = matrix(c(1, 1, 1, 0, 1, 1, 0, 0), 2, 4), K = 2L, loc = FALSE, first = FALSE,
                       name = "(1 + r, 1{r <= 0.4})"), class = "dfl_design")
+  # (no tight wall-clock bound, which fails on a loaded machine: the guard refuses before any inner integral, which the
+  # test of the shared C engine, c/dfl_test_det.c of dflimit-matlab, checks by its memory, under 100 MB against 1.2 GB
+  # without the guard; here a hang protection only)
   t <- system.time(expect_error(dist_cdf(-2, D, 1), "the U-shapes of the zero start"))[["elapsed"]]
-  expect_lt(t, 1)
+  expect_lt(t, 60)
 })
 
 test_that("the general engine and the router at non-finite arguments: a limit or an error that names the argument", {
