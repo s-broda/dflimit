@@ -1,6 +1,6 @@
 # dflimit 0.5.0
 
-* The general engine (the C engine of dflimit-matlab, branch general-engine): the limits of the Dickey-Fuller statistics
+* The general engine (the C engine of dflimit-matlab, branch general-engine, bda1973): the limits of the Dickey-Fuller statistics
   for any piecewise smooth deterministic design, by the inversion on paths around the roots of the moment generating
   function. Designs are made by `dfl_trend()` (polynomial trends of any order), `dfl_perron()` (Perron's models A, B,
   C with several breaks), `dfl_fdesign()` (regressors given by a function), `dfl_ltrend()`, `dfl_design_from_matrix()`
@@ -15,7 +15,15 @@
   the new arguments `start` and `gls`, and the new argument `engine = c("auto", "classical", "general")`: `"auto"`
   takes the faster engine at the same accuracy where the classical engine accepts the computation (the rule of the C
   router, measured on both engines) and the general engine elsewhere. With a case code and no `engine` argument the
-  classical engine computes, and the values are those of before, bit for bit.
+  classical engine computes, and the values are those of before, bit for bit. `adfmax_cdf()`, `adfmax_pdf()`,
+  `adfmax_icdf()` and `ltratio_region()` take a fixed start `g0` (also with a case code), which the classical engine
+  does not have: the general engine computes it (`engine = "classical"` is then an error).
+* The general engine refuses, with an error, what it does not compute accurately: the LM statistic above `c = 10`, the
+  point-optimal statistic where the grid of its inversion does not resolve the transform (far above the unit root;
+  the message names the `N` that would do) and at `|q|` beyond the range of the grid, probabilities and levels outside
+  (0, 1), and a point of the outer contour whose paths around the roots would need more than a million nodes (as the
+  design (1 + r, 1{r <= 0.4}) at every `c`, which took gigabytes before). The law of V is 0 at `b <= 0`, the envelopes
+  are `NaN` at `c = NaN`.
 * The tests compare the general engine and the router with the values of the Julia engine (DFLimit.jl), a subset of
   them on CRAN; the reference values are copied from dflimit-matlab by `tools/det-ref-subset.R`.
 

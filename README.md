@@ -131,7 +131,10 @@ By default every value is one evaluation (`verified = TRUE` evaluates it again w
 points of one call share the paths of the inversion, so a vector of points costs much less in one call than point by
 point, and the engine keeps up to 64 prepared designs and paths between calls (`dfl_empty_caches()` frees them). The
 general engine is checked for c from -480 to 10; designs whose roots run far out on the vertical line (above the unit
-root, and some unusual designs) can need several gigabytes of memory. Its values are checked against those of the
+root, and some unusual designs) can need several gigabytes of memory, and where one point of the outer contour would
+need more than a million nodes it stops with an error. It refuses, with an error, what it does not compute accurately
+(the LM statistic above c = 10, the point-optimal statistic far above the unit root, where the grid of its inversion
+does not resolve the transform). Its values are checked against those of the
 Julia engine (DFLimit.jl) to 1e-9 or better (`tests/testthat/test-general.R`).
 
 ## Installation
