@@ -1,7 +1,7 @@
 # The general engine (any deterministic design) and the router over the two engines, against the values of the Julia
-# engine DFLimit.jl (ref/det_ref.txt; see helper-det.R). On CRAN a subset of the lines (named by their computation,
-# the first tokens of each line, below) is checked, about four seconds on two threads; otherwise every line (about
-# fifty seconds).
+# engine DFLimit.jl (ref/det_ref.txt; see helper-det.R), and the calls that the engines refuse. On CRAN a subset of the
+# lines (named by their computation, the first tokens of each line, below) is checked, about five seconds on two
+# threads; otherwise every line (about seventy seconds).
 
 det_cran <- c(
   # every constructor (perron A, two and three breaks, ltrend, fdesign, design_from_matrix, detrend_first), a cubic
@@ -53,34 +53,75 @@ det_cran <- c(
   "route region1 2 case 1 0 0 NaN -5 0 -3.5 1 -0.26390000000000002",
   "route region2 0 case 1 0 0 NaN -7 0 0 1 -1.9408700000000001",
   "route region2 1 case 1 0 0 NaN -7 0 0 1 -1.9408700000000001",
-  "route region2 2 case 1 0 0 NaN -7 0 0 1 -1.9408700000000001")
+  "route region2 2 case 1 0 0 NaN -7 0 0 1 -1.9408700000000001",
+  # the repairs of November 2026: the LM statistic above the unit root (and refused above c = 10), the point-optimal
+  # statistic refused where its grid does not resolve the transform, p and levels outside (0, 1) refused, the law of V
+  # off its support, MSB and the envelopes at non-finite points, ADFmax and the regions with a fixed start through the
+  # router (the general engine), the router's refusals
+  "val lmcdf 3 NaN 0 0 5 0 0 0 4 -0.5", "val lmq 3 NaN 0 0 5 0 0 0 1 0.050000000000000003",
+  "err lmcdf 3 NaN 0 0 11 0 0 0 1 -0.10000000000000001", "err ptcdf 2 -7 0 0 3.1000000000000001 0 0 -7 3 4",
+  "err quant 3 NaN 0 0 0 0 0 -2 1 1.5", "err ptq 3 -13.5 0 0 0 0 0 -13.5 1 0", "err lmq 3 NaN 0 0 0 0 0 0 1 NaN",
+  "err ptpow 3 -13.5 0 0 0 0 0 -13.5 1 1.5", "err env 1 NaN 0 0 0 0 0 1.5 1 -5",
+  "val lincdf 1 NaN 0 0 -5 0 0 NaN 5 -0.10000000000000001", "val linpdf 1 NaN 0 0 -5 0 0 NaN 5 -0.10000000000000001",
+  "val msbcdf 3 -13.5 0 0 0 0 0 -13.5 4 NaN", "val env 1 NaN 0 0 0 0 0 0.050000000000000003 2 NaN",
+  "route adf 0 case 2 1 1.5 NaN -5 0 0 3 -3", "route adfpdf 0 case 3 1 1 NaN -5 0 0 3 -3",
+  "route adf 2 design 2 1 1.5 NaN -5 0 0 3 -3",
+  "route region1 0 case 1 1 1.5 NaN -5 0 -3.5 1 -0.26390000000000002", "route region2 2 design 1 1 1.5 NaN -5 0 0 1 -2",
+  "rerr adf 1 case 2 1 1.5 NaN -5 0 0 3 -3", "rerr adf 0 case 4 0 0 NaN -5 0 0 3 -3", "rerr cdf 0 case 2 0 0 -7 -5 0 0 1 -2",
+  "rerr region1 1 case 1 1 1.5 NaN -5 0 -3.5 1 -0.26390000000000002", "rerr icdf 0 case 2 0 0 NaN -5 -1 0 1 1.5",
+  "rerr env 0 case 1 0 0 NaN 0 0 1.5 1 -5")
 
 det_key <- function(l) {
   w <- strsplit(l, " ", fixed = TRUE)[[1]]
-  paste(w[seq_len(if (w[1] == "val") 12L else 13L)], collapse = " ")
+  paste(w[seq_len(if (w[1] %in% c("val", "err")) 12L else 13L)], collapse = " ")
 }
 
-# the lines (all, or those of det_cran) against their tolerances; the warnings of the engines are not checked here
-# (the lines that the Julia engine flags as brittle have the tolerance 1e-6)
+# the messages of the R functions where their own checks refuse a call before the engine sees it (an R check that
+# fires first): the text of the line, or the R message
+det_alt <- c("gls applies to a design" = "apply to a design", "level must lie in (0, 1)" = "must lie in (0, 1)")
+# the error lines that the R interface cannot express: ADFmax with GLS detrending or a null value c0 != 0 (the R
+# functions of ADFmax have neither argument)
+det_skip <- function(l, v) {
+  (startsWith(l, "err ") && v$fn %in% c("adfcdf", "adfpdf", "adfq") && (!is.nan(v$cb) || v$c0 != 0)) ||
+    (startsWith(l, "rerr ") && v$fn %in% c("adf", "adfpdf") && !is.nan(v$gls))
+}
+
+# the lines (all, or those of det_cran): the values against their tolerances, the refused calls against their messages;
+# the warnings of the engines are not checked here (the lines that the Julia engine flags as brittle have the tolerance
+# 1e-6)
 det_check_lines <- function(cran) {
   L <- det_ref_lines()
   D <- det_designs(L)
-  L <- L[startsWith(L, "val ") | startsWith(L, "route ")]
+  tag <- sub(" .*", "", L)
+  L <- L[tag %in% c("val", "route", "err", "rerr")]
   if (cran) {
     k <- vapply(L, det_key, "", USE.NAMES = FALSE)
     expect_true(all(det_cran %in% k), label = "every line of the CRAN subset is in ref/det_ref.txt")
     L <- L[k %in% det_cran]
   }
+  n <- 0L
   for (l in L) {
-    isval <- startsWith(l, "val ")
-    v <- if (isval) det_parse_val(l) else det_parse_route(l)
-    got <- suppressWarnings(if (isval) det_eval_val(v, D) else det_eval_route(v, D))
+    kind <- sub(" .*", "", l)
+    v <- switch(kind, val = det_parse_val(l), route = det_parse_route(l), err = det_parse_err(l), rerr = det_parse_rerr(l))
+    if (kind %in% c("err", "rerr")) {
+      if (det_skip(l, v)) next
+      msg <- tryCatch({
+        suppressWarnings(if (kind == "err") det_eval_val(v, D) else det_eval_route(v, D))
+        NA_character_
+      }, error = conditionMessage)
+      alt <- if (v$text %in% names(det_alt)) det_alt[[v$text]] else v$text
+      expect(!is.na(msg) && (grepl(v$text, msg, fixed = TRUE) || grepl(alt, msg, fixed = TRUE)),
+             sprintf("%s: %s", substr(l, 1, 90), if (is.na(msg)) "no error" else msg))
+    } else {
+      got <- suppressWarnings(if (kind == "val") det_eval_val(v, D) else det_eval_route(v, D))
+      d <- det_dev(got, v$want, v$fn)
+      expect(length(got) == length(v$want) && all(d <= v$tol),
+             sprintf("%s: deviation %.3g above the tolerance %.1g", substr(l, 1, 90), max(d), v$tol))
+    }
     dfl_empty_caches()
-    d <- det_dev(got, v$want, v$fn)
-    expect(length(got) == length(v$want) && all(d <= v$tol),
-           sprintf("%s: deviation %.3g above the tolerance %.1g", substr(l, 1, 90), max(d), v$tol))
+    n <- n + 1L
   }
-  length(L)
+  n
 }
 
 test_that("the general engine and the router reproduce the Julia values (a subset)", {
@@ -89,7 +130,7 @@ test_that("the general engine and the router reproduce the Julia values (a subse
 
 test_that("the general engine and the router reproduce the Julia values (every line)", {
   skip_on_cran()
-  expect_gt(det_check_lines(FALSE), 450)
+  expect_gt(det_check_lines(FALSE), 540)
 })
 
 test_that("the constructors make the designs of the Julia engine", {
@@ -209,6 +250,57 @@ test_that("the companions agree with each other", {
   P <- lm_power(-5, dfl_trend(1))
   expect_equal(attr(P, "critical"), lm_quantile(0.05, dfl_trend(1)), tolerance = 1e-12)
   expect_equal(as.numeric(P), lm_cdf(attr(P, "critical"), dfl_trend(1), -5), tolerance = 1e-12)
+})
+
+test_that("ADFmax with a fixed start takes the general engine; the classical engine refuses it", {
+  x <- c(-3, -2.4, -1.5)
+  F <- adfmax_cdf(x, "DU", -5, g0 = 1.5)
+  expect_equal(F, adfmax_cdf(x, dfl_trend(0), -5, g0 = 1.5, engine = "general"), tolerance = 1e-14)
+  expect_equal(F, adfmax_cdf(x, dfl_trend(0), -5, start = "fixed", g0 = 1.5), tolerance = 1e-14)
+  # (the zero start is a different law: the fixed start is not dropped)
+  expect_gt(max(abs(F - adfmax_cdf(x, "DU", -5))), 1e-3)
+  expect_error(adfmax_cdf(x, "DU", -5, g0 = 1.5, engine = "classical"), "with a zero or a stationary start")
+  expect_error(adfmax_cdf(x, dfl_trend(0), -5, g0 = 1.5, engine = "classical"), "with a zero or a stationary start")
+  expect_error(adfmax_cdf(x, "SU", -5, g0 = 1.5), "exclude each other")
+  q <- adfmax_icdf(0.5, "DU", -5, g0 = 1.5)
+  expect_equal(adfmax_cdf(q, "DU", -5, g0 = 1.5), 0.5, tolerance = 1e-9)
+  expect_equal(adfmax_quantile(0.5, dfl_trend(0), -5, gamma0 = 1.5), q, tolerance = 1e-8)
+})
+
+test_that("the regions and the linear form keep a fixed start of a design (the general engine)", {
+  bnd <- list(type = "line", a = -3.5, b = -0.2639)
+  P <- ltratio_region(bnd, "DK", -5, g0 = 1.5)
+  expect_equal(P, ltratio_region(bnd, dfl_trend(-1), -5, g0 = 1.5), tolerance = 1e-14)
+  expect_equal(P, region_prob(bnd, dfl_trend(-1), -5, gamma0 = 1.5), tolerance = 1e-14)
+  expect_gt(abs(P - ltratio_region(bnd, "DK", -5)), 0.1)
+  expect_equal(ltratio_lincdf(-0.2639, -3.5, dfl_trend(-1), -5, g0 = 1.5), P, tolerance = 1e-14)
+  expect_error(ltratio_region(bnd, "DK", -5, g0 = 1.5, engine = "classical"), "case DK only")
+})
+
+test_that("the refusals of the general engine are R errors", {
+  D <- dfl_trend(1)
+  expect_error(lm_cdf(-1, D, 11), "must be at most 10")
+  expect_error(lm_power(c(-5, 11), D), "must be at most 10")
+  expect_error(pt_cdf(4, D, -13.5, 3.7), "does not resolve")
+  expect_error(pt_cdf(1e5, D, -13.5), "beyond the range")
+  expect_error(pt_power(-5, D, -13.5, level = 1.5), "level must lie in (0, 1)", fixed = TRUE)
+  expect_error(pt_envelope(-5, D, level = 0), "level must lie in (0, 1)", fixed = TRUE)
+  expect_error(lm_power(-5, D, level = 1), "level must lie in (0, 1)", fixed = TRUE)
+  expect_error(power_envelope(-5, dfl_perron("A", 0.5), alpha = 1.5), "must lie in (0, 1)", fixed = TRUE)
+  expect_error(power_envelope(-5, "DK", alpha = 1.5, engine = "auto"), "must lie in (0, 1)", fixed = TRUE)
+  expect_error(ltratio_cdf(-2, "DU", gls = -7, engine = "auto"), "apply to a design")
+  # the law of V is 0 at b <= 0
+  expect_identical(v_cdf(c(-0.1, 0, -Inf), D), c(0, 0, 0))
+  expect_identical(v_pdf(c(-0.1, 0), D), c(0, 0))
+  expect_identical(lin_cdf(-1, NaN, dfl_perron("A", 0.5)), 0)
+})
+
+test_that("the guard on the nodes of the paths around the roots stops a design whose roots run off (not on CRAN)", {
+  skip_on_cran()
+  # (1 + r, 1{r <= 0.4}), given by its coefficients: two pieces, the coefficients of 1 and r of each regressor
+  D <- structure(list(br = c(0, 0.4, 1), C = matrix(c(1, 1, 1, 0, 1, 1, 0, 0), 2, 4), K = 2L, loc = FALSE, first = FALSE,
+                      name = "(1 + r, 1{r <= 0.4})"), class = "dfl_design")
+  expect_error(dist_cdf(-2, D, 1), "the U-shapes of the zero start")
 })
 
 test_that("the shapes of the inputs are kept and non-finite points have their limits", {

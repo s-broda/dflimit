@@ -1,13 +1,14 @@
-# the reference values of the general engine and of the router (ref/det_ref.txt, the lines design, val and route of
-# c/test/det_ref.txt of dflimit-matlab, copied by tools/det-ref-subset.R; the values of the Julia engine DFLimit.jl)
+# the reference values of the general engine and of the router (ref/det_ref.txt, the lines design, val, route, err and
+# rerr of c/test/det_ref.txt of dflimit-matlab, copied by tools/det-ref-subset.R; the values of the Julia engine
+# DFLimit.jl)
 
 det_ref_lines <- function() {
   l <- readLines(test_path("ref", "det_ref.txt"))
   l[!startsWith(l, "#")]
 }
 
-# the designs of the lines 'design id spec...', built with the constructors of the package (the design 'raw', which
-# no value line uses, is left out)
+# the designs of the lines 'design id spec...', built with the constructors of the package (the design 'raw np deg K
+# loc br... C...' as a list filled by hand, a design given by its coefficients)
 det_designs <- function(lines = det_ref_lines()) {
   fd <- list(sincos = function(r) c(sin(2 * pi * r), cos(2 * pi * r)),
              perronC04 = function(r) c(1, r, if (r > 0.4) 1 else 0, max(r - 0.4, 0)),
@@ -24,7 +25,13 @@ det_designs <- function(lines = det_ref_lines()) {
       fdesign = dfl_fdesign(fd[[w[4]]], fb[[w[4]]]),
       matrix = dfl_design_from_matrix(dfl_regmat(D[[as.integer(w[4])]], as.integer(w[5]))),
       first = dfl_detrend_first(D[[as.integer(w[4])]]),
-      raw = NULL)
+      raw = {
+        v <- as.numeric(w[-(1:3)])
+        np <- as.integer(v[1]); deg <- as.integer(v[2]); K <- as.integer(v[3])
+        structure(list(br = v[5 + 0:np], C = matrix(v[5 + np + seq_len(np * (deg + 1) * K)], deg + 1, K * np),
+                       K = K, loc = v[4] != 0, first = FALSE, name = "a design given by its coefficients"),
+                  class = "dfl_design")
+      })
   }
   D
 }
@@ -38,6 +45,16 @@ det_parse_val <- function(l) {
   list(fn = w[2], id = as.integer(w[3]), cb = num(4), st = as.integer(w[5]), g0 = num(6), c = num(7), c0 = num(8),
        ver = w[9] == "1", par = num(10), x = num(11 + seq_len(n)), want = num(12 + n + seq_len(nv)),
        tol = num(13 + n + nv), brittle = length(w) > 13 + n + nv)
+}
+# a line 'err func id cbar start g0 c c0 verified par n x... | text': the arguments of 'val', the call must fail with
+# an error whose message contains text
+det_parse_err <- function(l) {
+  parts <- strsplit(l, " | ", fixed = TRUE)[[1]]
+  w <- strsplit(parts[1], " ", fixed = TRUE)[[1]]
+  num <- function(i) as.numeric(w[i])
+  n <- as.integer(w[11])
+  list(fn = w[2], id = as.integer(w[3]), cb = num(4), st = as.integer(w[5]), g0 = num(6), c = num(7), c0 = num(8),
+       ver = w[9] == "1", par = num(10), x = num(11 + seq_len(n)), text = parts[2])
 }
 det_start <- function(st) c("zero", "fixed", "stationary")[st + 1L]
 det_gls <- function(cb) if (is.nan(cb)) NULL else cb
@@ -61,12 +78,13 @@ det_eval_val <- function(v, D) {
     lincdf = lin_cdf(x, v$par, d, v$c, st, v$g0, gl),
     linpdf = lin_pdf(x, v$par, d, v$c, st, v$g0, gl),
     linq = lin_quantile(x, v$par, d, v$c, st, v$g0, gl, b0 = 0, tol = 1e-10),
-    adfcdf = adfmax_cdf(x, d, v$c, engine = "general", start = st),
-    adfpdf = adfmax_pdf(x, d, v$c, engine = "general", start = st),
-    adfq = adfmax_quantile(x, d, v$c, st, x0 = v$par, tol = 1e-10),
+    adfcdf = adfmax_cdf(x, d, v$c, engine = "general", start = st, g0 = v$g0),
+    adfpdf = adfmax_pdf(x, d, v$c, engine = "general", start = st, g0 = v$g0),
+    adfq = adfmax_quantile(x, d, v$c, st, v$g0, x0 = v$par, tol = 1e-10),
     env = power_envelope(x, d, alpha = v$par, engine = "general"),
     ptcdf = pt_cdf(x, d, v$par, v$c),
     ptpdf = pt_pdf(x, d, v$par, v$c),
+    ptcdfN = pt_cdf(x, d, v$par, v$c, N = v$c0),
     ptq = pt_quantile(x, d, v$par),
     ptpow = { p <- pt_power(v$c, d, v$par, level = x); c(attr(p, "critical"), p) },
     ptenv = pt_envelope(x, d, level = v$par),
@@ -92,6 +110,17 @@ det_parse_route <- function(l) {
        x = num(12 + seq_len(n)), want = num(13 + n + seq_len(nv)), tol = num(14 + n + nv),
        brittle = length(w) > 14 + n + nv)
 }
+# a line 'rerr func engine spec a b g0 gls c c0 par n x... | text': the arguments of 'route', the call must fail with
+# an error whose message contains text
+det_parse_rerr <- function(l) {
+  parts <- strsplit(l, " | ", fixed = TRUE)[[1]]
+  w <- strsplit(parts[1], " ", fixed = TRUE)[[1]]
+  num <- function(i) as.numeric(w[i])
+  n <- as.integer(w[12])
+  list(fn = w[2], engine = c("auto", "classical", "general")[as.integer(w[3]) + 1L], spec = w[4], a = as.integer(w[5]),
+       st = as.integer(w[6]), g0 = num(7), gls = num(8), c = num(9), c0 = num(10), par = num(11),
+       x = num(12 + seq_len(n)), text = parts[2])
+}
 det_case <- function(m, st) if (m == 4L) "DG" else paste0(if (st == 2L) "S" else "D", c("K", "U", "T")[m])
 
 # the value of a line 'route' by the functions of the classical engine with the argument engine
@@ -102,9 +131,10 @@ det_eval_route <- function(r, D) {
     st <- det_start(r$st)
     gl <- det_gls(r$gls)
   } else {
+    # (a case code with gls: the argument gls with the case code, which the R functions refuse)
     cas <- det_case(r$a, r$st)
     st <- NULL
-    gl <- NULL
+    gl <- if (r$a != 4L && !is.nan(r$gls)) r$gls else NULL
   }
   x <- r$x
   switch(r$fn,
@@ -116,10 +146,10 @@ det_eval_route <- function(r, D) {
     coefq = coef_icdf(x, cas, r$c, r$c0, r$g0, engine = e),
     lin = ltratio_lincdf(x, r$par, cas, r$c, cbar = if (r$a == 4L) r$gls else -13.5, engine = e),
     env = power_envelope(x, cas, alpha = r$par, engine = e),
-    adf = adfmax_cdf(x, cas, r$c, engine = e),
-    adfpdf = adfmax_pdf(x, cas, r$c, engine = e),
-    region1 = ltratio_region(list(type = "line", a = r$par, b = x[1]), cas, r$c, engine = e),
-    region2 = ltratio_region(list(type = "parabola", x = x[1]), cas, r$c, engine = e),
+    adf = adfmax_cdf(x, cas, r$c, engine = e, start = st, g0 = r$g0),
+    adfpdf = adfmax_pdf(x, cas, r$c, engine = e, start = st, g0 = r$g0),
+    region1 = ltratio_region(list(type = "line", a = r$par, b = x[1]), cas, r$c, engine = e, start = st, g0 = r$g0),
+    region2 = ltratio_region(list(type = "parabola", x = x[1]), cas, r$c, engine = e, start = st, g0 = r$g0),
     stop("unknown function ", r$fn))
 }
 
