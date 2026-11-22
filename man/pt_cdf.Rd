@@ -54,7 +54,7 @@ power envelope of the design: the power at `c` of the point-optimal test against
 D <- dfl_trend(1)
 pt_quantile(0.05, D, -13.5)          # 5.7045: the 5\% critical value of the limit of P_T, trend case
 pt_cdf(c(4, 7), dfl_perron("C", 0.5), -10, -10)
-pt_envelope(c(-5, -10), dfl_perron("A", 0.5))
+pt_envelope(-10, dfl_perron("A", 0.5))
 }
 \references{
 Elliott, G., Rothenberg, T. J. and Stock, J. H. (1996), "Efficient Tests for an Autoregressive Unit

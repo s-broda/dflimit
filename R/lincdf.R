@@ -64,7 +64,7 @@ ltratio_lincdf <- function(b, a, cas, c = 0, cbar = -13.5, engine = c("auto", "c
     if (engine == "classical" && !cls) dfl_no_classical("the linear form of the classical engine has the cases DK and DG only")
     if (engine == "general" || !cls) {
       G <- dfl_general_target(tg)
-      return(dfl_det_finite("lincdf", G$D, b, c(as.double(a), dfl_num(c, "c")), dfl_opts(0, G$start, G$g0, G$gls)))
+      return(lin_cdf(b, a, G$D, c, G$start, G$g0, G$gls))
     }
     cas <- tg$case
     cbar <- -13.5
@@ -75,7 +75,8 @@ ltratio_lincdf <- function(b, a, cas, c = 0, cbar = -13.5, engine = c("auto", "c
   k <- dfl_case(cas, c("DK", "DG"))
   if (given && engine != "classical") {
     pl <- list(spec = list(NULL, 1L, 0L, 0, NaN), engine = dfl_engine_code(engine))
-    return(dfl_shape(dfl_route_call("lin", dfl_real(b, "b"), pl, c(as.double(a), k$model, dfl_num(c, "c"), dfl_num(cbar, "cbar"))), b))
+    P <- dfl_route_call("lin", dfl_real(b, "b"), pl, c(as.double(a), k$model, dfl_num(c, "c"), dfl_num(cbar, "cbar")))
+    return(dfl_vneg(dfl_shape(P, b), b, as.double(a)))
   }
   P <- .Call(C_dfl_r_lincdf, dfl_real(b, "b"), as.double(a), k$model, dfl_num(c, "c"), dfl_num(cbar, "cbar"))
   dfl_shape(P, b)

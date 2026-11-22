@@ -28,7 +28,7 @@
 #' D <- dfl_trend(1)
 #' pt_quantile(0.05, D, -13.5)          # 5.7045: the 5% critical value of the limit of P_T, trend case
 #' pt_cdf(c(4, 7), dfl_perron("C", 0.5), -10, -10)
-#' pt_envelope(c(-5, -10), dfl_perron("A", 0.5))
+#' pt_envelope(-10, dfl_perron("A", 0.5))
 #' @export
 pt_cdf <- function(q, D, cbar, c = 0, N = 60000, umax = 4000) {
   dfl_det_finite("ptcdf", D, q, c(dfl_cbar(cbar), dfl_num(c, "c"), dfl_int(N, "N"), dfl_num(umax, "umax")))
@@ -136,7 +136,7 @@ lm_power <- function(c, D, level = 0.05) {
 #' @seealso [pt_cdf()], [coef_cdf()], [dist_cdf()].
 #' @examples
 #' D <- dfl_trend(1)
-#' mza_quantile(0.05, D)                 # -16.591: the 5% critical value of the limit of MZ_alpha, trend case
+#' mza_quantile(0.05, D)                 # -16.591: the 5% critical value of MZ_alpha, trend case
 #' msb_cdf(c(0.15, 0.25), dfl_perron("A", 0.5))
 #' @export
 mza_cdf <- function(y, D, c = 0, gls = -13.5) {

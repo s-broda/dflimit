@@ -43,7 +43,7 @@ statistic with GLS detrending ([coef_cdf()]), and MSB, whose limit is \eqn{\sqrt
 }
 \examples{
 D <- dfl_trend(1)
-mza_quantile(0.05, D)                 # -16.591: the 5\% critical value of the limit of MZ_alpha, trend case
+mza_quantile(0.05, D)                 # -16.591: the 5\% critical value of MZ_alpha, trend case
 msb_cdf(c(0.15, 0.25), dfl_perron("A", 0.5))
 }
 \references{

@@ -175,13 +175,15 @@ local_power <- function(c, D, level = 0.05, statistic = c("tratio", "coef"), c0 
 #' v_cdf(c(0.02, 0.2), dfl_perron("B", 0.5), -5)
 #' @export
 lin_cdf <- function(b, a, D, c = 0, start = NULL, gamma0 = 0, gls = NULL, verified = FALSE) {
-  dfl_det_finite("lincdf", D, b, c(dfl_a(a), dfl_num(c, "c")), dfl_opts(0, start, gamma0, gls, verified))
+  a <- dfl_a(a)
+  dfl_vneg(dfl_det_finite("lincdf", D, b, c(a, dfl_num(c, "c")), dfl_opts(0, start, gamma0, gls, verified)), b, a)
 }
 
 #' @rdname lin_cdf
 #' @export
 lin_pdf <- function(b, a, D, c = 0, start = NULL, gamma0 = 0, gls = NULL, verified = FALSE) {
-  dfl_det_finite("linpdf", D, b, c(dfl_a(a), dfl_num(c, "c")), dfl_opts(0, start, gamma0, gls, verified), hi = 0)
+  a <- dfl_a(a)
+  dfl_vneg(dfl_det_finite("linpdf", D, b, c(a, dfl_num(c, "c")), dfl_opts(0, start, gamma0, gls, verified), hi = 0), b, a)
 }
 
 #' @rdname lin_cdf
@@ -196,13 +198,13 @@ lin_quantile <- function(p, a, D, c = 0, start = NULL, gamma0 = 0, gls = NULL, b
 #' @rdname lin_cdf
 #' @export
 v_cdf <- function(v, D, c = 0, start = NULL, gamma0 = 0, gls = NULL) {
-  dfl_det_finite("lincdf", D, v, c(NaN, dfl_num(c, "c")), dfl_opts(0, start, gamma0, gls))
+  lin_cdf(v, NaN, D, c, start, gamma0, gls)
 }
 
 #' @rdname lin_cdf
 #' @export
 v_pdf <- function(v, D, c = 0, start = NULL, gamma0 = 0, gls = NULL) {
-  dfl_det_finite("linpdf", D, v, c(NaN, dfl_num(c, "c")), dfl_opts(0, start, gamma0, gls), hi = 0)
+  lin_pdf(v, NaN, D, c, start, gamma0, gls)
 }
 
 #' ADFmax and regions by the general engine
@@ -264,4 +266,9 @@ dfl_a <- function(a) {
     stop("a must be a single number (NaN: the distribution of V)", call. = FALSE)
   }
   as.double(a)
+}
+# the law of V (a = NaN) below its support: 0 (the engine's inversion of the law of V gives NaN at b < 0)
+dfl_vneg <- function(out, b, a) {
+  if (is.nan(a)) out[!is.na(b) & b < 0] <- 0
+  out
 }
