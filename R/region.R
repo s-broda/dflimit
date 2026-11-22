@@ -87,6 +87,18 @@ ltratio_region <- function(bnd, cas = "DK", c = 0, info = FALSE, engine = c("aut
          call. = FALSE)
   }
   par <- switch(type, c(el("a"), el("b")), c(el("x"), el("c0", 0)), c(el("k"), el("omega")))
+  # (the line and the parabola at a non-finite b or x: 1, 0, NaN, as the router gives them; the classical code gave 0 at b
+  # = Inf and at a = +-Inf; the slope a and c0 must be finite)
+  if (type <= 2L && is.null(bnd$v0) && is.null(bnd$brks)) {
+    if (!is.finite(par[if (type == 1L) 1L else 2L])) {
+      stop(if (type == 1L) "the slope a of the line must be a finite real scalar" else "c0 of the parabola must be a finite real scalar", call. = FALSE)
+    }
+    b <- par[if (type == 1L) 2L else 1L]
+    if (!is.finite(b)) {
+      P <- if (is.nan(b)) NaN else if (b > 0) 1 else 0
+      return(if (isTRUE(info)) list(P = P, err = 0, status = 0L) else P)
+    }
+  }
   v0 <- if (is.null(bnd$v0)) 0 else el("v0")
   brks <- if (is.null(bnd$brks)) double() else dfl_real(bnd$brks, "bnd$brks")
   if (!all(is.finite(brks) & brks > 0)) stop("bnd$brks must be positive and finite", call. = FALSE)

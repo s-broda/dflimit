@@ -295,12 +295,13 @@ test_that("the refusals of the general engine are R errors", {
   expect_identical(lin_cdf(-1, NaN, dfl_perron("A", 0.5)), 0)
 })
 
-test_that("the guard on the nodes of the paths around the roots stops a design whose roots run off (not on CRAN)", {
-  skip_on_cran()
-  # (1 + r, 1{r <= 0.4}), given by its coefficients: two pieces, the coefficients of 1 and r of each regressor
+test_that("the guard on the nodes of the paths around the roots stops a design whose roots run off", {
+  # (1 + r, 1{r <= 0.4}), given by its coefficients: two pieces, the coefficients of 1 and r of each regressor.  The
+  # guard checks the nodes of the outer path before the inner integrals (it refused after 1.4 s and 1.2 GB before)
   D <- structure(list(br = c(0, 0.4, 1), C = matrix(c(1, 1, 1, 0, 1, 1, 0, 0), 2, 4), K = 2L, loc = FALSE, first = FALSE,
                       name = "(1 + r, 1{r <= 0.4})"), class = "dfl_design")
-  expect_error(dist_cdf(-2, D, 1), "the U-shapes of the zero start")
+  t <- system.time(expect_error(dist_cdf(-2, D, 1), "the U-shapes of the zero start"))[["elapsed"]]
+  expect_lt(t, 1)
 })
 
 test_that("the shapes of the inputs are kept and non-finite points have their limits", {

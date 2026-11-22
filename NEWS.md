@@ -24,6 +24,15 @@
   (0, 1), and a point of the outer contour whose paths around the roots would need more than a million nodes (as the
   design (1 + r, 1{r <= 0.4}) at every `c`, which took gigabytes before). The law of V is 0 at `b <= 0`, the envelopes
   are `NaN` at `c = NaN`.
+* The C engine of dflimit-matlab 8f78233: a design whose roots run off along the outer contour (as (1 + r, 1{r <= 0.4}))
+  is refused before any inner integral, in 0.1 s and a few MB (it took 1.4 s and 1.2 GB before the refusal), and the
+  test of it runs on CRAN; the outer hyperbola refuses more than 1e5 nodes and the moments a grid of more than 1e6
+  points; at non-finite arguments every function of the general engine and of the router gives the limit or an error
+  that names the argument (`coef_cdf_gp()` at y = +-Inf, the searches from a start value of +-Inf and the point-optimal
+  statistic at c = +-Inf did not return in C; the wrappers refused most of these already); the rules of the general
+  engine far from the unit root start at c = -60 (they started at c = -100, and on -100 <= c < -60 the general engine
+  was off by up to 1.4e-9, now 5e-13). `ltratio_region()` with case DK gives 1, 0 at b = Inf, -Inf (the classical code
+  gave 0) and refuses a non-finite slope.
 * The tests compare the general engine and the router with the values of the Julia engine (DFLimit.jl), a subset of
   them on CRAN; the reference values are copied from dflimit-matlab by `tools/det-ref-subset.R`.
 
