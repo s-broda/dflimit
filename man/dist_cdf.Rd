@@ -16,7 +16,8 @@ dist_cdf(
   gamma0 = 0,
   gls = NULL,
   verified = FALSE,
-  method = c("auto", "line", "paths")
+  method = c("auto", "line", "paths"),
+  rule = "auto"
 )
 
 dist_pdf(
@@ -28,7 +29,8 @@ dist_pdf(
   gamma0 = 0,
   gls = NULL,
   verified = FALSE,
-  method = c("auto", "line", "paths")
+  method = c("auto", "line", "paths"),
+  rule = "auto"
 )
 
 dist_quantile(
@@ -41,7 +43,8 @@ dist_quantile(
   gls = NULL,
   x0 = -2,
   tol = 1e-09,
-  method = c("auto", "line", "paths")
+  method = c("auto", "line", "paths"),
+  rule = "auto"
 )
 
 dist_moments(
@@ -84,6 +87,13 @@ detrending. `"auto"` takes it at `c0 = 0` for `c >= -20`, where it is 2.2 to 3.5
 value and 1.8 to 2.7 times per quantile, and the paths otherwise; `"line"` stops with the reason where it does not
 cover the design, the start or the options (GLS detrending, a fixed start, a jump).}
 
+\item{rule}{The rule of one evaluation of the inversion on paths: `"auto"` (the default, by regions), `"present"`
+(the rule before November 2026, also taken by `verified = TRUE`), `"thin"` (1.5 times the outer step, 16 and 32
+nodes), `"inner"` (the thin nodes on the present step), `"outer"` (the present nodes on the longer step), `"fine"`
+(the thin nodes on half the present step) or `"finestep"` (a fixed start without deterministic terms: the present
+nodes on the step min(1/2, 2.5/(gamma0 |c0|)) times the present one where the outer hyperbola is flatter than 70
+degrees). The line integral (see `method`) is not affected.}
+
 \item{p}{`dist_quantile()`: numeric vector or array of probabilities in (0, 1). `dist_moments()`: the number of
 moments.}
 
@@ -121,7 +131,13 @@ the general engine.
 
 By default (`verified = FALSE`) every value is one evaluation; `verified = TRUE` evaluates it a second time with
 other rules on a steeper path, and a third time with doubled rules where the two differ by more than 1e-9, with a
-warning where the last two still differ. The points of one call share the paths of the inversion, so a vector of
+warning where the last two still differ. One evaluation of the inversion on paths takes the rule of `rule`: by
+default (`"auto"`) the outer hyperbola with 1.5 times the step and the paths around the roots with 16 nodes per panel
+and 32 on the tails of their rays (24 and 40 before November 2026; 32 and 48 for 48 and 64 with a fixed start) where
+that holds, about half the time, and by regions of the start, the deterministic terms, `c` and `c0` the rule of before
+or a finer one (near the unit root with `c0 < 0`; the rules and regions of DFLimit.jl, within 7.6e-10 of the rule of
+before in the distribution function and 4e-9 of the peak in the density on a dense grid); `verified = TRUE` takes the
+rule of before. The points of one call share the paths of the inversion, so a vector of
 points is much cheaper in one call than point by point. The engine is checked for `c` from -480 to 10 (above the
 unit root the coefficient statistic, the moments and the t-ratio centred at `c0 = c` up to 16 with deterministic terms,
 10 with them and a fixed start, and 20 without them; beyond those bounds every function stops with an error); designs

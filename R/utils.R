@@ -144,12 +144,24 @@ dfl_gls <- function(gls, name = "gls") {
 }
 
 # the options of the general engine's functions: c(c0, start, gamma0, gls, verified)
-dfl_opts <- function(c0 = 0, start = NULL, gamma0 = 0, gls = NULL, verified = FALSE, method = NULL) {
+dfl_opts <- function(c0 = 0, start = NULL, gamma0 = 0, gls = NULL, verified = FALSE, method = NULL, rule = NULL) {
   c0 <- dfl_num(c0, "c0")
   gamma0 <- dfl_num(gamma0, "gamma0")
   o <- c(c0, dfl_start(start, gamma0), gamma0, dfl_gls(gls), dfl_flag(verified, "verified"))
-  if (!is.null(method)) o <- c(o, dfl_gmethod(method))
+  if (!is.null(method) || !is.null(rule)) o <- c(o, if (is.null(method)) 0L else dfl_gmethod(method))
+  if (!is.null(rule)) o <- c(o, dfl_grule(rule))
   o
+}
+# the rule of one evaluation of the general engine's inversion on paths (dist_cdf, dist_pdf, dist_quantile; DFL_RULE_* of
+# the C engine): 0 "auto" (by regions), 1 "present" (the rule before November 2026), 2 "thin", 3 "inner", 4 "outer",
+# 5 "fine", 6 "finestep"
+dfl_grule <- function(rule) {
+  msg <- paste0("rule must be \"auto\", \"present\", \"thin\", \"inner\", \"outer\", \"fine\" or \"finestep\" ",
+                "(the rules of one evaluation of the inversion on paths)")
+  if (!is.character(rule) || length(rule) != 1L) stop(msg, call. = FALSE)
+  m <- match(tolower(rule), c("auto", "present", "thin", "inner", "outer", "fine", "finestep"))
+  if (is.na(m)) stop(msg, call. = FALSE)
+  m - 1L
 }
 # the method of the general engine's t-ratio (dist_cdf, dist_pdf, dist_quantile): 0 "auto", 1 "line" (the line integral
 # with the explicit kernel), 2 "paths" (the inversion on paths around the roots)
