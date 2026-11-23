@@ -45,6 +45,11 @@ test_that("the upper tail above the unit root, case DK", {
   expect_equal(ltratio_cdf(-200, "DK", 10, c0 = 10.5), 0.716459029660, tolerance = 1e-10)
   expect_equal(ltratio_cdf(c(1e3, 3e3), "DK", 10, c0 = 9, engine = "general"), c(0.636120922790, 0.993550212928),
                tolerance = 1e-10)
-  expect_error(ltratio_cdf(1e7, "DK", 16, c0 = 2), "is computed for c <= 14 only", fixed = TRUE)
-  expect_error(ltratio_cdf(1e7, "DK", 16, c0 = -2, verified = TRUE), "is computed for c <= 14 only", fixed = TRUE)
+  expect_error(ltratio_cdf(1e7, "DK", 16, c0 = 2), "computes for c <= 14 only", fixed = TRUE)
+  expect_error(ltratio_cdf(1e7, "DK", 16, c0 = -2, verified = TRUE), "computes for c <= 14 only", fixed = TRUE)
+  # cases DU, DT far above the unit root: the conditional integral at x > 300 against the large-c law; above c = 14 an error
+  # (the line integral exhausted the memory at c = 16, c0 = 0, x = 4.4e6)
+  expect_equal(ltratio_cdf(4.07e5, "DU", 13), 0.9545202704, tolerance = 1e-6)
+  expect_equal(ltratio_cdf(4.766e5, "DT", 13), 0.9973023556, tolerance = 1e-6)
+  expect_error(ltratio_cdf(4.4e6, "DT", 16), "computes for c <= 14 only", fixed = TRUE)
 })
