@@ -386,3 +386,23 @@ test_that("the line integral with the explicit kernel for designs of rank one or
   expect_identical(ltratio_cdf(x, dfl_trend(0), -5, method = "line"), ltratio_cdf(x, "DU", -5, method = "single"))
   expect_error(ltratio_cdf(x, "DU", -5, method = "paths"))
 })
+
+test_that("above the unit root: the coefficient statistic, the moments, Gil-Pelaez and the range of c", {
+  # (the segments of the paths around the roots shorter than 1e-12 got no panel: case DK at c = 20 gave 0.3128 for the
+  # 30% point of the coefficient statistic, without a warning)
+  expect_lt(abs(coef_cdf(19.999999940099205, "DK", 20, engine = "general") - 0.3), 2e-8)
+  expect_lt(abs(coef_cdf(19.999999940099205, dfl_trend(-1), 20, engine = "general") - 0.3), 2e-8)
+  # the moments with c0 != 0: case DT at c = 0, c0 = -2 failed on the default route (the circle continued the logarithm
+  # of the determinant alone); far above the unit root the general engine's moments (the (1,1) entry of its matrix)
+  mc <- ltratio_mom(4, "DT", 0, c0 = -2, engine = "classical")
+  expect_lt(max(abs(ltratio_mom(4, "DT", 0, c0 = -2) - mc) / abs(mc)), 1e-9)
+  mc <- ltratio_mom(4, "DK", 20, engine = "classical")
+  expect_lt(max(abs(dist_moments(4, dfl_trend(-1), 20) - mc) / abs(mc)), 1e-11)
+  # coef_cdf_gp refuses where its grid does not resolve the transform, and names the N that serves
+  expect_error(coef_cdf_gp(11.999892584561692, dfl_trend(-1), 12), "needs N >=")
+  # the range of c: 16 with deterministic terms, 20 without; the default route takes the classical engine above it
+  expect_error(coef_cdf(17, dfl_trend(0), 17, engine = "general"), "up to c = 16")
+  expect_error(dist_cdf(0, dfl_perron("A", 0.5), 18, c0 = 2), "the t-ratio \\(dist_cdf\\) at c = 18")
+  expect_error(dist_moments(2, dfl_trend(-1), 21), "up to c = 20")
+  expect_equal(ltratio_mom(2, "DU", 18), ltratio_mom(2, "DU", 18, engine = "classical"))
+})
