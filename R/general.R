@@ -22,7 +22,9 @@
 #' By default (`verified = FALSE`) every value is one evaluation; `verified = TRUE` evaluates it a second time with
 #' other rules on a steeper path, and a third time with doubled rules where the two differ by more than 1e-9, with a
 #' warning where the last two still differ. The points of one call share the paths of the inversion, so a vector of
-#' points is much cheaper in one call than point by point. The engine is checked for `c` from -480 to 10; designs
+#' points is much cheaper in one call than point by point. The engine is checked for `c` from -480 to 10 (above the
+#' unit root the coefficient statistic, the moments and the t-ratio centred at `c0 = c` up to 16 with deterministic terms,
+#' 10 with them and a fixed start, and 20 without them; beyond those bounds every function stops with an error); designs
 #' whose roots run far out on the vertical line (above the unit root, and some unusual designs) can need several
 #' gigabytes of memory; where the paths around the roots of one node of the outer contour would need more than a million
 #' nodes the engine stops with an error (for instance the design \eqn{(1 + r, 1\{r \le 0.4\})}{(1 + r, 1{r <= 0.4})},
