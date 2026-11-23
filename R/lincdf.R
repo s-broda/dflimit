@@ -10,7 +10,19 @@
 #' \eqn{\bar c^2 V + (1 - \bar c) J(1)^2}{cbar^2 V + (1 - cbar) J(1)^2}, \eqn{J(1)^2 = 2U + 1}); see
 #' [power_envelope()]. `a = NaN` gives \eqn{P(V \le b)}{P(V <= b)} (case DK).
 #'
-#' The probability is computed by the inversion formula of Gil-Pelaez,
+#' By default (`method = "auto"` with `engine = "auto"`, a finite \eqn{a \ne 0}{a != 0}) the probability is the single
+#' inversion of the joint characteristic function along the ray of the half-plane, the method of Yong Bao and Raymond
+#' Kan, "Exact Finite-Sample Distribution and Moments of the Least Squares Estimator in First-Order Autoregressions: O(1)
+#' Algorithms", with the tail beyond \eqn{S = 400/|w|}{S = 400/|w|} (\eqn{w = 1/2 + b}) completed by integration by
+#' parts: in case DK for \eqn{-100 \le c \le 4}{-100 <= c <= 4}, and for a design that is one of the six classical
+#' cases (`dfl_trend(-1)`, `dfl_trend(0)`, `dfl_trend(1)` with any start) for \eqn{-100 \le c \le 2}{-100 <= c <= 2}
+#' (as `ltratio_lincdf` of DFLimit.jl and the MATLAB programs). `tol` is its absolute tolerance, `err = TRUE` returns
+#' the error estimates as well, and a warning names the points at which they exceed it (`verified = TRUE` recomputes
+#' those by the engines). `method = "inversion"` forces it (any `c`); `method = "engine"`, case DG, `a = NaN`, `engine =
+#' "classical"` or `"general"` and the points outside those ranges take the computation of before, which reproduces its
+#' values and is described next.
+#'
+#' The engines compute the probability by the inversion formula of Gil-Pelaez,
 #' \eqn{P(X < b) = 1/2 - (1/\pi) \int_0^\infty \mathrm{Im}[\varphi(u) e^{-iub}]/u \, du}{P(X < b) = 1/2 - (1/pi)
 #' int_0^Inf Im[phi(u) exp(-iub)]/u du}, from the joint moment generating function of \eqn{(U, V)}, by the
 #' trapezoidal rule in \eqn{u = \sinh v}{u = sinh(v)} with 60000 steps up to \eqn{u = 4000}, as `ltratio_lincdf` of
@@ -40,7 +52,12 @@
 #'   GLS detrending (`NULL`: least squares); see [ltratio_cdf()].
 #' @param c The local-to-unity parameter, finite.
 #' @param cbar The detrending parameter \eqn{\bar c}{cbar} of case DG (-13.5: the DF-GLS tests); not used in case DK.
-#' @return The probabilities, with the attributes of `b`.
+#' @param method `"auto"` (the default), `"inversion"` (the single inversion of Bao and Kan) or `"engine"` (the
+#'   engines' computation of before).
+#' @param tol The absolute tolerance of the single inversion.
+#' @param verified `TRUE`: the values whose error estimate exceeds `tol` are recomputed by the engines.
+#' @param err `TRUE`: a list of the values (`value`) and their error estimates (`err`; `NaN` where the engines computed).
+#' @return The probabilities, with the attributes of `b` (with `err = TRUE` a list, `value` and `err`).
 #' @references Elliott, G., Rothenberg, T. J. and Stock, J. H. (1996), "Efficient Tests for an Autoregressive Unit
 #'   Root", Econometrica 64, 813-836.
 #' @seealso [power_envelope()], [ltratio_region()], [ltratio_cdf()].
@@ -51,33 +68,43 @@
 #' ltratio_lincdf(0, -3.5, dfl_perron("A", 0.5), -5)
 #' @export
 ltratio_lincdf <- function(b, a, cas, c = 0, cbar = -13.5, engine = c("auto", "classical", "general"), start = NULL,
-                           g0 = 0, gls = NULL) {
+                           g0 = 0, gls = NULL, method = "auto", tol = 1e-12, verified = FALSE, err = FALSE) {
   engine <- dfl_engine(engine)
   if (!is.numeric(a) || length(a) != 1L || (is.na(a) && !is.nan(a))) {
     stop("a must be a single number (NaN: the distribution of V)", call. = FALSE)
   }
+  im <- dfl_imethod(method, "ltratio_lincdf")
+  ve <- dfl_flag(verified, "verified")
+  bv <- dfl_real(b, "b")
   if (dfl_is_design(cas)) {
     tg <- dfl_target(cas, g0, start, gls)
-    # (the classical cases of the linear form: DK, and DG detrended at -13.5, with a zero start)
-    cls <- !is.null(tg$case) && tg$case %in% c("DK", "DG") && tg$start == 0L
-    if (engine == "classical" && !cls) dfl_no_classical("the linear form of the classical engine has the cases DK and DG only")
-    if (engine == "general" || !cls) {
-      G <- dfl_general_target(tg)
-      return(lin_cdf(b, a, G$D, c, G$start, G$g0, G$gls))
+    # (the router: the single inversion of Bao and Kan for a design that is one of the six classical cases, the classical
+    # linear form for cases DK and DG with a zero start, the general engine otherwise; the general engine's points at
+    # -Inf, Inf, NaN: 0, 1, NaN)
+    if (engine == "classical" && is.null(tg$case)) dfl_no_classical("the linear form of the classical engine has the cases DK and DG only")
+    pl <- list(spec = dfl_spec(tg, FALSE), engine = dfl_engine_code(engine))
+    out <- rep(NaN, length(bv))
+    out[!is.na(bv) & bv > 0] <- 1
+    out[!is.na(bv) & bv < 0] <- 0
+    e <- ifelse(is.finite(bv), NaN, 0)
+    ok <- is.finite(bv)
+    if (any(ok)) {
+      r <- dfl_route_call2("lind", bv[ok], pl, c(as.double(a), dfl_num(c, "c"), im, dfl_tol(tol), ve))
+      out[ok] <- r$v
+      e[ok] <- r$e
     }
-    cas <- tg$case
-    cbar <- -13.5
+    return(dfl_with_err(out, e, b, err))
   } else if (dfl_num(g0, "g0") != 0 || !is.null(start) || !is.null(gls)) {
     stop("start, g0 and gls apply to a design; the linear form of the cases DK and DG has a zero start", call. = FALSE)
   }
   k <- dfl_case(cas, c("DK", "DG"))
-  if (engine != "classical") {
+  if (engine != "classical" || im == 5L) {
     pl <- list(spec = list(NULL, 1L, 0L, 0, NaN), engine = dfl_engine_code(engine))
-    P <- dfl_route_call("lin", dfl_real(b, "b"), pl, c(as.double(a), k$model, dfl_num(c, "c"), dfl_num(cbar, "cbar")))
-    return(dfl_shape(P, b))
+    r <- dfl_route_call2("lin", bv, pl, c(as.double(a), k$model, dfl_num(c, "c"), dfl_num(cbar, "cbar"), im, dfl_tol(tol), ve))
+    return(dfl_with_err(r$v, r$e, b, err))
   }
-  P <- .Call(C_dfl_r_lincdf, dfl_real(b, "b"), as.double(a), k$model, dfl_num(c, "c"), dfl_num(cbar, "cbar"))
-  dfl_shape(P, b)
+  P <- .Call(C_dfl_r_lincdf, bv, as.double(a), k$model, dfl_num(c, "c"), dfl_num(cbar, "cbar"))
+  dfl_with_err(P, rep(NaN, length(P)), b, err)
 }
 
 #' Asymptotic power envelope of Elliott, Rothenberg and Stock (1996)
@@ -102,11 +129,24 @@ ltratio_lincdf <- function(b, a, cas, c = 0, cbar = -13.5, engine = c("auto", "c
 #' (`engine = "auto"`) the rule of the C router keeps the classical engine for the cases DK and DG (1.6 to 11 times
 #' faster; its critical value is bisected to 1e-9).
 #'
+#' In case DK (and DU) the default (`method = "auto"` with `engine = "auto"`, `c <= -1e-4`) computes the critical value
+#' and the power by the single inversion of Bao and Kan (see [ltratio_lincdf()]), the critical value by regula falsi
+#' to 1e-12; `tol` is the tolerance of each inversion, `err = TRUE` returns the error estimates (the sum of the two
+#' inversions' estimates), and a warning names the points at which they exceed `tol` (`verified = TRUE` recomputes those
+#' by the engines). `method = "inversion"` forces it; `method = "engine"`, case DG, `engine = "classical"` or `"general"`
+#' and \eqn{-10^{-4} < c < 0}{-1e-4 < c < 0} take the computation described above, which reproduces the values of
+#' earlier versions.
+#'
 #' @param c Numeric vector or array of the local-to-unity parameters. `NaN` gives `NaN`.
 #' @param cas The case, `"DK"`, `"DU"` (the same as `"DK"`) or `"DG"`, or a design ([dfl_design]).
 #' @param engine `"auto"` (the default), `"classical"` or `"general"`; see the section Engines of [ltratio_cdf()].
 #' @param alpha The level of the tests.
-#' @return The envelope, with the attributes of `c`.
+#' @param method `"auto"` (the default), `"inversion"` (the single inversion of Bao and Kan) or `"engine"` (the
+#'   engines' computation of before).
+#' @param tol The absolute tolerance of each single inversion.
+#' @param verified `TRUE`: the values whose error estimate exceeds `tol` are recomputed by the engines.
+#' @param err `TRUE`: a list of the values (`value`) and their error estimates (`err`; `NaN` where the engines computed).
+#' @return The envelope, with the attributes of `c` (with `err = TRUE` a list, `value` and `err`).
 #' @references Elliott, G., Rothenberg, T. J. and Stock, J. H. (1996), "Efficient Tests for an Autoregressive Unit
 #'   Root", Econometrica 64, 813-836.
 #' @seealso [ltratio_lincdf()], [ltratio_cdf()].
@@ -115,23 +155,29 @@ ltratio_lincdf <- function(b, a, cas, c = 0, cbar = -13.5, engine = c("auto", "c
 #' power_envelope(c(-5, -13.5), "DG")
 #' power_envelope(-10, dfl_perron("C", 0.5))
 #' @export
-power_envelope <- function(c, cas = "DK", alpha = 0.05, engine = c("auto", "classical", "general")) {
+power_envelope <- function(c, cas = "DK", alpha = 0.05, engine = c("auto", "classical", "general"), method = "auto",
+                           tol = 1e-12, verified = FALSE, err = FALSE) {
   engine <- dfl_engine(engine)
+  im <- dfl_imethod(method, "power_envelope")
+  ve <- dfl_flag(verified, "verified")
   if (dfl_is_design(cas)) {
     # (dfl_trend(-1) and dfl_trend(0): case DK; dfl_trend(1): case DG; the other designs: the envelope of the
     # point-optimal statistic of the design, pt_envelope())
     cas <- if (dfl_is_trend(cas, -1L) || dfl_is_trend(cas, 0L)) "DK" else if (dfl_is_trend(cas, 1L)) "DG" else cas
     if (dfl_is_design(cas)) {
       if (engine == "classical") dfl_no_classical("the envelope of the classical engine has the cases DK (DU) and DG only")
-      return(pt_envelope(c, cas, alpha))
+      if (im != 0L) stop("power_envelope: method applies to the cases DK (DU) and DG; the envelope of a design is pt_envelope()", call. = FALSE)
+      v <- pt_envelope(c, cas, alpha)
+      return(dfl_with_err(v, rep(NaN, length(v)), c, err))
     }
   }
   k <- dfl_case(cas, c("DK", "DU", "DG"))
   model <- if (k$model == 4L) 4L else 1L
-  if (engine != "classical") {
+  if (engine != "classical" || im == 5L) {
     pl <- list(spec = list(NULL, 1L, 0L, 0, NaN), engine = dfl_engine_code(engine))
-    return(dfl_shape(dfl_route_call("env", dfl_real(c, "c"), pl, c(model, dfl_num(alpha, "alpha"))), c))
+    r <- dfl_route_call2("env", dfl_real(c, "c"), pl, c(model, dfl_num(alpha, "alpha"), im, dfl_tol(tol), ve))
+    return(dfl_with_err(r$v, r$e, c, err))
   }
   P <- .Call(C_dfl_r_envelope, dfl_real(c, "c"), model, dfl_num(alpha, "alpha"))
-  dfl_shape(P, c)
+  dfl_with_err(P, rep(NaN, length(P)), c, err)
 }

@@ -34,6 +34,26 @@ dfl_method <- function(method) {
   c(0L, 1L, 1L, 2L, 2L, 3L, 4L)[m]
 }
 
+# the method of the functions with the devices of Bao and Kan (dfl_inv_opts of the C router): "auto" 0, "inversion" (or
+# "jets", the moments) 5, "engine" (the engines' computation of before) 6, and where rep the representations of the
+# t-ratio ("single" or "line" 1, "double" or "conditional" 2, "contour" 3, "paths" 4), which take the engines too
+dfl_imethod <- function(method, fn, rep = FALSE) {
+  msg <- paste0(fn, ": method must be \"auto\", \"inversion\" (the single inversion of Bao and Kan) or \"engine\" ",
+                "(the engines' computation)",
+                if (rep) ", or a representation of the t-ratio (\"single\" or \"line\", \"double\" or \"conditional\", \"contour\", \"paths\")" else "")
+  if (!is.character(method) || length(method) != 1L || is.na(method)) stop(msg, call. = FALSE)
+  m <- match(tolower(method), c("auto", "inversion", "jets", "engine", "single", "line", "double", "conditional", "contour", "paths"))
+  if (is.na(m) || (!rep && m > 4L)) stop(msg, call. = FALSE)
+  c(0L, 5L, 5L, 6L, 1L, 1L, 2L, 2L, 3L, 4L)[m]
+}
+# the tolerance of the single inversion (NULL: the default of the engine)
+dfl_tol <- function(tol) if (is.null(tol)) NaN else dfl_num(tol, "tol")
+# the value with the error estimates where err = TRUE: list(value, err)
+dfl_with_err <- function(v, e, x, err) {
+  v <- dfl_shape(v, x)
+  if (isTRUE(err)) list(value = v, err = dfl_shape(e, x)) else v
+}
+
 dfl_real <- function(x, name) {
   if (!(is.numeric(x) || is.logical(x) && all(is.na(x)))) stop(name, " must be numeric", call. = FALSE)
   as.double(x)
@@ -70,8 +90,23 @@ dfl_once <- function(expr) {
 dfl_warn <- function(msgs) {
   for (m in msgs) {
     if (!nzchar(m)) next
-    for (l in strsplit(m, "\n", fixed = TRUE)[[1L]]) warning(l, call. = FALSE)
+    for (l in strsplit(dfl_rtext(m), "\n", fixed = TRUE)[[1L]]) warning(l, call. = FALSE)
   }
+}
+# the options of the C engine's messages in the words of the R functions (the method codes of the devices of Bao and
+# Kan, the engine general, verified)
+dfl_rtext <- function(m) {
+  for (r in list(c("method 5", "method = \"inversion\""), c("method 6", "method = \"engine\""), c("method 7", "method = \"grid\""),
+                 c("with engine general", "with engine = \"general\""),
+                 c("engine auto or classical", "engine = \"auto\" or \"classical\""),
+                 c("; verified recomputes", "; verified = TRUE recomputes"))) {
+    m <- gsub(r[1], r[2], m, fixed = TRUE)
+  }
+  m
+}
+# .Call with the messages of the engine's errors in those words
+dfl_call <- function(...) {
+  tryCatch(.Call(...), error = function(e) stop(dfl_rtext(conditionMessage(e)), call. = FALSE))
 }
 
 # the engine: "auto" (the default), "classical" or "general", as its code 0, 1, 2
@@ -129,7 +164,7 @@ dfl_gmethod <- function(method) {
 # a function of the general engine (dfl_r_det): the value, with the warnings of the engine given
 dfl_det_call <- function(what, D, x, args, opts = c(0, 0, 0, NaN, 0)) {
   dfl_check_design(D)
-  r <- .Call(C_dfl_r_det, what, D, as.double(x), as.double(args), as.double(opts))
+  r <- dfl_call(C_dfl_r_det, what, D, as.double(x), as.double(args), as.double(opts))
   dfl_warn(r[[3]])
   r
 }
@@ -143,6 +178,36 @@ dfl_det_finite <- function(what, D, x, args, opts = c(0, 0, 0, NaN, 0), lo = 0, 
   ok <- is.finite(xv)
   if (any(ok)) out[ok] <- dfl_det_call(what, D, xv[ok], args, opts)[[1]]
   dfl_shape(out, x)
+}
+
+# the same with the second element of the result, the error estimates of the single inversion of Bao and Kan:
+# list(value, err), err 0 at the non-finite points
+dfl_det_finite2 <- function(what, D, x, args, opts = c(0, 0, 0, NaN, 0), lo = 0, hi = 1) {
+  dfl_check_design(D)
+  xv <- dfl_real(x, "x")
+  out <- rep(NaN, length(xv))
+  out[!is.na(xv) & xv > 0] <- hi
+  out[!is.na(xv) & xv < 0] <- lo
+  e <- ifelse(is.finite(xv), NaN, 0)
+  ok <- is.finite(xv)
+  if (any(ok)) {
+    r <- dfl_det_call(what, D, xv[ok], args, opts)
+    out[ok] <- r[[1]]
+    e[ok] <- r[[2]]
+  }
+  list(value = dfl_shape(out, x), err = dfl_shape(e, x))
+}
+# the grid of the inversion of Gil-Pelaez of the point-optimal statistic and coef_cdf_gp (NULL: 0, the engine's rule)
+dfl_ptgrid <- function(N, umax) {
+  c(if (is.null(N)) 0 else dfl_int(N, "N"), if (is.null(umax)) 0 else dfl_num(umax, "umax"))
+}
+# their method: "auto" 0, "inversion" 5 (the single inversion of Bao and Kan), "grid" 7 (the fixed grid)
+dfl_ptmethod <- function(method) {
+  msg <- "method must be \"auto\", \"inversion\" (the single inversion of Bao and Kan) or \"grid\" (the fixed grid of Gil-Pelaez)"
+  if (!is.character(method) || length(method) != 1L || is.na(method)) stop(msg, call. = FALSE)
+  m <- match(tolower(method), c("auto", "inversion", "grid"))
+  if (is.na(m)) stop(msg, call. = FALSE)
+  c(0L, 5L, 7L)[m]
 }
 
 # the classical case of a design with its start (0, 1, 2) and GLS detrending (NaN: least squares): "DK", ..., "ST",
@@ -231,11 +296,17 @@ dfl_no_classical <- function(what = "the classical engine has the cases DK, DU, 
        "gls = -13.5 for case DG)", call. = FALSE)
 }
 
-# a function of the router (dfl_r_route): the value, with the warnings of the engines given
+# a function of the router (dfl_r_route): the value, with the warnings of the engines given (dfl_route_call2: the value
+# and the error estimates of the single inversion of Bao and Kan, NaN where the engines computed)
 dfl_route_call <- function(what, x, plan, args) {
-  r <- .Call(C_dfl_r_route, what, as.double(x), plan$spec, as.double(args), plan$engine)
+  r <- dfl_call(C_dfl_r_route, what, as.double(x), plan$spec, as.double(args), plan$engine)
   dfl_warn(r[[2]])
   r[[1]]
+}
+dfl_route_call2 <- function(what, x, plan, args) {
+  r <- dfl_call(C_dfl_r_route, what, as.double(x), plan$spec, as.double(args), plan$engine)
+  dfl_warn(r[[2]])
+  list(v = r[[1]], e = r[[3]])
 }
 
 # the design, start, fixed start and detrending of a computation for the general engine's own functions (a case code:

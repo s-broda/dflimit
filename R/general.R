@@ -108,16 +108,44 @@ dist_moments <- function(p, D, c = 0, c0 = 0, start = NULL, gamma0 = 0, gls = NU
 #' The limit \eqn{(U - c_0 V)/V}{(U - c0 V)/V} of the coefficient statistic \eqn{n(\hat\phi - \phi_0)}{n(phi^ -
 #' phi0)} for any design ([dfl_design]), by the general engine (the notation of [dist_cdf()]):
 #' `coef_pdf()` its density, `coef_quantile()` its quantiles (Newton's method from `y0`), `coef_cdf_gp()` its
-#' distribution function by the inversion formula of Gil-Pelaez on the trapezoidal rule in \eqn{u = \sinh v}{u =
-#' sinh(v)} with `N` steps up to `umax`, a check of the contour integral. The distribution function by the
-#' inversion on paths around the roots is [coef_cdf()] with a design (or with `engine = "general"`).
+#' distribution function by the inversion formula of Gil-Pelaez, a check of the contour integral. The distribution
+#' function by the inversion on paths around the roots is [coef_cdf()] with a design (or with `engine = "general"`).
+#'
+#' `coef_pdf()` also takes a case code (`"DK"`, `"DU"`, `"DT"` with the fixed start `gamma0`, `"SK"`, `"SU"`, `"ST"`,
+#' `"DG"`) in place of `D`. In those six classical cases, and for a design that is one of them, the default (`method =
+#' "auto"` with `engine = "auto"`, up to `c = 20`) is the single inversion of Yong Bao and Raymond Kan, "Exact
+#' Finite-Sample Distribution and Moments of the Least Squares Estimator in First-Order Autoregressions: O(1)
+#' Algorithms": the density of the ratio by the formula of Geary, one integral of the derivative of the joint
+#' characteristic function along the ray, from jets, the tail completed by integration by parts. `tol` is its tolerance
+#' relative to the scale \eqn{\max(1, E[V]/\mathrm{sd}(U))}{max(1, E[V]/sd(U))} of the density, `err = TRUE` returns the
+#' estimates as well, and a warning names the points at which they exceed it (`verified = TRUE` recomputes those by the
+#' general engine's checked computation). `method = "inversion"` forces it, `method = "engine"` (and `engine =
+#' "general"`, case DG, the other designs) is the general engine's density, the kernel of its contour integral. Near
+#' the point \eqn{y = -c_0}{y = -c0}, where the integrand decays slowly, one value of the single inversion can take a
+#' second, with a warning.
+#'
+#' `coef_cdf_gp()` is by default (a zero or stationary start, up to `c = 5`) the single inversion of Bao and Kan for the
+#' general engine's transform, with the branch of the square root of its determinant fixed at each point from the
+#' pivots of the precision matrix and the tail completed by integration by parts; `tol` its absolute tolerance, `err =
+#' TRUE` the error estimates. `method = "grid"` (and `N` or `umax` given, a fixed start, `c` above 5) is the trapezoidal
+#' rule of before in \eqn{u = \sinh v}{u = sinh(v)} with `N` steps (60000) up to `umax` (4000), refused where the grid
+#' does not resolve the singularity of the transform nearest the real line.
 #'
 #' @inheritParams dist_cdf
+#' @param D A design ([dfl_design]); for `coef_pdf()` also a case code.
 #' @param y Numeric vector or array of points. `-Inf`, `Inf` and `NaN` give 0, 1 (density 0) and `NaN`.
 #' @param p Numeric vector or array of probabilities in (0, 1).
 #' @param y0 The starting point of the search.
-#' @param N,umax The number of steps and the end of the grid of the inversion formula of Gil-Pelaez.
-#' @return A numeric vector with the attributes of `y` or `p`.
+#' @param N,umax The number of steps and the end of the fixed grid of the inversion formula of Gil-Pelaez (`NULL`:
+#'   60000 and 4000 where the grid computes; given, they choose the grid).
+#' @param method `coef_pdf()`: `"auto"`, `"inversion"` (the single inversion of Bao and Kan) or `"engine"` (the general
+#'   engine); `coef_cdf_gp()`: `"auto"`, `"inversion"` or `"grid"`.
+#' @param engine `coef_pdf()`: `"auto"` (the default), `"classical"` (the six classical cases, by the single inversion)
+#'   or `"general"`.
+#' @param tol The tolerance of the single inversion (1e-12).
+#' @param err `TRUE`: a list of the values (`value`) and their error estimates (`err`; `NaN` where the general engine
+#'   computed).
+#' @return A numeric vector with the attributes of `y` or `p` (with `err = TRUE` a list, `value` and `err`).
 #' @seealso [coef_cdf()], [dist_cdf()].
 #' @examples
 #' D <- dfl_perron("A", 0.3)
@@ -125,8 +153,29 @@ dist_moments <- function(p, D, c = 0, c0 = 0, start = NULL, gamma0 = 0, gls = NU
 #' coef_quantile(0.05, D)
 #' coef_cdf_gp(-12, dfl_trend(0))           # = coef_cdf(-12, "DU")
 #' @export
-coef_pdf <- function(y, D, c = 0, c0 = 0, start = NULL, gamma0 = 0, gls = NULL, verified = FALSE) {
-  dfl_det_finite("coefpdf", D, y, dfl_num(c, "c"), dfl_opts(c0, start, gamma0, gls, verified), hi = 0)
+coef_pdf <- function(y, D, c = 0, c0 = 0, start = NULL, gamma0 = 0, gls = NULL, verified = FALSE, method = "auto",
+                     engine = c("auto", "classical", "general"), tol = 1e-12, err = FALSE) {
+  engine <- dfl_engine(engine)
+  tg <- dfl_target(D, gamma0, start, gls)
+  im <- dfl_imethod(method, "coef_pdf")
+  ve <- dfl_flag(verified, "verified")
+  c <- dfl_num(c, "c")
+  c0 <- dfl_num(c0, "c0")
+  pl <- dfl_plan(tg, engine, c, c0)
+  if (pl$path == "legacy") pl <- list(path = "router", spec = dfl_spec(tg, TRUE), engine = dfl_engine_code(engine))
+  # (the engine as given: the router decides between the single inversion and the general engine)
+  pl$engine <- dfl_engine_code(engine)
+  yv <- dfl_real(y, "y")
+  out <- rep(NaN, length(yv))
+  out[!is.na(yv) & is.infinite(yv)] <- 0
+  e <- ifelse(is.finite(yv), NaN, 0)
+  ok <- is.finite(yv)
+  if (any(ok)) {
+    r <- dfl_route_call2("coefpdf", yv[ok], pl, c(c, c0, im, dfl_tol(tol), ve))
+    out[ok] <- r$v
+    e[ok] <- r$e
+  }
+  dfl_with_err(out, e, y, err)
 }
 
 #' @rdname coef_pdf
@@ -139,9 +188,11 @@ coef_quantile <- function(p, D, c = 0, c0 = 0, start = NULL, gamma0 = 0, gls = N
 
 #' @rdname coef_pdf
 #' @export
-coef_cdf_gp <- function(y, D, c = 0, c0 = 0, start = NULL, gamma0 = 0, gls = NULL, N = 60000, umax = 4000) {
-  dfl_det_finite("coefgp", D, y, c(dfl_num(c, "c"), dfl_int(N, "N"), dfl_num(umax, "umax")),
-                 dfl_opts(c0, start, gamma0, gls))
+coef_cdf_gp <- function(y, D, c = 0, c0 = 0, start = NULL, gamma0 = 0, gls = NULL, N = NULL, umax = NULL, method = "auto",
+                        tol = 1e-12, err = FALSE) {
+  m <- dfl_ptmethod(method)
+  r <- dfl_det_finite2("coefgp", D, y, c(dfl_num(c, "c"), dfl_ptgrid(N, umax), m, dfl_tol(tol)), dfl_opts(c0, start, gamma0, gls))
+  if (isTRUE(err)) r else r$value
 }
 
 #' Local power by the general engine

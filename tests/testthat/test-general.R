@@ -59,7 +59,7 @@ det_cran <- c(
   # off its support, MSB and the envelopes at non-finite points, ADFmax and the regions with a fixed start through the
   # router (the general engine), the router's refusals
   "val lmcdf 3 NaN 0 0 5 0 0 0 4 -0.5", "val lmq 3 NaN 0 0 5 0 0 0 1 0.050000000000000003",
-  "err lmcdf 3 NaN 0 0 11 0 0 0 1 -0.10000000000000001", "err ptcdf 2 -7 0 0 3.1000000000000001 0 0 -7 3 4",
+  "err lmcdf 3 NaN 0 0 11 0 0 0 1 -0.10000000000000001", "err ptcdfG 2 -7 0 0 3.1000000000000001 0 0 -7 3 4",
   "err quant 3 NaN 0 0 0 0 0 -2 1 1.5", "err ptq 3 -13.5 0 0 0 0 0 -13.5 1 0", "err lmq 3 NaN 0 0 0 0 0 0 1 NaN",
   "err ptpow 3 -13.5 0 0 0 0 0 -13.5 1 1.5", "err env 1 NaN 0 0 0 0 0 1.5 1 -5",
   "val lincdf 1 NaN 0 0 -5 0 0 NaN 5 -0.10000000000000001", "val linpdf 1 NaN 0 0 -5 0 0 NaN 5 -0.10000000000000001",
@@ -286,7 +286,10 @@ test_that("the regions and the linear form keep a fixed start of a design (the g
   expect_equal(P, ltratio_region(bnd, dfl_trend(-1), -5, g0 = 1.5), tolerance = 1e-14)
   expect_equal(P, region_prob(bnd, dfl_trend(-1), -5, gamma0 = 1.5), tolerance = 1e-14)
   expect_gt(abs(P - ltratio_region(bnd, "DK", -5)), 0.1)
-  expect_equal(ltratio_lincdf(-0.2639, -3.5, dfl_trend(-1), -5, g0 = 1.5), P, tolerance = 1e-14)
+  # (the design is case DK with a fixed start: by default the single inversion of Bao and Kan, the general engine with
+  # method = "engine")
+  expect_equal(ltratio_lincdf(-0.2639, -3.5, dfl_trend(-1), -5, g0 = 1.5, method = "engine"), P, tolerance = 1e-14)
+  expect_equal(ltratio_lincdf(-0.2639, -3.5, dfl_trend(-1), -5, g0 = 1.5), P, tolerance = 1e-10)
   expect_error(ltratio_region(bnd, "DK", -5, g0 = 1.5, engine = "classical"), "case DK only")
 })
 
@@ -294,8 +297,12 @@ test_that("the refusals of the general engine are R errors", {
   D <- dfl_trend(1)
   expect_error(lm_cdf(-1, D, 11), "must be at most 10")
   expect_error(lm_power(c(-5, 11), D), "must be at most 10")
-  expect_error(pt_cdf(4, D, -13.5, 3.7), "does not resolve")
-  expect_error(pt_cdf(1e5, D, -13.5), "beyond the range")
+  # (the fixed grid of the point-optimal statistic, method = "grid" or N given; the default up to c = 4, the single
+  # inversion of Bao and Kan, has no such refusals)
+  expect_error(pt_cdf(4, D, -13.5, 3.7, method = "grid"), "does not resolve")
+  expect_error(pt_cdf(1e5, D, -13.5, N = 60000), "beyond the range")
+  expect_error(pt_cdf(4, D, -13.5, method = "fast"), "method must be")
+  expect_error(pt_cdf(4, D, -13.5, method = "inversion", N = 60000), "N and umax belong")
   expect_error(pt_power(-5, D, -13.5, level = 1.5), "level must lie in (0, 1)", fixed = TRUE)
   expect_error(pt_envelope(-5, D, level = 0), "level must lie in (0, 1)", fixed = TRUE)
   expect_error(lm_power(-5, D, level = 1), "level must lie in (0, 1)", fixed = TRUE)

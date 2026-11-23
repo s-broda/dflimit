@@ -226,13 +226,27 @@ ltratio_icdf <- function(p, cas, c = 0, c0 = 0, g0 = 0, method = "auto", tol = 1
 #' The moments \eqn{E[\tau^j]}{E[tau^j]}, \eqn{j = 1, \dots, p}{j = 1..p}, of the limit
 #' \eqn{\tau = (U - c_0 V)/\sqrt{V}}{tau = (U - c0 V)/sqrt(V)} of [ltratio_cdf()], as one-dimensional integrals of
 #' the joint moment generating function of \eqn{(U, V)} (the moments of the limit in the Supplementary Material of the
-#' paper).
+#' paper): \eqn{E\tau^j = \Gamma(j/2)^{-1} \int_0^\infty s^{j/2-1} m_j(s)\,ds}{E tau^j = Gamma(j/2)^(-1) int_0^Inf
+#' s^(j/2-1) m_j(s) ds}, \eqn{m_j(s)}{m_j(s)} the j-th derivative of the moment generating function along its affine path.
 #' Not available for case DG in the classical engine (a design of case DG takes the general engine).
+#'
+#' By default (`method = "auto"` with `engine = "auto"`, the cases DK, DU, DT with a zero or fixed start and SK, SU, ST,
+#' up to `c = 20` and 31 moments) the derivative comes from one Taylor-mode jet of order j at each node of an adaptive
+#' quadrature in \eqn{\log s}{log s}, the method of Yong Bao and Raymond Kan, "Exact Finite-Sample Distribution and
+#' Moments of the Least Squares Estimator in First-Order Autoregressions: O(1) Algorithms", with the closed-form
+#' transform of the six cases; `tol` is the relative tolerance of its quadrature, and a warning names the moments whose
+#' error estimate exceeds `tol` times their size (`verified = TRUE` recomputes them by the engines). `method = "jets"`
+#' forces it (also above `c = 20`); `method = "engine"` is the computation of before (the derivatives as Cauchy
+#' integrals on a circle, by the classical engine or the general engine), which reproduces those values; `engine =
+#' "classical"` or `"general"` takes that computation too.
 #'
 #' @inheritParams ltratio_cdf
 #' @param p The number of moments, a positive integer.
 #' @param info If `TRUE`, return a list with the moments `m` and the error estimates `err` of the integrals (`NA`
-#'   where the router computes).
+#'   where the router computes by the engines).
+#' @param method `"auto"` (the default), `"jets"` (the moments from jets of Bao and Kan) or `"engine"` (the engines'
+#'   circles).
+#' @param tol The relative tolerance of the quadrature of the moments from jets (1e-10).
 #' @return A numeric vector of length `p` (or the list described under `info`).
 #' @inheritSection ltratio_cdf Cases
 #' @inheritSection ltratio_cdf Engines
@@ -243,7 +257,7 @@ ltratio_icdf <- function(p, cas, c = 0, c0 = 0, g0 = 0, method = "auto", tol = 1
 #' ltratio_mom(2, dfl_perron("A", 0.5))
 #' @export
 ltratio_mom <- function(p, cas, c = 0, c0 = 0, g0 = 0, info = FALSE, engine = c("auto", "classical", "general"),
-                        start = NULL, gls = NULL) {
+                        start = NULL, gls = NULL, method = "auto", tol = 1e-10, verified = FALSE) {
   if (!is.numeric(p) || length(p) != 1L || is.na(p) || p != round(p) || p < 1) {
     stop("p must be a positive integer", call. = FALSE)
   }
@@ -251,12 +265,17 @@ ltratio_mom <- function(p, cas, c = 0, c0 = 0, g0 = 0, info = FALSE, engine = c(
   tg <- dfl_target(cas, g0, start, gls)
   c <- dfl_num(c, "c")
   c0 <- dfl_num(c0, "c0")
+  im <- dfl_imethod(method, "ltratio_mom")
+  ve <- dfl_flag(verified, "verified")
   pl <- dfl_plan(tg, engine, c, c0)
+  # (the moments from jets with engine = "classical": the router, which takes them for method = "jets")
+  if (pl$path == "legacy" && im == 5L) pl <- list(path = "router", spec = dfl_spec(tg, TRUE), engine = dfl_engine_code(engine))
   # (a design of case DG, which has no moments in the classical engine: the general engine)
   if (pl$path == "router" && identical(tg$case, "DG") && !is.null(tg$D)) pl <- list(path = "router", spec = dfl_spec(tg, FALSE), engine = 2L)
   if (pl$path == "router") {
-    m <- dfl_route_call("mom", 0, pl, c(c, c0, p))
-    return(if (isTRUE(info)) list(m = m, err = rep(NA_real_, length(m))) else m)
+    if (im == 5L) pl$engine <- dfl_engine_code(engine)
+    r <- dfl_route_call2("mom", 0, pl, c(c, c0, p, im, dfl_tol(tol), ve))
+    return(if (isTRUE(info)) list(m = r$v, err = ifelse(is.nan(r$e), NA_real_, r$e)) else r$v)
   }
   k <- dfl_case(pl$case)
   r <- .Call(C_dfl_r_moments, as.integer(p), k$model, c, c0, as.double(pl$g0), k$stat)

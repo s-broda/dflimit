@@ -51,11 +51,17 @@ test_that("the conditional integral reproduces the Julia values", {
 })
 
 test_that("the moments reproduce the Julia values", {
+  # (the stored values are the engines' circles: method = "engine" to 1e-10; the default, the moments from jets of Bao and
+  # Kan, agrees with DFLimit.jl's to rounding and with these to 1e-10 relative to the size of the moments near the unit
+  # root, to 3.7e-9 at c = -60, c0 = c, where its error estimate does not flag it)
   d <- read_ref("mom_ref.txt", c("m", "c", "c0", "g0", "st", "m1", "m2", "m3", "m4"))
   for (i in seq_len(nrow(d))) {
     r <- d[i, ]
     mr <- c(r$m1, r$m2, r$m3, r$m4)
-    expect_lt(max(abs(ltratio_mom(4, case_code(r$m, r$st), r$c, r$c0, r$g0) / mr - 1)), 1e-10)
+    cas <- case_code(r$m, r$st)
+    expect_lt(max(abs(ltratio_mom(4, cas, r$c, r$c0, r$g0, method = "engine") / mr - 1)), 1e-10)
+    sc <- pmax(abs(mr), abs(mr[2])^((1:4) / 2))
+    expect_lt(max(abs(ltratio_mom(4, cas, r$c, r$c0, r$g0) - mr) / sc), if (r$c >= -20) 1e-9 else 1e-8)
   }
 })
 
@@ -73,8 +79,13 @@ test_that("ADFmax, the regions, the linear form and the power envelope reproduce
       p <- pairs(v, 3)
       expect_lt(max(abs(ltratio_lincdf(p[1, ], NaN, "DK", v[1]) - p[2, ])), 1e-10)
     } else if (tag == "envelope") {
+      # (the stored values are those of the critical value bisected to 1e-9: method = "engine" to 1e-10; the default in
+      # case DK, the single inversion of Bao and Kan with the critical value to 1e-12, moves by up to 1.2e-9, within 3e-12
+      # of the general engine's envelope)
       p <- pairs(v, 4)
-      expect_lt(max(abs(power_envelope(p[1, ], c("DK", "", "", "DG")[v[1]], v[2]) - p[2, ])), 1e-10)
+      cas <- c("DK", "", "", "DG")[v[1]]
+      expect_lt(max(abs(power_envelope(p[1, ], cas, v[2], method = "engine") - p[2, ])), 1e-10)
+      expect_lt(max(abs(power_envelope(p[1, ], cas, v[2]) - p[2, ])), 5e-9)
     } else if (tag == "adfmax") {
       cas <- paste0(if (v[2] == 1) "S" else "D", c("K", "U", "T")[v[1]])
       expect_close_Ff(adfmax_cdf(v[4], cas, v[3]), adfmax_pdf(v[4], cas, v[3]), v[5], v[6], 1e-10, 0, 1e-10,

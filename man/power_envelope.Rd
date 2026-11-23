@@ -8,7 +8,11 @@ power_envelope(
   c,
   cas = "DK",
   alpha = 0.05,
-  engine = c("auto", "classical", "general")
+  engine = c("auto", "classical", "general"),
+  method = "auto",
+  tol = 1e-12,
+  verified = FALSE,
+  err = FALSE
 )
 }
 \arguments{
@@ -19,9 +23,18 @@ power_envelope(
 \item{alpha}{The level of the tests.}
 
 \item{engine}{`"auto"` (the default), `"classical"` or `"general"`; see the section Engines of [ltratio_cdf()].}
+
+\item{method}{`"auto"` (the default), `"inversion"` (the single inversion of Bao and Kan) or `"engine"` (the
+engines' computation of before).}
+
+\item{tol}{The absolute tolerance of each single inversion.}
+
+\item{verified}{`TRUE`: the values whose error estimate exceeds `tol` are recomputed by the engines.}
+
+\item{err}{`TRUE`: a list of the values (`value`) and their error estimates (`err`; `NaN` where the engines computed).}
 }
 \value{
-The envelope, with the attributes of `c`.
+The envelope, with the attributes of `c` (with `err = TRUE` a list, `value` and `err`).
 }
 \description{
 The power at `c` of the point-optimal level-`alpha` test against `c` itself, the envelope of the powers of all
@@ -44,6 +57,14 @@ In place of the case a design of the general engine ([dfl_design]) may be given:
 statistic of the design ([pt_envelope()]). `engine` chooses between the two engines as in [ltratio_cdf()]; by default
 (`engine = "auto"`) the rule of the C router keeps the classical engine for the cases DK and DG (1.6 to 11 times
 faster; its critical value is bisected to 1e-9).
+
+In case DK (and DU) the default (`method = "auto"` with `engine = "auto"`, `c <= -1e-4`) computes the critical value
+and the power by the single inversion of Bao and Kan (see [ltratio_lincdf()]), the critical value by regula falsi
+to 1e-12; `tol` is the tolerance of each inversion, `err = TRUE` returns the error estimates (the sum of the two
+inversions' estimates), and a warning names the points at which they exceed `tol` (`verified = TRUE` recomputes those
+by the engines). `method = "inversion"` forces it; `method = "engine"`, case DG, `engine = "classical"` or `"general"`
+and \eqn{-10^{-4} < c < 0}{-1e-4 < c < 0} take the computation described above, which reproduces the values of
+earlier versions.
 }
 \examples{
 power_envelope(-7, "DK")                   # 0.4994: at c = -7 the envelope has power one half

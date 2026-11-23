@@ -193,14 +193,18 @@ static dfl_det_opts opts_in(SEXP o)
 
 /* .Call("dfl_r_det", what, D, x, args, opts): a function of the general engine; list(value, extra, warning):
  *   "cdf" "pdf" x | args c                       "quantile" p | c x0 tol
- *   "coefcdf" "coefpdf" y | c                    "coefquantile" p | c y0 tol         "coefgp" y | c N umax
+ *   "coefcdf" "coefpdf" y | c                    "coefquantile" p | c y0 tol         "coefgp" y | c N umax method tol
+ *   (extra: the error estimates of the single inversion of Bao and Kan, NaN on the fixed grid)
  *   "moments" (x unused) | c pmax (extra: the error estimates)
  *   "power" cs | level statistic (0 the t-ratio, 1 the coefficient statistic)
  *   "lincdf" "linpdf" b | a c (a NaN: the law of V)   "linquantile" p | a c b0 tol
  *   "adfcdf" "adfpdf" x | c                      "adfquantile" p | c x0 tol
  *   "region" (x unused) | type par1 par2 c
- *   "ptcdf" "ptpdf" q | cbar c N umax            "ptquantile" p | cbar N umax
- *   "ptpower" cs | cbar level N umax (extra: the critical values)   "ptenvelope" cs | level N umax
+ *   "ptcdf" "ptpdf" q | cbar c N umax method tol (extra: the error estimates)   "ptquantile" p | cbar N umax method tol
+ *   "ptpower" cs | cbar level N umax method tol (extra: the critical values)   "ptenvelope" cs | level N umax method tol
+ * (method of the point-optimal functions and coef_cdf_gp: 0 automatic, the single inversion of Bao and Kan up to c = 4, 5
+ * for coef_cdf_gp, and the fixed grid beyond or where N or umax is given (> 0); 5 the single inversion; 7 the fixed grid;
+ * tol NaN for 1e-12)
  *   "lmcdf" x | c      "lmquantile" p | c      "lmpower" cs | level (extra: the critical value)
  *   "mzacdf" y | c gls      "mzaquantile" p | c gls y0 tol      "msbcdf" x | c gls      "msbquantile" p | c gls
  * opts = c(c0, start, gamma0, gls, verified) where the function takes the options; the probabilities are checked by the
@@ -217,7 +221,7 @@ SEXP dfl_r_det(SEXP what, SEXP Ds, SEXP x, SEXP args, SEXP opts)
     char err[ERRLEN] = "";
     int rc = 1, nout = n, nextra = 0;
     if (!strcmp(w, "moments")) { NEED(2); nout = (int) a[1]; nextra = nout; if (nout < 1) Rf_error("p must be a positive integer"); }
-    if (!strcmp(w, "ptpower")) nextra = n;
+    if (!strcmp(w, "ptpower") || !strcmp(w, "ptcdf") || !strcmp(w, "ptpdf") || !strcmp(w, "ptquantile") || !strcmp(w, "coefgp")) nextra = n;
     if (!strcmp(w, "lmpower")) nextra = 1;
     SEXP out = PROTECT(Rf_allocVector(REALSXP, nout)), ex = PROTECT(Rf_allocVector(REALSXP, nextra));
     double *v = REAL(out), *e = REAL(ex);
@@ -226,7 +230,7 @@ SEXP dfl_r_det(SEXP what, SEXP Ds, SEXP x, SEXP args, SEXP opts)
     else if (!strcmp(w, "quantile")) { NEED(3); rc = dfl_det_quantile(&D, n, xv, a[0], a[1], a[2], &o, v, err, sizeof err); }
     else if (!strcmp(w, "coefcdf") || !strcmp(w, "coefpdf")) { NEED(1); rc = dfl_det_coef(w[4] == 'c' ? 2 : 1, &D, n, xv, a[0], &o, v, err, sizeof err); }
     else if (!strcmp(w, "coefquantile")) { NEED(3); rc = dfl_det_coef_quantile(&D, n, xv, a[0], a[1], a[2], &o, v, err, sizeof err); }
-    else if (!strcmp(w, "coefgp")) { NEED(3); rc = dfl_det_coef_cdf_gp(&D, n, xv, a[0], &o, (int) a[1], a[2], v, err, sizeof err); }
+    else if (!strcmp(w, "coefgp")) { NEED(5); rc = dfl_det_coef_cdf_gp_x(&D, n, xv, a[0], &o, (int) a[3], (int) a[1], a[2], a[4], v, e, err, sizeof err); }
     else if (!strcmp(w, "moments")) rc = dfl_det_moments(&D, a[0], nout, &o, v, e, err, sizeof err);
     else if (!strcmp(w, "power")) { NEED(2); rc = dfl_det_local_power(&D, n, xv, a[0], (int) a[1], &o, v, err, sizeof err); }
     else if (!strcmp(w, "lincdf") || !strcmp(w, "linpdf")) { NEED(2); rc = dfl_det_lin(w[3] == 'c' ? 2 : 1, &D, n, xv, a[0], a[1], &o, v, err, sizeof err); }
@@ -241,14 +245,14 @@ SEXP dfl_r_det(SEXP what, SEXP Ds, SEXP x, SEXP args, SEXP opts)
         NEED(4); double par[2] = {a[1], a[2]};
         if (nout != 1) Rf_error("region: one value");
         rc = dfl_det_region(&D, (int) a[0], par, a[3], &o, v, err, sizeof err);
-    } else if (!strcmp(w, "ptcdf") || !strcmp(w, "ptpdf")) { NEED(4); rc = dfl_det_pt(w[2] == 'c' ? 2 : 1, &D, n, xv, a[0], a[1], (int) a[2], a[3], v, err, sizeof err); }
+    } else if (!strcmp(w, "ptcdf") || !strcmp(w, "ptpdf")) { NEED(6); rc = dfl_det_pt_x(w[2] == 'c' ? 2 : 1, &D, n, xv, a[0], a[1], (int) a[4], (int) a[2], a[3], a[5], v, e, err, sizeof err); }
     else if (!strcmp(w, "ptquantile")) {
-        NEED(3); rc = 0;
-        for (int k = 0; k < n && !rc; k++) rc = dfl_det_pt_quantile(&D, xv[k], a[0], (int) a[1], a[2], &v[k], err, sizeof err);
+        NEED(5); rc = 0;
+        for (int k = 0; k < n && !rc; k++) rc = dfl_det_pt_quantile_x(&D, xv[k], a[0], (int) a[3], (int) a[1], a[2], a[4], &v[k], &e[k], err, sizeof err);
     } else if (!strcmp(w, "ptpower")) {
-        NEED(4); rc = 0;
-        for (int k = 0; k < n && !rc; k++) rc = dfl_det_pt_power(&D, a[0], xv[k], a[1], (int) a[2], a[3], &e[k], &v[k], err, sizeof err);
-    } else if (!strcmp(w, "ptenvelope")) { NEED(3); rc = dfl_det_pt_envelope(&D, n, xv, a[0], (int) a[1], a[2], v, err, sizeof err); }
+        NEED(6); rc = 0;
+        for (int k = 0; k < n && !rc; k++) rc = dfl_det_pt_power_x(&D, a[0], xv[k], a[1], (int) a[4], (int) a[2], a[3], a[5], &e[k], &v[k], err, sizeof err);
+    } else if (!strcmp(w, "ptenvelope")) { NEED(5); rc = dfl_det_pt_envelope_x(&D, n, xv, a[0], (int) a[3], (int) a[1], a[2], a[4], v, err, sizeof err); }
     else if (!strcmp(w, "lmcdf")) { NEED(1); rc = dfl_det_lm_cdf(&D, n, xv, a[0], v, err, sizeof err); }
     else if (!strcmp(w, "lmquantile")) {
         NEED(1); rc = 0;
@@ -285,9 +289,15 @@ static void spec_in(SEXP s, dfl_spec *S, dfl_design *D)
 /* .Call("dfl_r_route", what, x, spec, args, engine): the router (engine 0 auto, 1 classical, 2 general; with a classical
  * case and engine auto the R functions take the classical engine's own entry points where a method other than 0 or the
  * checked computation is asked for); list(value, the warnings, a character vector):
- *   "cdf" "pdf" x | args c c0 method verified          "icdf" p | c c0 tol method          "mom" (x unused) | c c0 pmax
- *   "coef" y | c c0                    "coefq" p | c c0 tol
- *   "lin" b | a model c cbar (spec unused)       "env" cs | model alpha (spec unused)
+ *   "cdf" "pdf" x | args c c0 method verified          "icdf" p | c c0 tol method
+ *   "mom" (x unused) | c c0 pmax [imethod tol verified]           "coefmom" (x unused) | c c0 pmax imethod tol
+ *   "coef" y | c c0 [imethod tol verified]       "coefq" p | c c0 tol [imethod verified]     "coefpdf" y | c c0 imethod tol verified
+ *   "lin" b | a model c cbar [imethod tol verified] (spec unused)   "lind" b | a c imethod tol verified (the design of spec)
+ *   "env" cs | model alpha [imethod tol verified] (spec unused)
+ * imethod (dfl_inv_opts): 0 automatic (the single inversion of Bao and Kan, the moments from jets, in their cases and
+ * regions), 5 forces them, 6 the engines' computation of before, 1-4 the representations of the coefficient statistic; tol
+ * NaN for the default; the error estimates of these functions are the third element of the list (NaN where the engines
+ * computed)
  *   "adf" "adfpdf" x | c               "region" (x unused) | type par1 par2 c
  * The warnings: where a computation of a classical case with engine auto takes the classical engine's one evaluation
  * in a regime in which it is known to be brittle, the message of dfl_brittle (as the classical entry points give it);
@@ -302,10 +312,14 @@ SEXP dfl_r_route(SEXP what, SEXP x, SEXP spec, SEXP args, SEXP engine)
 #define NEED(k) do { if (na < (k)) Rf_error("%s needs %d arguments", w, (k)); } while (0)
     char err[ERRLEN] = "";
     int rc = 1, nout = n;
-    if (!strcmp(w, "mom")) { NEED(3); nout = (int) a[2]; if (nout < 1) Rf_error("p must be a positive integer"); }
+    if (!strcmp(w, "mom") || !strcmp(w, "coefmom")) { NEED(3); nout = (int) a[2]; if (nout < 1) Rf_error("p must be a positive integer"); }
     if (!strcmp(w, "region")) nout = 1;
-    SEXP out = PROTECT(Rf_allocVector(REALSXP, nout));
-    double *v = REAL(out);
+    SEXP out = PROTECT(Rf_allocVector(REALSXP, nout)), eo = PROTECT(Rf_allocVector(REALSXP, nout));
+    double *v = REAL(out), *ev = REAL(eo);
+    for (int k = 0; k < nout; k++) ev[k] = NAN;
+    /* the options of the single inversion from the trailing arguments from position k0 (dfl_inv_opts) */
+#define IOPTS(k0) do { dfl_inv_defaults(&io); if (na > (k0)) io.method = (int) a[k0]; if (na > (k0) + 1) io.tol = a[(k0) + 1]; if (na > (k0) + 2) io.verified = a[(k0) + 2] != 0; } while (0)
+    dfl_inv_opts io;
     /* the classical case of the computation (spec->D NULL), for the warnings of its brittle regimes */
     int cls = S.D == NULL && eng == DFL_ENGINE_AUTO && S.model >= 1 && S.model <= 4, stat = S.start == 2;
     double g0 = stat ? 0.0 : S.g0, gls = S.model == 4 ? DFL_CBAR_GLS : NAN;
@@ -330,12 +344,17 @@ SEXP dfl_r_route(SEXP what, SEXP x, SEXP spec, SEXP args, SEXP engine)
         if (!rc && cls && a[3] == 0 && dfl_autoengine(DFL_F_ICDF, S.model, stat, g0, gls, a[0], a[1], 0.0) == DFL_ENGINE_CLASSICAL) {
             bm[nb] = dfl_brittle(2, S.model, a[0], a[1], g0, stat, 0); nb += bm[nb] != NULL;
         }
-    } else if (!strcmp(w, "mom")) rc = dfl_engine_mom(nout, &S, a[0], a[1], eng, v, err, sizeof err);
+    } else if (!strcmp(w, "mom")) { IOPTS(3); rc = dfl_engine_mom_x(nout, &S, a[0], a[1], eng, &io, v, ev, err, sizeof err); }
+    else if (!strcmp(w, "coefmom")) { IOPTS(3); rc = dfl_engine_coef_mom(nout, &S, a[0], a[1], eng, &io, v, ev, err, sizeof err); }
+    else if (!strcmp(w, "coefpdf")) { NEED(2); IOPTS(2); rc = dfl_engine_coef_pdf(n, xv, &S, a[0], a[1], eng, &io, v, ev, err, sizeof err); }
     else if (!strcmp(w, "coef") || !strcmp(w, "coefq")) {
         NEED(2);
-        if (w[4] == 'q') { NEED(3); rc = dfl_engine_coef_icdf(n, xv, &S, a[0], a[1], eng, a[2], v, err, sizeof err); }
-        else rc = dfl_engine_coef(n, xv, &S, a[0], a[1], eng, v, err, sizeof err);
-        if (!rc && cls) {
+        if (w[4] == 'q') {
+            NEED(3); dfl_inv_defaults(&io); if (na > 3) io.method = (int) a[3]; if (na > 4) io.verified = a[4] != 0;
+            rc = dfl_engine_coef_icdf_x(n, xv, &S, a[0], a[1], eng, a[2], &io, v, ev, err, sizeof err);
+        } else { IOPTS(2); rc = dfl_engine_coef_x(n, xv, &S, a[0], a[1], eng, &io, v, ev, err, sizeof err); }
+        /* (where the engines computed: the t-ratio at 0 with the null value c0 + y) */
+        if (!rc && cls && !io.verified && !dfl_inv_takes(&S, a[0], a[1], eng, io.method)) {
             /* (the t-ratio at 0 with the null value c0 + y: its engine and its brittle regime at each y, or at each
              * quantile) */
             for (int k = 0; k < n && nb < 64; k++) {
@@ -348,22 +367,26 @@ SEXP dfl_r_route(SEXP what, SEXP x, SEXP spec, SEXP args, SEXP engine)
                 if (!seen) { char *cp = R_alloc(strlen(m) + 1, 1); strcpy(cp, m); bm[nb++] = cp; }
             }
         }
-    } else if (!strcmp(w, "lin")) { NEED(4); rc = dfl_engine_lincdf(n, xv, a[0], (int) a[1], a[2], a[3], eng, v, err, sizeof err); }
-    else if (!strcmp(w, "env")) { NEED(2); rc = dfl_engine_envelope(n, xv, (int) a[0], a[1], eng, v, err, sizeof err); }
+    } else if (!strcmp(w, "lin")) {
+        NEED(4); IOPTS(4); dfl_spec S1 = {NULL, (int) a[1], 0, 0.0, NAN};
+        rc = dfl_engine_lincdf_x(n, xv, a[0], &S1, a[2], a[3], eng, &io, v, ev, err, sizeof err);
+    } else if (!strcmp(w, "lind")) { NEED(2); IOPTS(2); rc = dfl_engine_lincdf_x(n, xv, a[0], &S, a[1], NAN, eng, &io, v, ev, err, sizeof err); }
+    else if (!strcmp(w, "env")) { NEED(2); IOPTS(2); rc = dfl_engine_envelope_x(n, xv, (int) a[0], a[1], eng, &io, v, ev, err, sizeof err); }
     else if (!strcmp(w, "adf") || !strcmp(w, "adfpdf")) { NEED(1); rc = dfl_engine_adfmax(w[3] == 'p' ? 1 : 2, n, xv, &S, a[0], eng, v, err, sizeof err); }
     else if (!strcmp(w, "region")) { NEED(4); double par[2] = {a[1], a[2]}; rc = dfl_engine_region((int) a[0], par, &S, a[3], eng, v, err, sizeof err); }
     else Rf_error("unknown function %s of the router", w);
 #undef NEED
+#undef IOPTS
     engine_error(rc, err);
     const char *w1 = dfl_warning(), *w2 = dfl_det_warning();
     int nw = nb + (w1 != NULL) + (w2 != NULL);
-    SEXP res = PROTECT(Rf_allocVector(VECSXP, 2)), ws = PROTECT(Rf_allocVector(STRSXP, nw));
+    SEXP res = PROTECT(Rf_allocVector(VECSXP, 3)), ws = PROTECT(Rf_allocVector(STRSXP, nw));
     int j = 0;
     for (int i = 0; i < nb; i++) SET_STRING_ELT(ws, j++, Rf_mkChar(bm[i]));
     if (w1) SET_STRING_ELT(ws, j++, Rf_mkChar(w1));
     if (w2) SET_STRING_ELT(ws, j++, Rf_mkChar(w2));
-    SET_VECTOR_ELT(res, 0, out); SET_VECTOR_ELT(res, 1, ws);
-    UNPROTECT(3);
+    SET_VECTOR_ELT(res, 0, out); SET_VECTOR_ELT(res, 1, ws); SET_VECTOR_ELT(res, 2, eo);
+    UNPROTECT(4);
     return res;
 }
 
