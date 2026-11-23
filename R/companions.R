@@ -3,20 +3,30 @@
 #' The limit of the point-optimal invariant statistic \eqn{P_T}{P_T} of Elliott, Rothenberg and Stock (1996) against
 #' \eqn{\bar c < 0}{cbar < 0}, for any design ([dfl_design]), with a zero start: \eqn{P_T}{P_T} rejects the unit root
 #' for small values, and its limit is a quadratic form \eqn{Q} in the Ornstein-Uhlenbeck process (with the data
-#' GLS-detrended at \eqn{\bar c}{cbar}), whose law is computed by one inversion of Gil-Pelaez (the trapezoidal rule in
-#' \eqn{u = \sinh v}{u = sinh(v)} with `N` steps up to `umax`). `pt_cdf()` and `pt_pdf()` give its distribution
+#' GLS-detrended at \eqn{\bar c}{cbar}), whose law is computed by one inversion of its characteristic function.
+#' `pt_cdf()` and `pt_pdf()` give its distribution
 #' function and density at `q` under \eqn{\phi = 1 + c/n}{phi = 1 + c/n}, `pt_quantile()` its quantiles at the unit
 #' root, `pt_power()` the power at `c` of the level-`level` test against `cbar`, and `pt_envelope()` the Gaussian
 #' power envelope of the design: the power at `c` of the point-optimal test against `c` itself (`level` for
 #' `c >= 0`, `NaN` at `NaN`). For the intercept and the linear trend it is the envelope of Elliott, Rothenberg and
 #' Stock ([power_envelope()]).
 #'
-#' The inversion is refused with an error where its grid does not resolve the transform: far above the unit root, where
+#' By default (`method = "auto"`, up to `c = 4`) the inversion is the single inversion of Yong Bao and Raymond Kan,
+#' "Exact Finite-Sample Distribution and Moments of the Least Squares Estimator in First-Order Autoregressions: O(1)
+#' Algorithms": adaptive quadrature over decades along the real axis, with the branch of the square root of the
+#' determinant fixed at each point from the pivots of the precision matrix, and the tail completed by integration by
+#' parts (as `pt_cdf` of DFLimit.jl and the MATLAB programs). `tol` is its absolute tolerance, `err = TRUE` returns the
+#' error estimates as well (`pt_cdf()`, `pt_pdf()`), and a warning names the points at which they exceed it; the
+#' quantile is found by regula falsi on it with the values of the transform along the ray kept across the search.
+#' Above `c = 4`, with `method = "grid"` and wherever `N` or `umax` is given, the inversion is that of before, the
+#' formula of Gil-Pelaez on the trapezoidal rule in \eqn{u = \sinh v}{u = sinh(v)} with `N` steps (60000) up to `umax`
+#' (4000). It is refused with an error where its grid does not resolve the transform: far above the unit root, where
 #' the singularity of the transform of \eqn{Q} nearest to the real line comes closer than the step of the grid allows
 #' (with the default grid from about `c = 3.7` with a linear trend at `cbar = -13.5`, `c = 3.1` with an intercept at
 #' `cbar = -7`; the message names the `N` that would do), and at \eqn{|q|} beyond \eqn{0.15 N/\mathrm{asinh}(u_{max})}{0.15
-#' N/asinh(umax)} (1000 with the default grid). `-Inf`, `Inf` and `NaN` give 0, 1 (density 0) and `NaN`; `p` and `level`
-#' must lie in (0, 1).
+#' N/asinh(umax)} (1000 with the default grid). `pt_power()` and `pt_envelope()` take the grid for the critical value too
+#' where the alternative `c` is above 4. `-Inf`, `Inf` and `NaN` give 0, 1 (density 0) and `NaN`; `p` and `level` must
+#' lie in (0, 1).
 #'
 #' @param q Numeric vector or array of points of the statistic.
 #' @param p Numeric vector or array of probabilities in (0, 1).
@@ -25,7 +35,13 @@
 #' @param c `pt_cdf()`, `pt_pdf()`: the local-to-unity parameter. `pt_power()`, `pt_envelope()`: numeric vector or
 #'   array of them.
 #' @param level The level of the test.
-#' @param N,umax The number of steps and the end of the grid of the inversion formula of Gil-Pelaez.
+#' @param N,umax The number of steps and the end of the fixed grid of the inversion formula of Gil-Pelaez (`NULL`:
+#'   60000 and 4000 where the grid computes; given, they choose the grid).
+#' @param method `"auto"` (the default: the single inversion of Bao and Kan up to `c = 4`, the fixed grid beyond),
+#'   `"inversion"` or `"grid"`.
+#' @param tol The absolute tolerance of the single inversion.
+#' @param err `pt_cdf()`, `pt_pdf()`: `TRUE` returns a list of the values (`value`) and their error estimates (`err`;
+#'   `NaN` on the fixed grid).
 #' @return A numeric vector with the attributes of `q`, `p` or `c`; that of `pt_power()` has the attribute
 #'   `critical`, the critical value of the test.
 #' @references Elliott, G., Rothenberg, T. J. and Stock, J. H. (1996), "Efficient Tests for an Autoregressive Unit
@@ -37,28 +53,30 @@
 #' pt_cdf(c(4, 7), dfl_perron("C", 0.5), -10, -10)
 #' pt_envelope(-10, dfl_perron("A", 0.5))
 #' @export
-pt_cdf <- function(q, D, cbar, c = 0, N = 60000, umax = 4000) {
-  dfl_det_finite("ptcdf", D, q, c(dfl_cbar(cbar), dfl_num(c, "c"), dfl_int(N, "N"), dfl_num(umax, "umax")))
+pt_cdf <- function(q, D, cbar, c = 0, N = NULL, umax = NULL, method = "auto", tol = 1e-12, err = FALSE) {
+  r <- dfl_det_finite2("ptcdf", D, q, c(dfl_cbar(cbar), dfl_num(c, "c"), dfl_ptgrid(N, umax), dfl_ptmethod(method), dfl_tol(tol)))
+  if (isTRUE(err)) r else r$value
 }
 
 #' @rdname pt_cdf
 #' @export
-pt_pdf <- function(q, D, cbar, c = 0, N = 60000, umax = 4000) {
-  dfl_det_finite("ptpdf", D, q, c(dfl_cbar(cbar), dfl_num(c, "c"), dfl_int(N, "N"), dfl_num(umax, "umax")), hi = 0)
+pt_pdf <- function(q, D, cbar, c = 0, N = NULL, umax = NULL, method = "auto", tol = 1e-12, err = FALSE) {
+  r <- dfl_det_finite2("ptpdf", D, q, c(dfl_cbar(cbar), dfl_num(c, "c"), dfl_ptgrid(N, umax), dfl_ptmethod(method), dfl_tol(tol)), hi = 0)
+  if (isTRUE(err)) r else r$value
 }
 
 #' @rdname pt_cdf
 #' @export
-pt_quantile <- function(p, D, cbar, N = 60000, umax = 4000) {
+pt_quantile <- function(p, D, cbar, N = NULL, umax = NULL, method = "auto", tol = 1e-12) {
   pv <- dfl_prob(p)
-  dfl_shape(dfl_det_call("ptquantile", D, pv, c(dfl_cbar(cbar), dfl_int(N, "N"), dfl_num(umax, "umax")))[[1]], p)
+  dfl_shape(dfl_det_call("ptquantile", D, pv, c(dfl_cbar(cbar), dfl_ptgrid(N, umax), dfl_ptmethod(method), dfl_tol(tol)))[[1]], p)
 }
 
 #' @rdname pt_cdf
 #' @export
-pt_power <- function(c, D, cbar, level = 0.05, N = 60000, umax = 4000) {
+pt_power <- function(c, D, cbar, level = 0.05, N = NULL, umax = NULL, method = "auto", tol = 1e-12) {
   cv <- dfl_finite(c, "c")
-  r <- dfl_det_call("ptpower", D, cv, c(dfl_cbar(cbar), dfl_num(level, "level"), dfl_int(N, "N"), dfl_num(umax, "umax")))
+  r <- dfl_det_call("ptpower", D, cv, c(dfl_cbar(cbar), dfl_num(level, "level"), dfl_ptgrid(N, umax), dfl_ptmethod(method), dfl_tol(tol)))
   v <- dfl_shape(r[[1]], c)
   attr(v, "critical") <- if (length(r[[2]])) r[[2]][1] else NA_real_
   v
@@ -66,12 +84,14 @@ pt_power <- function(c, D, cbar, level = 0.05, N = 60000, umax = 4000) {
 
 #' @rdname pt_cdf
 #' @export
-pt_envelope <- function(c, D, level = 0.05, N = 60000, umax = 4000) {
+pt_envelope <- function(c, D, level = 0.05, N = NULL, umax = NULL, method = "auto", tol = 1e-12) {
   cv <- dfl_real(c, "c")
   out <- rep(NaN, length(cv))
   ok <- !is.na(cv)
   if (!all(is.finite(cv[ok]))) stop("c must be finite (or NaN)", call. = FALSE)
-  if (any(ok)) out[ok] <- dfl_det_call("ptenvelope", D, cv[ok], c(dfl_num(level, "level"), dfl_int(N, "N"), dfl_num(umax, "umax")))[[1]]
+  if (any(ok)) {
+    out[ok] <- dfl_det_call("ptenvelope", D, cv[ok], c(dfl_num(level, "level"), dfl_ptgrid(N, umax), dfl_ptmethod(method), dfl_tol(tol)))[[1]]
+  }
   dfl_shape(out, c)
 }
 

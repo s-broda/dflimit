@@ -3,6 +3,7 @@
 \name{coef_cdf}
 \alias{coef_cdf}
 \alias{coef_icdf}
+\alias{coef_mom}
 \title{Limiting distribution of the Dickey-Fuller coefficient statistic}
 \usage{
 coef_cdf(
@@ -15,7 +16,9 @@ coef_cdf(
   verified = FALSE,
   engine = c("auto", "classical", "general"),
   start = NULL,
-  gls = NULL
+  gls = NULL,
+  tol = 1e-12,
+  err = FALSE
 )
 
 coef_icdf(
@@ -28,6 +31,21 @@ coef_icdf(
   tol = 1e-09,
   verified = FALSE,
   engine = c("auto", "classical", "general"),
+  start = NULL,
+  gls = NULL,
+  err = FALSE
+)
+
+coef_mom(
+  p,
+  cas,
+  c = 0,
+  c0 = 0,
+  g0 = 0,
+  tol = 1e-10,
+  err = FALSE,
+  engine = c("auto", "classical", "general"),
+  method = "auto",
   start = NULL,
   gls = NULL
 )
@@ -44,10 +62,9 @@ design of the general engine ([dfl_design]; see the section Engines).}
 
 \item{g0}{The fixed start, \eqn{y_0 = g_0 \sigma \sqrt{n}}{y_0 = g0 sigma sqrt(n)} (cases DK, DU, DT).}
 
-\item{method}{`"auto"`, `"single"` (or `"line"`), `"double"` (or `"conditional"`) or `"contour"` (a fixed start
-in cases DU, DT only); see the section Methods and ranges. With a design, or `engine = "general"`, [ltratio_cdf()],
-[ltratio_pdf()] and [ltratio_icdf()] also take `"paths"` (the general engine's inversion on paths; see the section
-Engines).}
+\item{method}{`"auto"` (the default), `"inversion"` (the single inversion of Bao and Kan), `"engine"` (the engines'
+computation of before), or a representation of the t-ratio (`"single"` or `"line"`, `"double"` or
+`"conditional"`, `"contour"`), which takes the engines.}
 
 \item{verified}{`FALSE` (the default): one evaluation by one method; `TRUE`: the checked computation (see the
 section Methods and ranges; with the general engine, a second evaluation by other rules, see [dist_cdf()]).}
@@ -61,30 +78,46 @@ start).}
 \item{gls}{With a design: `NULL` (the default) for least squares detrending, or \eqn{\bar c < 0}{cbar < 0} for GLS
 detrending at \eqn{1 + \bar c/n}{1 + cbar/n}. With a case code it must be `NULL`.}
 
-\item{p}{Numeric vector or array of probabilities in (0, 1).}
+\item{tol}{`coef_cdf()`: the absolute tolerance of each value of the single inversion (1e-12); `coef_icdf()`: the width
+of the final bracket; `coef_mom()`: the relative tolerance of the quadrature (1e-10).}
 
-\item{tol}{The width of the final bracket.}
+\item{err}{`TRUE`: a list of the values (`value`) and their error estimates (`err`; `NaN` where the engines computed).}
+
+\item{p}{`coef_icdf()`: numeric vector or array of probabilities in (0, 1); `coef_mom()`: the number of moments.}
 }
 \value{
-`coef_cdf()`: the distribution function, with the attributes of `y`; `coef_icdf()`: the quantiles, with
-  the attributes of `p`.
+`coef_cdf()`: the distribution function, with the attributes of `y`; `coef_icdf()`: the quantiles, with the
+  attributes of `p`; `coef_mom()`: the moments \eqn{E[\{(U - c_0 V)/V\}^j]}{E[{(U - c0 V)/V}^j]}, \eqn{j = 1..p};
+  with `err = TRUE` a list (`value`, `err`).
 }
 \description{
 `coef_cdf()` gives the limit of \eqn{P[n(\hat\phi - \phi_0) \le y]}{P[n(phi^ - phi0) <= y]} for the least squares
 estimate \eqn{\hat\phi}{phi^} of \eqn{\phi}{phi} in the regression of [ltratio_cdf()], under
 \eqn{\phi = 1 + c/n}{phi = 1 + c/n}, with \eqn{\phi_0 = 1 + c_0/n}{phi0 = 1 + c0/n} (`c0`, default 0: the
-coefficient test of Dickey and Fuller, \eqn{n(\hat\phi - 1)}{n(phi^ - 1)}). `coef_icdf()` gives its quantiles.
+coefficient test of Dickey and Fuller, \eqn{n(\hat\phi - 1)}{n(phi^ - 1)}). `coef_icdf()` gives its quantiles and
+`coef_mom()` its moments; [coef_pdf()] its density.
 }
 \details{
 The limit is \eqn{(U - c_0 V)/V}{(U - c0 V)/V}, so that \eqn{P[(U - c_0 V)/V \le y] = P[U - (c_0 + y)V \le 0]}{P[(U
-- c0 V)/V <= y] = P[U - (c0 + y)V <= 0]}: the distribution function of the t-ratio at 0 with the local null value
-\eqn{c_0 + y}{c0 + y}. The C engine has no entry point of its own for the coefficient statistic: as `coef_cdf` and
-`coef_icdf` of the MATLAB programs, `coef_cdf()` evaluates `ltratio_cdf(0, cas, c, c0 = c0 + y, g0, method)` at
-each `y`, in every case and with every start and option of [ltratio_cdf()], and `coef_icdf()` finds each quantile
-by the Illinois variant of regula falsi on `coef_cdf()`, on a bracket grown from `[-40, 10]` until its width is
-below `tol` (about ten evaluations of `coef_cdf()`). With a design, or with `engine` given, the router of the C
-engine computes (the same construction in C, with the engine of each point; the general engine's own functions
-where it takes the general engine).
+- c0 V)/V <= y] = P[U - (c0 + y)V <= 0]}.
+
+In the cases DK, DU, DT (zero or fixed start `g0`) and SK, SU, ST the default (`method = "auto"` with `engine =
+"auto"`, up to `c = 20`) is the single inversion of the joint characteristic function along the ray of the half-plane,
+the method of Yong Bao and Raymond Kan, "Exact Finite-Sample Distribution and Moments of the Least Squares Estimator in
+First-Order Autoregressions: O(1) Algorithms": adaptive quadrature over decades, the tail completed by integration by
+parts with the derivatives from jets, the closed-form transform with the branch fixed at each point, one evaluation
+with an error estimate per value (the C engine's `dfl_engine_coef_x`, as `coef_cdf` of DFLimit.jl and the MATLAB
+programs). `tol` is its absolute tolerance, `err = TRUE` returns the estimates as well, and a warning names the points
+at which they exceed it. `method = "inversion"` forces it (also above `c = 20`); `method = "engine"` is the computation
+of before, the distribution function of the t-ratio at 0 with the local null value \eqn{c_0 + y}{c0 + y}
+(`ltratio_cdf(0, cas, c, c0 = c0 + y, g0)`, with its choice of engine and representation), which reproduces the
+values of earlier versions; the t-ratio's representations (`"single"` or `"line"`, `"double"` or `"conditional"`,
+`"contour"`), `engine = "classical"` or `"general"` and case DG take that computation too. `verified = TRUE` keeps the
+values of the single inversion whose estimate meets `tol` and recomputes the others by the engines' checked
+computation. `coef_icdf()` finds each quantile by the Illinois variant of regula falsi to the width `tol`: by default
+on the single inversion's distribution function (tolerance 1e-12) from the bracket \eqn{E[U - cV]/E[V]}{E[U - cV]/E[V]}
+-/+ twice the scale of the ratio (`err = TRUE`: the estimate of the distribution function at the quantile divided by
+the density there), otherwise on the engines' distribution function from a bracket grown from `[-40, 10]`.
 }
 \section{Cases}{
 
@@ -134,6 +167,7 @@ listed there.
 \examples{
 coef_cdf(-14.0936, "DU", -10)    # power of the 5\% coefficient test of rho_mu at c = -10
 coef_icdf(0.05, "DK")            # -8.039, the 5\% critical value of rho
+coef_mom(1, "DK")                # -1.7814: the mean of n(phi^ - 1) at the unit root
 coef_cdf(-20, dfl_perron("A", 0.5))
 }
 \seealso{

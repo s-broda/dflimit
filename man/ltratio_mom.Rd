@@ -13,7 +13,10 @@ ltratio_mom(
   info = FALSE,
   engine = c("auto", "classical", "general"),
   start = NULL,
-  gls = NULL
+  gls = NULL,
+  method = "auto",
+  tol = 1e-10,
+  verified = FALSE
 )
 }
 \arguments{
@@ -29,7 +32,7 @@ design of the general engine ([dfl_design]; see the section Engines).}
 \item{g0}{The fixed start, \eqn{y_0 = g_0 \sigma \sqrt{n}}{y_0 = g0 sigma sqrt(n)} (cases DK, DU, DT).}
 
 \item{info}{If `TRUE`, return a list with the moments `m` and the error estimates `err` of the integrals (`NA`
-where the router computes).}
+where the router computes by the engines).}
 
 \item{engine}{`"auto"` (the default), `"classical"` or `"general"` (see the section Engines).}
 
@@ -39,6 +42,14 @@ start).}
 
 \item{gls}{With a design: `NULL` (the default) for least squares detrending, or \eqn{\bar c < 0}{cbar < 0} for GLS
 detrending at \eqn{1 + \bar c/n}{1 + cbar/n}. With a case code it must be `NULL`.}
+
+\item{method}{`"auto"` (the default), `"jets"` (the moments from jets of Bao and Kan) or `"engine"` (the engines'
+circles).}
+
+\item{tol}{The relative tolerance of the quadrature of the moments from jets (1e-10).}
+
+\item{verified}{`FALSE` (the default): one evaluation by one method; `TRUE`: the checked computation (see the
+section Methods and ranges; with the general engine, a second evaluation by other rules, see [dist_cdf()]).}
 }
 \value{
 A numeric vector of length `p` (or the list described under `info`).
@@ -47,8 +58,20 @@ A numeric vector of length `p` (or the list described under `info`).
 The moments \eqn{E[\tau^j]}{E[tau^j]}, \eqn{j = 1, \dots, p}{j = 1..p}, of the limit
 \eqn{\tau = (U - c_0 V)/\sqrt{V}}{tau = (U - c0 V)/sqrt(V)} of [ltratio_cdf()], as one-dimensional integrals of
 the joint moment generating function of \eqn{(U, V)} (the moments of the limit in the Supplementary Material of the
-paper).
+paper): \eqn{E\tau^j = \Gamma(j/2)^{-1} \int_0^\infty s^{j/2-1} m_j(s)\,ds}{E tau^j = Gamma(j/2)^(-1) int_0^Inf
+s^(j/2-1) m_j(s) ds}, \eqn{m_j(s)}{m_j(s)} the j-th derivative of the moment generating function along its affine path.
 Not available for case DG in the classical engine (a design of case DG takes the general engine).
+}
+\details{
+By default (`method = "auto"` with `engine = "auto"`, the cases DK, DU, DT with a zero or fixed start and SK, SU, ST,
+up to `c = 20` and 31 moments) the derivative comes from one Taylor-mode jet of order j at each node of an adaptive
+quadrature in \eqn{\log s}{log s}, the method of Yong Bao and Raymond Kan, "Exact Finite-Sample Distribution and
+Moments of the Least Squares Estimator in First-Order Autoregressions: O(1) Algorithms", with the closed-form
+transform of the six cases; `tol` is the relative tolerance of its quadrature, and a warning names the moments whose
+error estimate exceeds `tol` times their size (`verified = TRUE` recomputes them by the engines). `method = "jets"`
+forces it (also above `c = 20`); `method = "engine"` is the computation of before (the derivatives as Cauchy
+integrals on a circle, by the classical engine or the general engine), which reproduces those values; `engine =
+"classical"` or `"general"` takes that computation too.
 }
 \section{Cases}{
 

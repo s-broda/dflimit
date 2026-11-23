@@ -14,7 +14,11 @@ coef_pdf(
   start = NULL,
   gamma0 = 0,
   gls = NULL,
-  verified = FALSE
+  verified = FALSE,
+  method = "auto",
+  engine = c("auto", "classical", "general"),
+  tol = 1e-12,
+  err = FALSE
 )
 
 coef_quantile(
@@ -37,14 +41,17 @@ coef_cdf_gp(
   start = NULL,
   gamma0 = 0,
   gls = NULL,
-  N = 60000,
-  umax = 4000
+  N = NULL,
+  umax = NULL,
+  method = "auto",
+  tol = 1e-12,
+  err = FALSE
 )
 }
 \arguments{
 \item{y}{Numeric vector or array of points. `-Inf`, `Inf` and `NaN` give 0, 1 (density 0) and `NaN`.}
 
-\item{D}{A design ([dfl_design]).}
+\item{D}{A design ([dfl_design]); for `coef_pdf()` also a case code.}
 
 \item{c}{The local-to-unity parameter, \eqn{\phi = 1 + c/n}{phi = 1 + c/n}.}
 
@@ -60,24 +67,54 @@ coef_cdf_gp(
 
 \item{verified}{`FALSE` (the default): one evaluation; `TRUE`: the checked computation (see Details).}
 
+\item{method}{`coef_pdf()`: `"auto"`, `"inversion"` (the single inversion of Bao and Kan) or `"engine"` (the general
+engine); `coef_cdf_gp()`: `"auto"`, `"inversion"` or `"grid"`.}
+
+\item{engine}{`coef_pdf()`: `"auto"` (the default), `"classical"` (the six classical cases, by the single inversion)
+or `"general"`.}
+
+\item{tol}{The tolerance of the single inversion (1e-12).}
+
+\item{err}{`TRUE`: a list of the values (`value`) and their error estimates (`err`; `NaN` where the general engine
+computed).}
+
 \item{p}{Numeric vector or array of probabilities in (0, 1).}
 
 \item{y0}{The starting point of the search.}
 
-\item{tol}{The tolerance of the search.}
-
-\item{N, umax}{The number of steps and the end of the grid of the inversion formula of Gil-Pelaez.}
+\item{N, umax}{The number of steps and the end of the fixed grid of the inversion formula of Gil-Pelaez (`NULL`:
+60000 and 4000 where the grid computes; given, they choose the grid).}
 }
 \value{
-A numeric vector with the attributes of `y` or `p`.
+A numeric vector with the attributes of `y` or `p` (with `err = TRUE` a list, `value` and `err`).
 }
 \description{
 The limit \eqn{(U - c_0 V)/V}{(U - c0 V)/V} of the coefficient statistic \eqn{n(\hat\phi - \phi_0)}{n(phi^ -
 phi0)} for any design ([dfl_design]), by the general engine (the notation of [dist_cdf()]):
 `coef_pdf()` its density, `coef_quantile()` its quantiles (Newton's method from `y0`), `coef_cdf_gp()` its
-distribution function by the inversion formula of Gil-Pelaez on the trapezoidal rule in \eqn{u = \sinh v}{u =
-sinh(v)} with `N` steps up to `umax`, a check of the contour integral. The distribution function by the
-inversion on paths around the roots is [coef_cdf()] with a design (or with `engine = "general"`).
+distribution function by the inversion formula of Gil-Pelaez, a check of the contour integral. The distribution
+function by the inversion on paths around the roots is [coef_cdf()] with a design (or with `engine = "general"`).
+}
+\details{
+`coef_pdf()` also takes a case code (`"DK"`, `"DU"`, `"DT"` with the fixed start `gamma0`, `"SK"`, `"SU"`, `"ST"`,
+`"DG"`) in place of `D`. In those six classical cases, and for a design that is one of them, the default (`method =
+"auto"` with `engine = "auto"`, up to `c = 20`) is the single inversion of Yong Bao and Raymond Kan, "Exact
+Finite-Sample Distribution and Moments of the Least Squares Estimator in First-Order Autoregressions: O(1)
+Algorithms": the density of the ratio by the formula of Geary, one integral of the derivative of the joint
+characteristic function along the ray, from jets, the tail completed by integration by parts. `tol` is its tolerance
+relative to the scale \eqn{\max(1, E[V]/\mathrm{sd}(U))}{max(1, E[V]/sd(U))} of the density, `err = TRUE` returns the
+estimates as well, and a warning names the points at which they exceed it (`verified = TRUE` recomputes those by the
+general engine's checked computation). `method = "inversion"` forces it, `method = "engine"` (and `engine =
+"general"`, case DG, the other designs) is the general engine's density, the kernel of its contour integral. Near
+the point \eqn{y = -c_0}{y = -c0}, where the integrand decays slowly, one value of the single inversion can take a
+second, with a warning.
+
+`coef_cdf_gp()` is by default (a zero or stationary start, up to `c = 5`) the single inversion of Bao and Kan for the
+general engine's transform, with the branch of the square root of its determinant fixed at each point from the
+pivots of the precision matrix and the tail completed by integration by parts; `tol` its absolute tolerance, `err =
+TRUE` the error estimates. `method = "grid"` (and `N` or `umax` given, a fixed start, `c` above 5) is the trapezoidal
+rule of before in \eqn{u = \sinh v}{u = sinh(v)} with `N` steps (60000) up to `umax` (4000), refused where the grid
+does not resolve the singularity of the transform nearest the real line.
 }
 \examples{
 D <- dfl_perron("A", 0.3)

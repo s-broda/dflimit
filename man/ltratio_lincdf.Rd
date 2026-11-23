@@ -13,7 +13,11 @@ ltratio_lincdf(
   engine = c("auto", "classical", "general"),
   start = NULL,
   g0 = 0,
-  gls = NULL
+  gls = NULL,
+  method = "auto",
+  tol = 1e-12,
+  verified = FALSE,
+  err = FALSE
 )
 }
 \arguments{
@@ -31,9 +35,18 @@ ltratio_lincdf(
 
 \item{start, g0, gls}{With a design: its start (`"zero"`, `"fixed"` with the fixed start `g0`, `"stationary"`) and
 GLS detrending (`NULL`: least squares); see [ltratio_cdf()].}
+
+\item{method}{`"auto"` (the default), `"inversion"` (the single inversion of Bao and Kan) or `"engine"` (the
+engines' computation of before).}
+
+\item{tol}{The absolute tolerance of the single inversion.}
+
+\item{verified}{`TRUE`: the values whose error estimate exceeds `tol` are recomputed by the engines.}
+
+\item{err}{`TRUE`: a list of the values (`value`) and their error estimates (`err`; `NaN` where the engines computed).}
 }
 \value{
-The probabilities, with the attributes of `b`.
+The probabilities, with the attributes of `b` (with `err = TRUE` a list, `value` and `err`).
 }
 \description{
 The limit of \eqn{P(U - aV \le b)}{P(U - aV <= b)} under \eqn{\phi = 1 + c/n}{phi = 1 + c/n}, zero start, no
@@ -47,7 +60,19 @@ likelihood ratio is \eqn{\bar c U - \bar c^2 V/2}{cbar U - cbar^2 V/2}), in case
 [power_envelope()]. `a = NaN` gives \eqn{P(V \le b)}{P(V <= b)} (case DK).
 }
 \details{
-The probability is computed by the inversion formula of Gil-Pelaez,
+By default (`method = "auto"` with `engine = "auto"`, a finite \eqn{a \ne 0}{a != 0}) the probability is the single
+inversion of the joint characteristic function along the ray of the half-plane, the method of Yong Bao and Raymond
+Kan, "Exact Finite-Sample Distribution and Moments of the Least Squares Estimator in First-Order Autoregressions: O(1)
+Algorithms", with the tail beyond \eqn{S = 400/|w|}{S = 400/|w|} (\eqn{w = 1/2 + b}) completed by integration by
+parts: in case DK for \eqn{-100 \le c \le 4}{-100 <= c <= 4}, and for a design that is one of the six classical
+cases (`dfl_trend(-1)`, `dfl_trend(0)`, `dfl_trend(1)` with any start) for \eqn{-100 \le c \le 2}{-100 <= c <= 2}
+(as `ltratio_lincdf` of DFLimit.jl and the MATLAB programs). `tol` is its absolute tolerance, `err = TRUE` returns
+the error estimates as well, and a warning names the points at which they exceed it (`verified = TRUE` recomputes
+those by the engines). `method = "inversion"` forces it (any `c`); `method = "engine"`, case DG, `a = NaN`, `engine =
+"classical"` or `"general"` and the points outside those ranges take the computation of before, which reproduces its
+values and is described next.
+
+The engines compute the probability by the inversion formula of Gil-Pelaez,
 \eqn{P(X < b) = 1/2 - (1/\pi) \int_0^\infty \mathrm{Im}[\varphi(u) e^{-iub}]/u \, du}{P(X < b) = 1/2 - (1/pi)
 int_0^Inf Im[phi(u) exp(-iub)]/u du}, from the joint moment generating function of \eqn{(U, V)}, by the
 trapezoidal rule in \eqn{u = \sinh v}{u = sinh(v)} with 60000 steps up to \eqn{u = 4000}, as `ltratio_lincdf` of
