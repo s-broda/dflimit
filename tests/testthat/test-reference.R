@@ -119,7 +119,10 @@ test_that("the warnings of the brittle regimes fire where they should and not el
   expect_no_warning(ltratio_cdf(-2, "DU", -5))
   expect_no_warning(ltratio_cdf(-2, "DU", -5, g0 = 1.5))
   expect_no_warning(ltratio_cdf(-3, "DU", -5, c0 = 2, method = "double", verified = TRUE))
-  expect_warning(ltratio_cdf(-8.4, "DU", 2, c0 = 5, g0 = 1.5, method = "contour"), "contour integral by one evaluation fails")
+  # (the failing contour integral gives 1.2e44 here: since the C engine of dflimit-matlab 9484fb7 the error of its final
+  # check, in place of the value and the warning of the brittle regime, which the wrapper gives after a successful call)
+  expect_error(ltratio_cdf(-8.4, "DU", 2, c0 = 5, g0 = 1.5, method = "contour"), "outside [0, 1] by more than 1e-08",
+               fixed = TRUE)
   # case DU with a fixed start, c0 > 3 at c > 1.5: the contour integral fails there, "auto" takes the conditional integral
   expect_no_warning(Fa <- ltratio_cdf(-8.4075, "DU", 2, c0 = 5, g0 = 1.5))
   expect_lt(abs(Fa - ltratio_cdf(-8.4075, "DU", 2, c0 = 5, g0 = 1.5, method = "double", verified = TRUE)), 1e-9)
