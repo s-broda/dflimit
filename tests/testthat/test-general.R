@@ -182,6 +182,20 @@ test_that("the constructors check their arguments; errors of the engine and of t
   expect_error(dist_cdf(0, bad), "coefficient matrix")
 })
 
+test_that("the rules of one evaluation of the paths (rule; November 2026)", {
+  # the thin rule within the criterion of the rule of before (7.6e-10 in F and 4e-9 of the peak in f on a dense grid; the
+  # values of every rule against DFLimit.jl are lines of ref/det_ref.txt, 'cdf#thin' and so on)
+  D <- dfl_trend(1); x <- c(-3.5, -2.3, -0.7, 0.4)
+  expect_lt(max(abs(dist_cdf(x, D, -5, c0 = 2) - dist_cdf(x, D, -5, c0 = 2, rule = "present"))), 1e-9)
+  expect_lt(max(abs(dist_pdf(x, D, -5, c0 = 2) - dist_pdf(x, D, -5, c0 = 2, rule = "present"))), 1e-8)
+  expect_lt(abs(dist_quantile(0.05, D, -5, c0 = 2) - dist_quantile(0.05, D, -5, c0 = 2, rule = "present")), 1e-8)
+  # the fixed start of case DK near the unit root in the upper tail (the placement of the paths at every c)
+  expect_lt(max(abs(dist_cdf(c(9.732, 12, 20), dfl_trend(-1), 0, start = "fixed", gamma0 = 1) - 1)), 1e-10)
+  expect_equal(ltratio_cdf(45.11, "DK", 0.5, c0 = -10, g0 = 1), 0.99981515720, tolerance = 1e-10)
+  expect_error(dist_cdf(0, D, rule = "finest"), "rule must be")
+  expect_error(dist_quantile(0.05, D, rule = 1), "rule must be")
+})
+
 test_that("the starts, GLS detrending and the options are checked", {
   D <- dfl_trend(0)
   expect_error(dist_cdf(0, D, 1, start = "stationary"), "stationary start needs c < 0")

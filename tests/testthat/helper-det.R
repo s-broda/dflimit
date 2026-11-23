@@ -68,12 +68,15 @@ det_eval_val <- function(v, D) {
   st <- det_start(v$st)
   gl <- det_gls(v$cb)
   x <- v$x
-  fm <- strsplit(v$fn, "@", fixed = TRUE)[[1]]
+  # ('cdf#thin': the rule of one evaluation of the paths)
+  fr <- strsplit(v$fn, "#", fixed = TRUE)[[1]]
+  ru <- if (length(fr) > 1L) fr[2] else "auto"
+  fm <- strsplit(fr[1], "@", fixed = TRUE)[[1]]
   me <- if (length(fm) > 1L) fm[2] else "auto"
   switch(fm[1],
-    cdf = dist_cdf(x, d, v$c, v$c0, st, v$g0, gl, v$ver, method = me),
-    pdf = dist_pdf(x, d, v$c, v$c0, st, v$g0, gl, v$ver, method = me),
-    quant = dist_quantile(x, d, v$c, v$c0, st, v$g0, gl, x0 = v$par, tol = 1e-9, method = me),
+    cdf = dist_cdf(x, d, v$c, v$c0, st, v$g0, gl, v$ver, method = me, rule = ru),
+    pdf = dist_pdf(x, d, v$c, v$c0, st, v$g0, gl, v$ver, method = me, rule = ru),
+    quant = dist_quantile(x, d, v$c, v$c0, st, v$g0, gl, x0 = v$par, tol = 1e-9, method = me, rule = ru),
     coefcdf = coef_cdf(x, d, v$c, v$c0, v$g0, verified = v$ver, engine = "general", start = st, gls = gl),
     coefpdf = coef_pdf(x, d, v$c, v$c0, st, v$g0, gl, v$ver),
     coefq = coef_quantile(x, d, v$c, v$c0, st, v$g0, gl, y0 = v$par, tol = 1e-9),
@@ -143,9 +146,12 @@ det_eval_route <- function(r, D) {
     gl <- if (r$a != 4L && !is.nan(r$gls)) r$gls else NULL
   }
   x <- r$x
-  switch(r$fn,
-    cdf = ltratio_cdf(x, cas, r$c, r$c0, r$g0, engine = e, start = st, gls = gl),
-    pdf = ltratio_pdf(x, cas, r$c, r$c0, r$g0, engine = e, start = st, gls = gl),
+  # ('cdf@3': the method of the t-ratio, the codes of the C router: 1 line, 2 conditional, 3 contour, 4 paths)
+  fm <- strsplit(r$fn, "@", fixed = TRUE)[[1]]
+  me <- if (length(fm) > 1L) c("line", "conditional", "contour", "paths")[as.integer(fm[2])] else "auto"
+  switch(fm[1],
+    cdf = ltratio_cdf(x, cas, r$c, r$c0, r$g0, method = me, engine = e, start = st, gls = gl),
+    pdf = ltratio_pdf(x, cas, r$c, r$c0, r$g0, method = me, engine = e, start = st, gls = gl),
     icdf = ltratio_icdf(x, cas, r$c, r$c0, r$g0, engine = e),
     mom = ltratio_mom(as.integer(x), cas, r$c, r$c0, r$g0, engine = e),
     coef = coef_cdf(x, cas, r$c, r$c0, r$g0, engine = e),
