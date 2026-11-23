@@ -46,4 +46,5 @@ test_that("the upper tail above the unit root, case DK", {
   expect_equal(ltratio_cdf(c(1e3, 3e3), "DK", 10, c0 = 9, engine = "general"), c(0.636120922790, 0.993550212928),
                tolerance = 1e-10)
   expect_error(ltratio_cdf(1e7, "DK", 16, c0 = 2), "is computed for c <= 14 only", fixed = TRUE)
+  expect_error(ltratio_cdf(1e7, "DK", 16, c0 = -2, verified = TRUE), "is computed for c <= 14 only", fixed = TRUE)
 })
