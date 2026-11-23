@@ -90,6 +90,7 @@ det_eval_val <- function(v, D) {
     ptcdf = pt_cdf(x, d, v$par, v$c),
     ptpdf = pt_pdf(x, d, v$par, v$c),
     ptcdfN = pt_cdf(x, d, v$par, v$c, N = v$c0),
+    ptcdfG = pt_cdf(x, d, v$par, v$c, method = "grid"),
     ptq = pt_quantile(x, d, v$par),
     ptpow = { p <- pt_power(v$c, d, v$par, level = x); c(attr(p, "critical"), p) },
     ptenv = pt_envelope(x, d, level = v$par),
