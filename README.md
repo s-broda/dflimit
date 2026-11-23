@@ -155,6 +155,12 @@ resolve the transform, and `coef_cdf_gp()` likewise, from about c = 10 with the 
 size `N` that serves). Its values are checked against those of the Julia engine (DFLimit.jl) to 1e-9 or better
 (`tests/testthat/test-general.R`).
 
+Above the unit root the t-ratio with `c0 != c` has its upper tail at x of the order (c - c0) e^c/(2c); the classical
+engine computes there by the conditional integral (within 1.3e-8 of an independent computation in case DK and 5e-7 of the
+large-c law in cases DU, DT up to c = 14) and stops with an error that names the case, c, c0, x and the region computed
+above c = 14. Every distribution
+function of both engines ends with a check of its values: outside [0, 1] by more than 1e-8 an error that names the call.
+
 ## Installation
 
 `dflimit` is an ordinary R source package with C code (C11 and the C++ of the Faddeeva package), so the usual
