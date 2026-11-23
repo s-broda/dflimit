@@ -143,12 +143,17 @@ lm_quantile(0.05, dfl_perron("B", 0.5))        # the LM test with a slope break
 By default every value is one evaluation (`verified = TRUE` evaluates it again with other rules on a steeper path). The
 points of one call share the paths of the inversion, so a vector of points costs much less in one call than point by
 point, and the engine keeps up to 64 prepared designs and paths between calls (`dfl_empty_caches()` frees them). The
-general engine is checked for c from -480 to 10; designs whose roots run far out on the vertical line (above the unit
-root, and some unusual designs) can need several gigabytes of memory, and where one point of the outer contour would
-need more than a million nodes it stops with an error. It refuses, with an error, what it does not compute accurately
-(the LM statistic above c = 10, the point-optimal statistic far above the unit root, where the grid of its inversion
-does not resolve the transform). Its values are checked against those of the
-Julia engine (DFLimit.jl) to 1e-9 or better (`tests/testthat/test-general.R`).
+general engine is checked for c from -480 to 10, and above the unit root, for the coefficient statistic, the moments and
+the t-ratio centred at the true value (c0 = c), up to c = 16 with deterministic terms (10 with them and a fixed start)
+and c = 20 without them; above those bounds every function of the general engine stops with an error that names the
+statistic (the roots of its transform are no longer resolved in double precision there), and `engine = "auto"` takes the
+classical engine for the classical cases. Designs whose roots run far out on the vertical line (above the unit root, and
+some unusual designs) can need several gigabytes of memory, and where one point of the outer contour would need more
+than a million nodes it stops with an error. It refuses, with an error, what it does not compute accurately (the LM
+statistic above c = 10, the point-optimal statistic far above the unit root, where the grid of its inversion does not
+resolve the transform, and `coef_cdf_gp()` likewise, from about c = 10 with the default grid; the message names the grid
+size `N` that serves). Its values are checked against those of the Julia engine (DFLimit.jl) to 1e-9 or better
+(`tests/testthat/test-general.R`).
 
 ## Installation
 
