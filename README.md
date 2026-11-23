@@ -142,7 +142,10 @@ lm_quantile(0.05, dfl_perron("B", 0.5))        # the LM test with a slope break
 #> [1] -3.647478
 ```
 
-By default every value is one evaluation (`verified = TRUE` evaluates it again with other rules on a steeper path). The
+By default every value is one evaluation (`verified = TRUE` evaluates it again with other rules on a steeper path), by
+the thinner rules of one evaluation where they hold (`rule = "auto"` of `dist_cdf()`, `dist_pdf()`, `dist_quantile()`: the
+outer step 1.5 times as long and 16 and 32 nodes on the paths around the roots, by regions of the start, the deterministic
+terms, `c` and `c0`, as in DFLimit.jl; `rule = "present"` the rule before November 2026). The
 points of one call share the paths of the inversion, so a vector of points costs much less in one call than point by
 point, and the engine keeps up to 64 prepared designs and paths between calls (`dfl_empty_caches()` frees them). The
 general engine is checked for c from -480 to 10, and above the unit root, for the coefficient statistic, the moments and
