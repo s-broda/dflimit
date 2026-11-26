@@ -427,3 +427,29 @@ test_that("above the unit root: the coefficient statistic, the moments, Gil-Pela
   expect_error(dist_moments(2, dfl_trend(-1), 21), "up to c = 20")
   expect_equal(ltratio_mom(2, "DU", 18), ltratio_mom(2, "DU", 18, engine = "classical"))
 })
+
+test_that("the LM statistic needs the constant in the span of the design", {
+  # (November 26, 2026, as DFLimit.jl: the limit -1/(2 sqrt V) holds only for trend functions whose span contains the
+  # constant; r alone, r with e^r, a level dummy with r gave the limit of the linear trend) each function refuses e^r
+  # alone, r with e^r, r alone, a level dummy with r, no deterministic terms and e^r with e^-r, with the design's name
+  refused <- list(dfl_fdesign(function(r) exp(r), name = "e^r"), dfl_fdesign(function(r) c(r, exp(r)), name = "r, e^r"),
+                  dfl_fdesign(function(r) r, name = "r"),
+                  dfl_fdesign(function(r) c(as.numeric(r > 0.4), r), breaks = 0.4, name = "a level dummy and r"),
+                  dfl_trend(-1), dfl_fdesign(function(r) c(exp(r), exp(-r)), name = "e^r, e^-r"))
+  for (D in refused) {
+    msg <- paste0("span contains the constant.*; the design ", gsub("([()^+])", "\\\\\\1", D$name), " does not contain it")
+    expect_error(lm_cdf(-2, D), msg)
+    expect_error(lm_quantile(0.05, D), msg)
+    expect_error(lm_power(-5, D), msg)
+  }
+  expect_error(lm_cdf(c(-Inf, Inf, NaN), refused[[1]]), "span contains the constant")    # (at non-finite points too)
+  # accepted: polynomial trends, breaks, the Legendre basis, functions of which only a combination is constant, a design
+  # from a matrix; and then the statistic is that of the span
+  tt <- (1:200) / 200
+  accepted <- list(dfl_trend(1), dfl_trend(3), dfl_perron("A", 0.5), dfl_perron("C", c(0.3, 0.7)), dfl_ltrend(4),
+                   dfl_fdesign(function(r) c(sin(pi * r)^2, cos(pi * r)^2, r)), dfl_fdesign(function(r) c(1 + r, r)),
+                   dfl_design_from_matrix(cbind(1, tt, tt^2)))
+  for (D in accepted) expect_true(is.finite(lm_cdf(-2, D)))
+  expect_error(lm_cdf(-2, dfl_fdesign(function(r) c(1, sin(2 * pi * r), cos(2 * pi * r)))), "J_0\\(1\\) does not vanish")
+  expect_lt(abs(lm_cdf(-3.0230, dfl_fdesign(function(r) c(1 + r, r))) - lm_cdf(-3.0230, dfl_trend(1))), 1e-10)
+})

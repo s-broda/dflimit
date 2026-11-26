@@ -136,7 +136,8 @@ The general engine's own functions, with all its options (`c`, `c0`, `start`, `g
 U - aV and the law of V), `adfmax_quantile` and `region_prob`. The companions of the t-ratio for any design are the
 point-optimal statistic of Elliott, Rothenberg and Stock and the Gaussian power envelope (`pt_cdf`, `pt_pdf`,
 `pt_quantile`, `pt_power`, `pt_envelope`), the LM statistic of Schmidt and Phillips with breaks (`lm_cdf`,
-`lm_quantile`, `lm_power`) and MZ_alpha and MSB with GLS detrending (`mza_cdf`, `mza_quantile`, `msb_cdf`,
+`lm_quantile`, `lm_power`; for trend functions whose span contains the constant and a linear trend, an error otherwise)
+and MZ_alpha and MSB with GLS detrending (`mza_cdf`, `mza_quantile`, `msb_cdf`,
 `msb_quantile`).
 
 ```r

@@ -104,6 +104,14 @@ dfl_rtext <- function(m) {
   }
   m
 }
+# the name of the design in the engine's messages that refer to it (the engine has no names: "the design does not contain
+# it" of the LM statistic's refusal becomes "the design <name> does not contain it", as in DFLimit.jl)
+dfl_dname <- function(m, D) {
+  if (!is.null(D$name)) {
+    m <- gsub("; the design does not contain it", paste0("; the design ", D$name, " does not contain it"), m, fixed = TRUE)
+  }
+  m
+}
 # .Call with the messages of the engine's errors in those words
 dfl_call <- function(...) {
   tryCatch(.Call(...), error = function(e) stop(dfl_rtext(conditionMessage(e)), call. = FALSE))
@@ -180,7 +188,8 @@ dfl_gmethod <- function(method) {
 # a function of the general engine (dfl_r_det): the value, with the warnings of the engine given
 dfl_det_call <- function(what, D, x, args, opts = c(0, 0, 0, NaN, 0)) {
   dfl_check_design(D)
-  r <- dfl_call(C_dfl_r_det, what, D, as.double(x), as.double(args), as.double(opts))
+  r <- tryCatch(dfl_call(C_dfl_r_det, what, D, as.double(x), as.double(args), as.double(opts)),
+                error = function(e) stop(dfl_dname(conditionMessage(e), D), call. = FALSE))
   dfl_warn(r[[3]])
   r
 }

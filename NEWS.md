@@ -1,5 +1,24 @@
 # dflimit (development version)
 
+* The C engine of dflimit-matlab 35a6799 (branch extensions), four repairs of DFLimit.jl (November 26, 2026):
+  - `lm_cdf()`, `lm_quantile()` and `lm_power()` refuse a design whose span does not contain the constant, with the
+    message of DFLimit.jl and the design's name: the limit -1/(2 sqrt V) holds only then (`r` alone, `r` and `exp(r)`, a
+    level dummy with `r` gave the limit of the linear trend). The span is decided on the values of the piecewise
+    polynomial design at Chebyshev points of each piece (exactly for polynomial trends, breaks and dummies, to 1e-6 for
+    the interpolants of `dfl_fdesign()` and `dfl_design_from_matrix()`). `lm_cdf()` now asks the engine at every point,
+    so that the refusal holds at non-finite points too.
+  - No NaN, hang or silently wrong value at a finite point: F and f were NaN at the ulps above `x = -500/4^k` (a panel a
+    few ulps long at the end of a geometric partition of the fixed node layouts) and for `0 < |x|` below about 1e-162
+    (the Gaussian factor of the ray underflowed); far in the tails the fixed layouts lost up to 2e-3 (case DK at `c = 0`:
+    1 + 1.3e-6 at `x = 31.25`, refused; case DU at `c = -10`: 4.9e-7 at `x = -250`) and now serve `-50 <= x <= 15`
+    only; the general engine's paths at a tiny `x < 0` hung (the asymptotic series of the incomplete Gaussian
+    integrals) or gave a NaN density.
+  - `verified = TRUE` with a zero start and `c0 > 0` below `c = -20` takes the line integral (the checked conditional
+    integral was off by 2e-8 at `c = -100`, `c0 = 3`, case DU, the 99% point).
+  - `method = "lines"` or `"mixture"` without `rho` is refused with the message of DFLimit.jl ("method must be 'auto',
+    'line' ... or 'paths' ...").
+  Elsewhere the values are unchanged; the reference subsets of the tests did not move.
+
 * The extensions of the limit (the C engine of dflimit-matlab, branch extensions): volatility and persistence regimes
   (`dfl_volpath()` and the argument `vol` of `dist_cdf()`, `dist_pdf()`, `dist_quantile()`, `ltratio_cdf()`,
   `ltratio_pdf()`, `ltratio_icdf()`, with `c` a vector of one value per regime), a normal component (the argument `rho`

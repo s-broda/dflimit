@@ -95,6 +95,13 @@ test_that("the argument errors of the extensions", {
   expect_error(dist_cdf(-2, T1, -5, rho = 0.5, gls = -13.5), "GLS detrending")
   expect_error(dist_cdf(-2, T0, -5, rho = 0.5, gamma0 = 1, method = "lines"), "zero or a stationary start")
   expect_error(dist_cdf(-2, T0, -5, vol = V2, method = "line"), "method must be 'auto' or 'paths'")
+  # (the methods of rho without it: the refusal and the message of DFLimit.jl, November 26, 2026)
+  lmsg <- "method must be 'auto', 'line' (the line integral with the explicit kernel) or 'paths' (the inversion on paths around the roots)"
+  for (m in c("lines", "mixture")) {
+    expect_error(dist_cdf(-2, T0, -5, method = m), lmsg, fixed = TRUE)
+    expect_error(dist_pdf(-2, T0, -5, method = m), lmsg, fixed = TRUE)
+    expect_error(dist_quantile(0.05, T0, -5, method = m), lmsg, fixed = TRUE)
+  }
   expect_error(dist_cdf(-2, T0, -5, vol = list(1)), "must be a volatility path")
   expect_error(cadf_c0(-5, 0), "not be 0")
   expect_error(predictive_c0(-5, 1.5), "not be 0")

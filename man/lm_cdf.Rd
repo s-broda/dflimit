@@ -15,7 +15,7 @@ lm_power(c, D, level = 0.05)
 \arguments{
 \item{x}{Numeric vector or array of points. `-Inf`, `Inf` and `NaN` give 0, 1 and `NaN`.}
 
-\item{D}{A design ([dfl_design]) with a linear trend among its regressors.}
+\item{D}{A design ([dfl_design]) with a linear trend among its regressors and the constant in their span.}
 
 \item{c}{`lm_cdf()`, `lm_quantile()`: the local-to-unity parameter. `lm_power()`: numeric vector or array of them.}
 
@@ -30,7 +30,12 @@ A numeric vector with the attributes of `x`, `p` or `c`.
 The limit of the LM (score) statistic of Schmidt and Phillips (1992) and Amsler and Lee (1995), with the breaks of
 the design, under \eqn{\phi = 1 + c/n}{phi = 1 + c/n}, zero start: its limit is \eqn{-1/(2\sqrt{V})}{-1/(2
 sqrt(V))} with \eqn{V} the integral of the square of the detrended partial sums, whose law is one inversion of the
-transform of \eqn{V} on a path of its own. The design ([dfl_design]) must contain a linear trend. `lm_cdf()` gives the
+transform of \eqn{V} on a path of its own. The design ([dfl_design]) must contain a linear trend, and its span the
+constant: the limit holds only for trend functions whose span contains the constant (the LM regression estimates the
+level from the first observation), and for any other design (`exp(r)` alone or `r` alone, say) the three functions
+raise an error (decided on the values of the piecewise polynomial design at Chebyshev points of each piece: exactly
+for polynomial trends, breaks and dummies, to 1e-6 for the interpolants of [dfl_fdesign()] and
+[dfl_design_from_matrix()]). `lm_cdf()` gives the
 distribution function, `lm_quantile()` the quantiles and `lm_power()` the power at `c` of the level-`level` test (its
 critical value at the unit root in the attribute `critical`). `c` must be at most 10 (above, the inversion is not
 accurate: off by 2e-7 at `c = 12` and by 3e-5 at `c = 15`), and an error is raised beyond.
