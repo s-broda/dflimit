@@ -118,12 +118,12 @@ For the designs whose numerator has rank one or two (polynomial trends of any or
 cosines, `dfl_detrend_first()` of a continuous design that does not vanish at the origin; a zero or a stationary start
 and least squares detrending) the general engine also has the line integral with the explicit kernel: the classical line
 integral with P(t) and the two roots supplied by the general engine's transform. `dist_cdf()`, `dist_pdf()` and
-`dist_quantile()` choose by `method`: `"auto"` (the default) takes it at `c0 = 0` for `c >= -20`, where it was 2.2 to 3.5
-times faster than the inversion on paths per value and 1.8 to 2.7 times per quantile when the rule was set; since the
-thinner rules of the paths (`c/test/line_timing.c` of dflimit-matlab, one thread, November 26, 2026) it is 1.1 to 1.7 times faster per
-value and 0.9 to 1.3 times per quantile for -20 <= c <= 0, and at c = 2 slower for the designs with deterministic
-terms (the paths 1.35 to 1.5 times faster per value and 1.7 to 2.1 times per quantile; the rule is unchanged), and the
-paths otherwise; `"line"`
+`dist_quantile()` choose by `method`: `"auto"` (the default) takes it at `c0 = 0` for `c >= -20`, except just above the
+unit root with deterministic terms, `0 < c <= 0.5`, where the paths are 1.5 to 2.3 times faster, and with `c0 > 0` at the
+points x < 0 where the outer contour of the paths is the vertical line (there the paths do not resolve the two roots of
+the parabola of such a point, and their one evaluation was off by up to 1e-3 in the lower tail); below the unit root it is 1.1 to 1.7
+times faster than the paths per value for -20 <= c <= 0 (`c/test/line_timing.c` of dflimit-matlab and interleaved
+timings, November 26, 2026), and the paths otherwise; `"line"`
 forces it (an error with the reason where it does not cover the design) and `"paths"` the paths. `ltratio_cdf()`,
 `ltratio_pdf()` and `ltratio_icdf()` with a design pass `method = "line"` or `"paths"` on (for a design that is a
 classical case, `"line"` is the classical line integral). The classical engine's line integral takes its inner
@@ -165,7 +165,10 @@ general engine is checked for c from -480 to 10, and above the unit root, for th
 the t-ratio centred at the true value (c0 = c), up to c = 16 with deterministic terms (10 with them and a fixed start)
 and c = 20 without them; above those bounds every function of the general engine stops with an error that names the
 statistic (the roots of its transform are no longer resolved in double precision there), and `engine = "auto"` takes the
-classical engine for the classical cases. Designs whose roots run far out on the vertical line (above the unit root, and
+classical engine for the classical cases. Far above the unit root, for c > 5.5, the inversion on paths by one evaluation
+may be off by more than 1e-5 in the upper tail for a design beyond the classical cases and for a fixed start with
+deterministic terms (Perron's model C at c = 7 by 1.5e-5 in F, a linear trend with a fixed start at c = 7 by 8.7e-5), and
+the general engine warns there (`verified = TRUE` checks it). Designs whose roots run far out on the vertical line (above the unit root, and
 some unusual designs) can need several gigabytes of memory, and where one point of the outer contour would need more
 than a million nodes it stops with an error. It refuses, with an error, what it does not compute accurately (the LM
 statistic above c = 10, the point-optimal statistic on its fixed grid far above the unit root, where the grid does not
