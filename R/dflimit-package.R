@@ -21,7 +21,10 @@
 #'   \item{[dist_cdf()], [coef_pdf()], [lin_cdf()], [local_power()], [adfmax_quantile()]}{the general engine's own
 #'     functions;}
 #'   \item{[pt_cdf()], [lm_cdf()], [mza_cdf()]}{the companions for any design: the point-optimal statistic and the
-#'     power envelope, the LM statistic, MZ_alpha and MSB.}
+#'     power envelope, the LM statistic, MZ_alpha and MSB;}
+#'   \item{[dfl_volpath()], [cadf_c0()], [predictive_c0()], [hegy_t3_cdf()]}{the extensions of the limit: volatility and
+#'     persistence regimes (the argument `vol`), a normal component (`rho`: the covariate-augmented t-ratio, the
+#'     predictive regression) and the first seasonal t-ratio of Hylleberg, Engle, Granger and Yoo.}
 #' }
 #'
 #' @references Bao, Y., Broda, S. A. and Kan, R., "The Exact Limiting Distribution of the Dickey-Fuller t-Ratio

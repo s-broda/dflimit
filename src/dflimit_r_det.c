@@ -178,18 +178,40 @@ SEXP dfl_r_regmat(SEXP Ds, SEXP n)
     return X;
 }
 
+/* the extensions of the limit from v[0..m-1] = c(rho, nreg, breaks (nreg - 1), omega (nreg), c (nreg, or left out)): rho
+ * (NaN: 1) and a volatility path (nreg 0: none), held in static buffers until the next call */
+#define R_MAXREG 64
+static double RVB[R_MAXREG], RVO[R_MAXREG], RVC[R_MAXREG];
+static dfl_vol RVP;
+static void ext_in(const double *v, int m, double *rho, const dfl_vol **vol)
+{
+    *rho = 1; *vol = NULL;
+    if (m > 0 && !ISNAN(v[0])) *rho = v[0];
+    if (m > 1 && v[1] > 0) {
+        int nreg = (int) v[1], rest = m - 2 - (2 * nreg - 1);
+        if (nreg != v[1] || nreg > R_MAXREG || !(rest == 0 || rest == nreg)) Rf_error("the volatility path: nreg (at most %d), the break dates, the standard deviations and the c of the regimes", R_MAXREG);
+        const double *q = v + 2;
+        for (int i = 0; i < nreg - 1; i++) RVB[i] = q[i];
+        for (int i = 0; i < nreg; i++) RVO[i] = q[nreg - 1 + i];
+        for (int i = 0; rest && i < nreg; i++) RVC[i] = q[2 * nreg - 1 + i];
+        RVP.nreg = nreg; RVP.breaks = RVB; RVP.omega = RVO; RVP.c = rest ? RVC : NULL;
+        *vol = &RVP;
+    }
+}
 /* the options of the general engine from c(c0, start, gamma0, gls, verified), c(c0, start, gamma0, gls, verified, method)
  * or c(c0, start, gamma0, gls, verified, method, rule) (gls NaN: least squares; method 0 auto, 1 the line integral with
- * the explicit kernel, 2 the inversion on paths; rule the rule of one evaluation of the paths, DFL_RULE_*) */
+ * the explicit kernel, 2 the inversion on paths, 3 the inversion on two lines and 4 the normal average with rho; rule the
+ * rule of one evaluation of the paths, DFL_RULE_*), followed by the extensions of the limit (ext_in) */
 static dfl_det_opts opts_in(SEXP o)
 {
     int no = len(o, "the options");
-    if (no < 5 || no > 7) Rf_error("the options are c0, start, gamma0, gls, verified and (optionally) method and rule");
+    if (no < 5) Rf_error("the options are c0, start, gamma0, gls, verified and (optionally) method, rule and the extensions");
     const double *v = REAL(o);
     dfl_det_opts d; dfl_det_defaults(&d);
     d.c0 = v[0]; d.start = (int) v[1]; d.gamma0 = v[2]; d.gls = v[3]; d.verified = v[4] != 0;
     if (no >= 6) d.method = (int) v[5];
     if (no >= 7) d.rule = (int) v[6];
+    if (no >= 8) ext_in(v + 7, no - 7, &d.rho, &d.vol);
     return d;
 }
 
@@ -209,6 +231,8 @@ static dfl_det_opts opts_in(SEXP o)
  * tol NaN for 1e-12)
  *   "lmcdf" x | c      "lmquantile" p | c      "lmpower" cs | level (extra: the critical value)
  *   "mzacdf" y | c gls      "mzaquantile" p | c gls y0 tol      "msbcdf" x | c gls      "msbquantile" p | c gls
+ *   "t3cdf" "t3pdf" x | c      "t3quantile" p | c x0 tol (the first seasonal t-ratio: c0, verified and the volatility path
+ *   from opts)
  * opts = c(c0, start, gamma0, gls, verified) where the function takes the options; the probabilities are checked by the
  * R functions. */
 SEXP dfl_r_det(SEXP what, SEXP Ds, SEXP x, SEXP args, SEXP opts)
@@ -255,6 +279,8 @@ SEXP dfl_r_det(SEXP what, SEXP Ds, SEXP x, SEXP args, SEXP opts)
         NEED(6); rc = 0;
         for (int k = 0; k < n && !rc; k++) rc = dfl_det_pt_power_x(&D, a[0], xv[k], a[1], (int) a[4], (int) a[2], a[3], a[5], &e[k], &v[k], err, sizeof err);
     } else if (!strcmp(w, "ptenvelope")) { NEED(5); rc = dfl_det_pt_envelope_x(&D, n, xv, a[0], (int) a[3], (int) a[1], a[2], a[4], v, err, sizeof err); }
+    else if (!strcmp(w, "t3cdf") || !strcmp(w, "t3pdf")) { NEED(1); rc = dfl_hegy_t3(w[2] == 'c' ? 2 : 1, &D, n, xv, a[0], &o, v, err, sizeof err); }
+    else if (!strcmp(w, "t3quantile")) { NEED(3); rc = dfl_hegy_t3_quantile(&D, n, xv, a[0], a[1], a[2], &o, v, err, sizeof err); }
     else if (!strcmp(w, "lmcdf")) { NEED(1); rc = dfl_det_lm_cdf(&D, n, xv, a[0], v, err, sizeof err); }
     else if (!strcmp(w, "lmquantile")) {
         NEED(1); rc = 0;
@@ -292,6 +318,9 @@ static void spec_in(SEXP s, dfl_spec *S, dfl_design *D)
  * case and engine auto the R functions take the classical engine's own entry points where a method other than 0 or the
  * checked computation is asked for); list(value, the warnings, a character vector):
  *   "cdf" "pdf" x | args c c0 method verified          "icdf" p | c c0 tol method
+ *   "cdfx" "pdfx" x | c c0 method verified rho nreg breaks omega c, "icdfx" p | c c0 tol method rho nreg breaks omega c:
+ *   with the extensions of the limit (dfl_engine_dist_ext, dfl_engine_icdf_ext; method 0 auto, 1 line, 2 double, 3
+ *   contour, 4 paths, 8 lines, 9 mixture)
  *   "mom" (x unused) | c c0 pmax [imethod tol verified]           "coefmom" (x unused) | c c0 pmax imethod tol
  *   "coef" y | c c0 [imethod tol verified]       "coefq" p | c c0 tol [imethod verified]     "coefpdf" y | c c0 imethod tol verified
  *   "lin" b | a model c cbar [imethod tol verified] (spec unused)   "lind" b | a c imethod tol verified (the design of spec)
@@ -340,6 +369,12 @@ SEXP dfl_r_route(SEXP what, SEXP x, SEXP spec, SEXP args, SEXP engine)
             }
             if (any) bm[nb] = dfl_brittle(kind, S.model, a[0], a[1], g0, stat, 0), nb += bm[nb] != NULL;
         }
+    } else if (!strcmp(w, "cdfx") || !strcmp(w, "pdfx")) {
+        NEED(4); double rho; const dfl_vol *vol; ext_in(a + 4, na - 4, &rho, &vol);
+        rc = dfl_engine_dist_ext(w[0] == 'c' ? 2 : 1, n, xv, &S, a[0], a[1], eng, (int) a[2], a[3] != 0, vol, rho, v, err, sizeof err);
+    } else if (!strcmp(w, "icdfx")) {
+        NEED(4); double rho; const dfl_vol *vol; ext_in(a + 4, na - 4, &rho, &vol);
+        rc = dfl_engine_icdf_ext(n, xv, &S, a[0], a[1], eng, (int) a[3], a[2], vol, rho, v, err, sizeof err);
     } else if (!strcmp(w, "icdf")) {
         NEED(4);
         rc = dfl_engine_icdf(n, xv, &S, a[0], a[1], eng, (int) a[3], a[2], v, err, sizeof err);

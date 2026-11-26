@@ -15,7 +15,9 @@ ltratio_cdf(
   verified = FALSE,
   engine = c("auto", "classical", "general"),
   start = NULL,
-  gls = NULL
+  gls = NULL,
+  vol = NULL,
+  rho = 1
 )
 
 ltratio_pdf(
@@ -28,7 +30,9 @@ ltratio_pdf(
   verified = FALSE,
   engine = c("auto", "classical", "general"),
   start = NULL,
-  gls = NULL
+  gls = NULL,
+  vol = NULL,
+  rho = 1
 )
 }
 \arguments{
@@ -59,6 +63,15 @@ start).}
 
 \item{gls}{With a design: `NULL` (the default) for least squares detrending, or \eqn{\bar c < 0}{cbar < 0} for GLS
 detrending at \eqn{1 + \bar c/n}{1 + cbar/n}. With a case code it must be `NULL`.}
+
+\item{vol}{`NULL` (the default) or a volatility path ([dfl_volpath()]): volatility and persistence regimes (`c` may
+then be a vector of one value per regime), computed by the general engine for the case or the design (`engine =
+"classical"` refuses it; `method` `"auto"` or `"paths"`). See [dfl_volpath()].}
+
+\item{rho}{A normal component (1, the default: none): the limit \eqn{\rho \tau + \sqrt{1 - \rho^2} Z}{rho tau +
+sqrt(1 - rho^2) Z} of the covariate-augmented t-ratio ([cadf_c0()]) and of the predictive regression
+([predictive_c0()]), computed by the general engine (`method` `"auto"`, `"lines"` or `"mixture"`). See
+[dfl_volpath()].}
 }
 \value{
 A numeric vector with the attributes (`dim`, `dimnames`, `names`) of `x`. A warning is given in a regime

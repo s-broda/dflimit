@@ -144,12 +144,14 @@ dfl_gls <- function(gls, name = "gls") {
 }
 
 # the options of the general engine's functions: c(c0, start, gamma0, gls, verified)
-dfl_opts <- function(c0 = 0, start = NULL, gamma0 = 0, gls = NULL, verified = FALSE, method = NULL, rule = NULL) {
+dfl_opts <- function(c0 = 0, start = NULL, gamma0 = 0, gls = NULL, verified = FALSE, method = NULL, rule = NULL, ext = NULL) {
   c0 <- dfl_num(c0, "c0")
   gamma0 <- dfl_num(gamma0, "gamma0")
   o <- c(c0, dfl_start(start, gamma0), gamma0, dfl_gls(gls), dfl_flag(verified, "verified"))
-  if (!is.null(method) || !is.null(rule)) o <- c(o, if (is.null(method)) 0L else dfl_gmethod(method))
-  if (!is.null(rule)) o <- c(o, dfl_grule(rule))
+  if (!is.null(method) || !is.null(rule) || !is.null(ext)) o <- c(o, if (is.null(method)) 0L else dfl_gmethod(method))
+  if (!is.null(rule) || !is.null(ext)) o <- c(o, if (is.null(rule)) 0L else dfl_grule(rule))
+  # (the extensions of the limit, dfl_ext: rho and the volatility path)
+  if (!is.null(ext)) o <- c(o, ext)
   o
 }
 # the rule of one evaluation of the general engine's inversion on paths (dist_cdf, dist_pdf, dist_quantile; DFL_RULE_* of
@@ -164,11 +166,13 @@ dfl_grule <- function(rule) {
   m - 1L
 }
 # the method of the general engine's t-ratio (dist_cdf, dist_pdf, dist_quantile): 0 "auto", 1 "line" (the line integral
-# with the explicit kernel), 2 "paths" (the inversion on paths around the roots)
+# with the explicit kernel), 2 "paths" (the inversion on paths around the roots), with rho 3 "lines" (the inversion on two
+# lines) and 4 "mixture" (the normal average)
 dfl_gmethod <- function(method) {
-  msg <- "method must be \"auto\", \"line\" (the line integral with the explicit kernel) or \"paths\" (the inversion on paths around the roots)"
+  msg <- paste0("method must be \"auto\", \"line\" (the line integral with the explicit kernel) or \"paths\" (the inversion on paths ",
+                "around the roots), with rho \"lines\" or \"mixture\"")
   if (!is.character(method) || length(method) != 1L) stop(msg, call. = FALSE)
-  m <- match(tolower(method), c("auto", "line", "paths"))
+  m <- match(tolower(method), c("auto", "line", "paths", "lines", "mixture"))
   if (is.na(m)) stop(msg, call. = FALSE)
   m - 1L
 }

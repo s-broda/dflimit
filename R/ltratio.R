@@ -117,6 +117,13 @@
 #'   start).
 #' @param gls With a design: `NULL` (the default) for least squares detrending, or \eqn{\bar c < 0}{cbar < 0} for GLS
 #'   detrending at \eqn{1 + \bar c/n}{1 + cbar/n}. With a case code it must be `NULL`.
+#' @param vol `NULL` (the default) or a volatility path ([dfl_volpath()]): volatility and persistence regimes (`c` may
+#'   then be a vector of one value per regime), computed by the general engine for the case or the design (`engine =
+#'   "classical"` refuses it; `method` `"auto"` or `"paths"`). See [dfl_volpath()].
+#' @param rho A normal component (1, the default: none): the limit \eqn{\rho \tau + \sqrt{1 - \rho^2} Z}{rho tau +
+#'   sqrt(1 - rho^2) Z} of the covariate-augmented t-ratio ([cadf_c0()]) and of the predictive regression
+#'   ([predictive_c0()]), computed by the general engine (`method` `"auto"`, `"lines"` or `"mixture"`). See
+#'   [dfl_volpath()].
 #' @return A numeric vector with the attributes (`dim`, `dimnames`, `names`) of `x`. A warning is given in a regime
 #'   in which one evaluation is known to be brittle, where points that the line integral refuses get flagged values
 #'   from the conditional integral (see the section Methods and ranges), and, with `verified = TRUE` and
@@ -140,19 +147,27 @@
 #' ltratio_cdf(c(-4.5, -4), dfl_perron("C", 0.5))       # a break in level and slope at mid-sample
 #' @export
 ltratio_cdf <- function(x, cas, c = 0, c0 = 0, g0 = 0, method = "auto", verified = FALSE,
-                        engine = c("auto", "classical", "general"), start = NULL, gls = NULL) {
-  dfl_dist(2L, x, cas, c, c0, g0, method, verified, dfl_engine(engine), start, gls)
+                        engine = c("auto", "classical", "general"), start = NULL, gls = NULL, vol = NULL, rho = 1) {
+  dfl_dist(2L, x, cas, c, c0, g0, method, verified, dfl_engine(engine), start, gls, vol, rho)
 }
 
 #' @rdname ltratio_cdf
 #' @export
 ltratio_pdf <- function(x, cas, c = 0, c0 = 0, g0 = 0, method = "auto", verified = FALSE,
-                        engine = c("auto", "classical", "general"), start = NULL, gls = NULL) {
-  dfl_dist(1L, x, cas, c, c0, g0, method, verified, dfl_engine(engine), start, gls)
+                        engine = c("auto", "classical", "general"), start = NULL, gls = NULL, vol = NULL, rho = 1) {
+  dfl_dist(1L, x, cas, c, c0, g0, method, verified, dfl_engine(engine), start, gls, vol, rho)
 }
 
-dfl_dist <- function(kind, x, cas, c, c0, g0, method, verified, engine = "auto", start = NULL, gls = NULL) {
+dfl_dist <- function(kind, x, cas, c, c0, g0, method, verified, engine = "auto", start = NULL, gls = NULL, vol = NULL, rho = 1) {
   tg <- dfl_target(cas, g0, start, gls)
+  e <- dfl_ext(vol, rho, c)
+  if (!is.null(e$v)) {
+    # (the extensions of the limit: the general engine for the case or the design, through the router; engine =
+    # "classical" refuses them)
+    pl <- list(spec = dfl_spec(tg, is.null(tg$D)), engine = dfl_engine_code(engine))
+    a <- c(e$c, dfl_num(c0, "c0"), dfl_ext_method(method), dfl_flag(verified, "verified"), e$v)
+    return(dfl_shape(dfl_route_call(if (kind == 2L) "cdfx" else "pdfx", dfl_real(x, "x"), pl, a), x))
+  }
   me <- dfl_method(method)
   ve <- dfl_flag(verified, "verified")
   c <- dfl_num(c, "c")
@@ -193,9 +208,21 @@ dfl_dist <- function(kind, x, cas, c, c0, g0, method, verified, engine = "auto",
 #' ltratio_icdf(0.05, dfl_trend(2))          # the quadratic trend (the general engine)
 #' @export
 ltratio_icdf <- function(p, cas, c = 0, c0 = 0, g0 = 0, method = "auto", tol = 1e-10, info = FALSE, verified = FALSE,
-                         engine = c("auto", "classical", "general"), start = NULL, gls = NULL) {
+                         engine = c("auto", "classical", "general"), start = NULL, gls = NULL, vol = NULL, rho = 1) {
   engine <- dfl_engine(engine)
   tg <- dfl_target(cas, g0, start, gls)
+  e <- dfl_ext(vol, rho, c)
+  if (!is.null(e$v)) {
+    pv <- dfl_real(p, "p")
+    if (!all(!is.na(pv) & pv > 0 & pv < 1)) stop("p must lie in (0, 1)", call. = FALSE)
+    pl <- list(spec = dfl_spec(tg, is.null(tg$D)), engine = dfl_engine_code(engine))
+    me <- dfl_ext_method(method)
+    q <- dfl_route_call("icdfx", pv, pl, c(e$c, dfl_num(c0, "c0"), dfl_num(tol, "tol"), me, e$v))
+    if (!isTRUE(info)) return(dfl_shape(q, p))
+    F <- dfl_route_call("cdfx", q, pl, c(e$c, dfl_num(c0, "c0"), me, 0, e$v))
+    na <- rep(NA_integer_, length(q))
+    return(lapply(list(q = q, F = F, iter = na, conv = as.logical(na)), dfl_shape, x = p))
+  }
   me <- dfl_method(method)
   ve <- dfl_flag(verified, "verified")
   c <- dfl_num(c, "c")

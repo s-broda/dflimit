@@ -16,8 +16,10 @@ dist_cdf(
   gamma0 = 0,
   gls = NULL,
   verified = FALSE,
-  method = c("auto", "line", "paths"),
-  rule = "auto"
+  method = c("auto", "line", "paths", "lines", "mixture"),
+  rule = "auto",
+  vol = NULL,
+  rho = 1
 )
 
 dist_pdf(
@@ -29,8 +31,10 @@ dist_pdf(
   gamma0 = 0,
   gls = NULL,
   verified = FALSE,
-  method = c("auto", "line", "paths"),
-  rule = "auto"
+  method = c("auto", "line", "paths", "lines", "mixture"),
+  rule = "auto",
+  vol = NULL,
+  rho = 1
 )
 
 dist_quantile(
@@ -43,8 +47,10 @@ dist_quantile(
   gls = NULL,
   x0 = -2,
   tol = 1e-09,
-  method = c("auto", "line", "paths"),
-  rule = "auto"
+  method = c("auto", "line", "paths", "lines", "mixture"),
+  rule = "auto",
+  vol = NULL,
+  rho = 1
 )
 
 dist_moments(
@@ -90,7 +96,9 @@ vertical line (there the paths do not resolve the two roots of the parabola of s
 paths); C engine, November 2026; the paths otherwise.
 Above `c = 5.5` the paths warn for a design beyond the classical cases and a fixed start with deterministic terms,
 where one evaluation may be off by more than 1e-5 in the upper tail. `"line"` stops with the reason where it does not
-cover the design, the start or the options (GLS detrending, a fixed start, a jump).}
+cover the design, the start or the options (GLS detrending, a fixed start, a jump).
+With `rho` the methods are `"auto"`, `"lines"` and `"mixture"`, with `vol` `"auto"` and `"paths"` (see
+[dfl_volpath()]).}
 
 \item{rule}{The rule of one evaluation of the inversion on paths: `"auto"` (the default, by regions), `"present"`
 (the rule before November 2026, also taken by `verified = TRUE`), `"thin"` (1.5 times the outer step, 16 and 32
@@ -98,6 +106,15 @@ nodes), `"inner"` (the thin nodes on the present step), `"outer"` (the present n
 (the thin nodes on half the present step) or `"finestep"` (a fixed start without deterministic terms: the present
 nodes on the step min(1/2, 2.5/(gamma0 |c0|)) times the present one where the outer hyperbola is flatter than 70
 degrees). The line integral (see `method`) is not affected.}
+
+\item{vol}{`NULL` (the default) or a volatility path ([dfl_volpath()]): volatility and persistence regimes (with
+`c` a vector of one value per regime); zero start, least squares detrending, every `c` in \[-480, 0\], `method`
+`"auto"` or `"paths"`. See [dfl_volpath()].}
+
+\item{rho}{A normal component: the limit \eqn{\rho \tau + \sqrt{1 - \rho^2} Z}{rho tau + sqrt(1 - rho^2) Z} with
+\eqn{Z} standard normal and independent (the covariate-augmented t-ratio at `c0 = cadf_c0(c, rho, R)`, the
+predictive regression at `c0 = predictive_c0(c, rho, b)`); `rho` in \[-1, 1\], 1 (the default) the t-ratio itself;
+`method` then `"auto"`, `"lines"` or `"mixture"`. See [dfl_volpath()].}
 
 \item{p}{`dist_quantile()`: numeric vector or array of probabilities in (0, 1). `dist_moments()`: the number of
 moments.}
