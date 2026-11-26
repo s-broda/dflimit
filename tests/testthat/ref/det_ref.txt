@@ -1,4 +1,4 @@
-# the lines design, val, route, err and rerr (823 of 4654 lines) of c/test/det_ref.txt of dflimit-matlab (checkout 0e681db, the file as of 0e681db; Julia reference values of c/test/det_ref.jl), copied by tools/det-ref-subset.R; the format is described in c/test/det_ref.jl
+# the lines design, val, route, err and rerr (823 of 4654 lines) of c/test/det_ref.txt of dflimit-matlab (checkout 2e6a692, the file as of 0e681db; Julia reference values of c/test/det_ref.jl), copied by tools/det-ref-subset.R; the format is described in c/test/det_ref.jl
 design 1 trend -1
 design 2 trend 0
 design 3 trend 1
