@@ -35,10 +35,10 @@ This is the first submission of dflimit to CRAN.
 * Threads: the C engine evaluates its quadrature rules on a pool of worker threads (POSIX threads; Windows threads on
   Windows). Under `R CMD check` the package uses two threads: the thread count is set to 2 when the package is
   loaded with `_R_CHECK_LIMIT_CORES_` or `_R_CHECK_PACKAGE_NAME_` set, and the tests set it to 2 explicitly. In the
-  check above the tests took 24 s of CPU time in 13 s elapsed, and no example had a ratio of CPU to elapsed time
-  above 2.
-* Run time: the whole `R CMD check --as-cran` takes about 31 s on the machine above; no example takes more than
-  0.3 s. One test (about 3 s) is skipped on CRAN.
+  check above (0.5.0, 26 Nov 2026) the tests took 87 s of CPU time in 48 s elapsed, and no example had a ratio of CPU
+  to elapsed time above 2.
+* Run time: the whole `R CMD check --as-cran` takes about 130 s on the machine above (0.5.0); no example takes more
+  than 0.8 s. Four test blocks are skipped on CRAN.
 * The method is that of two working papers by Bao, Broda and Kan (2026), "The Exact Limiting Distribution of the
   Dickey-Fuller t-Ratio with General Deterministic Terms", on SSRN at
   <https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7745921>, and its companion, "Low-Rank Representations of

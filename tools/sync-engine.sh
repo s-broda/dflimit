@@ -14,7 +14,7 @@
 #   4. records the upstream commit in inst/UPSTREAM.
 # The engine has three parts: the classical engine (dfl_api.c to tables.c), the general engine for any deterministic
 # terms (dfl_det_*.c with the internal header dfl_det_int.h; dfl_det_tables.c holds its generated tables) and the
-# devices of Bao and Kan (dfl_kan.c with dfl_kan_int.h and the templates dfl_kan_jet.inc, dfl_kan_logcf.inc, which
+# devices of Bao and Kan (dfl_kan.c with dfl_kan_int.h and the templates dfl_kan_jet.h, dfl_kan_logcf.h, which
 # dfl_kan.c includes; dfl_det_kan.c for the general engine's transform).
 # Left out: the test programs (dfl_test_*.c), dfl_probe.c, gen_tables.jl, gen_det_tables.jl, the MEX gateway (c/mex/)
 # and c/test/.
@@ -30,7 +30,7 @@ ENGINE="dflimit.h dfl_lock.h dfl_vmath.h dfl_api.c dfl_double.c dfl_gen.c dfl_gi
         dfl_single.c dfl_batch.c dfl_special.c dfl_threads.c tables.c
         dfl_det_int.h dfl_det_api.c dfl_det_design.c dfl_det_inner.c dfl_det_la.c dfl_det_mgf.c dfl_det_paper2.c
         dfl_det_path.c dfl_det_route.c dfl_det_line.c dfl_det_tables.c
-        dfl_kan_int.h dfl_kan.c dfl_kan_jet.inc dfl_kan_logcf.inc dfl_det_kan.c"
+        dfl_kan_int.h dfl_kan.c dfl_kan_jet.h dfl_kan_logcf.h dfl_det_kan.c"
 FADDEEVA="Faddeeva.cc Faddeeva.h faddeeva_shim.cpp"
 
 lf() { tr -d '\r' < "$1" > "$2"; }

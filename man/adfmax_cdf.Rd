@@ -93,7 +93,7 @@ fixed start `g0 != 0` and every other design the general engine (the classical A
   other than the four cases, or `engine = "general"`), by its own search from `x0` ([adfmax_quantile()]).
 }
 \examples{
-adfmax_cdf(-2.43542, "DU")       # 0.05 (the quantiles of the ADFmax statistic in the companion paper)
+adfmax_cdf(-2.43542, "DU")       # 0.05 (the ADFmax quantiles of the companion paper)
 adfmax_pdf(c(-3, -2), "DT", -5)
 adfmax_cdf(-3, dfl_perron("A", 0.5))
 adfmax_icdf(0.05, "DT")          # -3.11891 (the ADFmax quantiles of the companion paper)

@@ -34,7 +34,7 @@
 #'   Regressions", Oxford Bulletin of Economics and Statistics 57, 559-571.
 #' @seealso [ltratio_cdf()].
 #' @examples
-#' adfmax_cdf(-2.43542, "DU")       # 0.05 (the quantiles of the ADFmax statistic in the companion paper)
+#' adfmax_cdf(-2.43542, "DU")       # 0.05 (the ADFmax quantiles of the companion paper)
 #' adfmax_pdf(c(-3, -2), "DT", -5)
 #' adfmax_cdf(-3, dfl_perron("A", 0.5))
 #' @export
