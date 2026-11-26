@@ -5,7 +5,7 @@
 #' \eqn{y_{t-1}}) and of the reverse regression (\eqn{y_t} on \eqn{y_{t+1}}), under
 #' \eqn{\phi = 1 + c/n}{phi = 1 + c/n}, no drift. In the limit both regressions have the denominator \eqn{V} and the
 #' numerators \eqn{U} and \eqn{-U - 1}, so that ADFmax converges to \eqn{(|R| - 1/2)/\sqrt{V}}{(|R| - 1/2)/sqrt(V)},
-#' \eqn{R = U + 1/2}, whose distribution is computed by the conditional integral (the ADFmax test of the paper).
+#' \eqn{R = U + 1/2}, whose distribution is computed by the conditional integral (the ADFmax test of the companion paper).
 #' `adfmax_icdf()` gives its quantiles.
 #'
 #' The cases are `"DU"` and `"DT"` (a constant, or a constant and a trend, zero start) and `"SU"` and `"ST"` (the
@@ -34,7 +34,7 @@
 #'   Regressions", Oxford Bulletin of Economics and Statistics 57, 559-571.
 #' @seealso [ltratio_cdf()].
 #' @examples
-#' adfmax_cdf(-2.43542, "DU")       # 0.05 (the quantiles of the ADFmax statistic in the paper)
+#' adfmax_cdf(-2.43542, "DU")       # 0.05 (the quantiles of the ADFmax statistic in the companion paper)
 #' adfmax_pdf(c(-3, -2), "DT", -5)
 #' adfmax_cdf(-3, dfl_perron("A", 0.5))
 #' @export
@@ -99,7 +99,7 @@ dfl_adfmax <- function(kind, x, cas, c, info, engine = "auto", start = NULL, g0 
 #'   safeguarded by bisection on a bracket grown from `[x0 - 1, x0 + 1]`; where the general engine computes (a design
 #'   other than the four cases, or `engine = "general"`), by its own search from `x0` ([adfmax_quantile()]).
 #' @examples
-#' adfmax_icdf(0.05, "DT")          # -3.11891 (the quantiles of the ADFmax statistic in the paper)
+#' adfmax_icdf(0.05, "DT")          # -3.11891 (the ADFmax quantiles of the companion paper)
 #' @export
 adfmax_icdf <- function(p, cas, c = 0, tol = 1e-10, x0 = -2, engine = c("auto", "classical", "general"), start = NULL,
                         g0 = 0) {

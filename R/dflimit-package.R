@@ -1,9 +1,11 @@
 #' dflimit: Exact limiting distribution of the Dickey-Fuller t-ratio
 #'
 #' The distribution function, density, quantiles and moments of the limits of the Dickey-Fuller t-ratios under
-#' local alternatives, by the exact representations of Bao, Broda and Kan, computed by their C engine (a port of
-#' the Julia reference implementation of the paper; the same functions, with the same names and arguments, exist in
-#' MATLAB and Julia).
+#' local alternatives, by the exact representations of Bao, Broda and Kan: the inversion formula on paths and the limit
+#' for any piecewise smooth deterministic terms of the lead paper (the general engine) and, for the classical cases,
+#' the line and the conditional integral of its companion paper (the classical engine); computed by their C engine (a
+#' port of the Julia reference implementation; the same functions, with the same names and arguments, exist in MATLAB,
+#' Julia and Python).
 #'
 #' \describe{
 #'   \item{[ltratio_cdf()], [ltratio_pdf()], [ltratio_icdf()], [ltratio_mom()]}{the t-ratio, cases DK, DU, DT
@@ -23,7 +25,11 @@
 #' }
 #'
 #' @references Bao, Y., Broda, S. A. and Kan, R., "The Exact Limiting Distribution of the Dickey-Fuller t-Ratio
-#'   and Some Related Statistics", working paper, 2026, \url{https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7725619}.
+#'   with General Deterministic Terms", working paper, 2026, \url{https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7745921}.
+#'
+#'   Bao, Y., Broda, S. A. and Kan, R., "Low-Rank Representations of the Classical Dickey-Fuller Limits, with an
+#'   Extension to Predictive Regressions", working paper, 2026,
+#'   \url{https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7725619}.
 #' @keywords internal
 #' @useDynLib dflimit, .registration = TRUE, .fixes = "C_"
 "_PACKAGE"

@@ -20,11 +20,18 @@ Description: The distribution function, density, quantiles and moments of the
     (GLS); the ADFmax statistic of Leybourne (1995)
     <doi:10.1111/j.1468-0084.1995.tb00040.x>, the larger of the t-ratios of the
     forward and the reverse regression; and the probabilities of regions of the
-    limit experiment and its asymptotic power envelope.
+    limit experiment and its asymptotic power envelope. A second engine
+    computes the same limits for any piecewise smooth deterministic terms
+    (polynomial trends of any order, breaks in level and slope at known
+    dates, GLS detrending).
     The values come from the exact representations of Bao, Broda and Kan
-    (2026) <https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7725619>,
-    "The Exact Limiting Distribution of the Dickey-Fuller t-Ratio and Some
-    Related Statistics", evaluated by a multithreaded engine written in 'C'.
+    (2026) <https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7745921>,
+    "The Exact Limiting Distribution of the Dickey-Fuller t-Ratio with General
+    Deterministic Terms", and, for the classical cases, of their companion
+    paper (2026) <https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7725619>,
+    "Low-Rank Representations of the Classical Dickey-Fuller Limits, with an
+    Extension to Predictive Regressions", evaluated by a multithreaded engine
+    written in 'C'.
 License: MIT + file LICENSE
 URL: https://github.com/s-broda/dflimit
 BugReports: https://github.com/s-broda/dflimit/issues

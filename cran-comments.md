@@ -39,12 +39,14 @@ This is the first submission of dflimit to CRAN.
   above 2.
 * Run time: the whole `R CMD check --as-cran` takes about 31 s on the machine above; no example takes more than
   0.3 s. One test (about 3 s) is skipped on CRAN.
-* The method is that of a working paper (Bao, Broda and Kan, 2026, "The Exact Limiting Distribution of the
-  Dickey-Fuller t-Ratio and Some Related Statistics"), which is on SSRN at 
-  <https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7725619>;
-  the DESCRIPTION and two help pages give that address. SSRN answers automated requests with status 403, so the
-  URL check may list it as possibly invalid; it opens in a browser. Its DOI was not yet registered when this was
-  submitted.
+* The method is that of two working papers by Bao, Broda and Kan (2026), "The Exact Limiting Distribution of the
+  Dickey-Fuller t-Ratio with General Deterministic Terms", on SSRN at
+  <https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7745921>, and its companion, "Low-Rank Representations of
+  the Classical Dickey-Fuller Limits, with an Extension to Predictive Regressions", on SSRN at
+  <https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7725619>; the DESCRIPTION and two help pages give these
+  addresses. SSRN answers automated requests with status 403, so the
+  URL check may list them as possibly invalid; they open in a browser. Their DOIs were not yet registered when this
+  was submitted.
 * `src/Faddeeva.cc` and `src/Faddeeva.h` are the Faddeeva package by Steven G. Johnson (MIT licence, copyright
   Massachusetts Institute of Technology); Authors@R lists him as a contributor and MIT as a copyright holder, and
   `inst/COPYRIGHTS` reproduces the licence.

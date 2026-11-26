@@ -3,20 +3,29 @@
 The exact limiting distribution of the Dickey-Fuller t-ratio in R.
 
 `dflimit` computes the distribution function, density, quantiles and moments of the limits of the Dickey-Fuller
-t-ratios under local alternatives, phi = 1 + c/n, by the exact representations of
+t-ratios under local alternatives, phi = 1 + c/n, by the exact representations of two papers. The lead paper,
 
-> Bao, Y., Broda, S. A. and Kan, R., "The Exact Limiting Distribution of the Dickey-Fuller t-Ratio and Some Related
-> Statistics", working paper, 2026, available at <https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7725619>.
+> Bao, Y., Broda, S. A. and Kan, R., "The Exact Limiting Distribution of the Dickey-Fuller t-Ratio with General
+> Deterministic Terms", working paper, 2026, available at <https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7745921>,
 
-for the regression without deterministic terms, with an intercept and with an intercept and a trend; with a zero,
-a fixed or a stationary initial observation; for the t-ratio centred at the unit root or at a local null value c0;
-and for the GLS-detrended trend case of Elliott, Rothenberg and Stock (1996). It also has the ADFmax test of
+gives the inversion formula on paths around the singularities of the joint moment generating function and with it the
+limit for any piecewise smooth deterministic terms (the general engine); its companion,
+
+> Bao, Y., Broda, S. A. and Kan, R., "Low-Rank Representations of the Classical Dickey-Fuller Limits, with an Extension
+> to Predictive Regressions", working paper, 2026, available at <https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7725619>,
+
+gives the representations of the classical cases, in which the numerator has rank one or two (the line integral and the
+conditional integral), and the probabilities of regions of the plane of the numerator and the denominator.
+
+The package covers the regression without deterministic terms, with an intercept and with an intercept and a trend; a
+zero, a fixed or a stationary initial observation; the t-ratio centred at the unit root or at a local null value c0;
+and the GLS-detrended trend case of Elliott, Rothenberg and Stock (1996). It also has the ADFmax test of
 Leybourne (1995), the probabilities of regions {U <= g(V)} of the limit experiment (point-optimal and
 weighted-average-power tests), the distribution of the linear form U - aV and the asymptotic power envelope of
 Elliott, Rothenberg and Stock, and, by a second engine, the same limits for any deterministic terms (see "The
-general engine" below). The numbers come from the multithreaded C engine of the paper (a port of its Julia
+general engine" below). The numbers come from the multithreaded C engine (a port of the Julia
 reference implementation, checked against it to 1e-10 or better); the same functions, with the same names and
-arguments, exist in MATLAB and Julia.
+arguments, exist in MATLAB, Julia and Python.
 
 | function | computes |
 |---|---|
@@ -35,8 +44,8 @@ The case `cas` is a two-letter code: `D` (fixed start, `g0`, default 0) or `S` (
 followed by `K` (no deterministic terms, tau), `U` (intercept, tau_mu) or `T` (intercept and trend, tau_tau);
 `"DG"` is the GLS-detrended trend case (DF-GLS, cbar = -13.5). `method` is `"auto"` (at each point the fastest
 representation that one evaluation gives to well below 1e-5), `"single"` (the line integral representation of the
-paper), `"double"` (the conditional integral representation) or `"contour"`
-(the contour integral representation, a fixed start in cases DU, DT only). Every
+companion paper), `"double"` (its conditional integral representation) or `"contour"` (the contour integral
+representation, the inversion formula on paths of the lead paper, a fixed start in cases DU, DT only). Every
 value is one evaluation by one method, with a warning where the parameters lie in a regime in which one evaluation is
 known to be brittle; `verified = TRUE` gives the checked computation (error estimates and fallbacks).
 
@@ -234,8 +243,10 @@ r-universe build such binaries for packages that are public).
 ## Licence and citation
 
 MIT (see `LICENSE`); the Faddeeva package in `src/Faddeeva.cc` is by Steven G. Johnson, MIT licence (see
-`inst/COPYRIGHTS`). Please cite the paper when using the package.
+`inst/COPYRIGHTS`). Please cite the lead paper when using the package, and the companion paper as well where you use
+the representations of the classical cases (`citation("dflimit")` gives both).
 
 The C engine in `src/` is copied from dflimit-matlab, the repository of the MATLAB package, which holds the C engine
 (its directory `c/`), by `tools/sync-engine.sh` (the upstream commit is in `inst/UPSTREAM`); do not edit those files
-here. The engine was developed in the paper's repository up to commit b484d4f.
+here. The engine was developed in the companion paper's repository up to commit
+b484d4f.

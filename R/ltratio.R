@@ -27,10 +27,11 @@
 #' }
 #'
 #' @section Methods and ranges:
-#' Three exact representations of the paper are implemented: the line integral representation (`method = "single"`,
-#' or `"line"`), the conditional integral representation (`"double"`, or `"conditional"`) and, for a fixed start
-#' `g0 != 0` in cases DU and DT only, the contour integral representation (`"contour"`): a double integral from the
-#' inversion formula on paths around the singularities of the moment generating function, with the integral over
+#' Three exact representations are implemented: the line integral representation of the companion paper
+#' (`method = "single"`, or `"line"`), its conditional integral representation (`"double"`, or `"conditional"`) and,
+#' for a fixed start `g0 != 0` in cases DU and DT only, the contour integral representation (`"contour"`): a double
+#' integral from the inversion formula on paths of the lead paper, around the singularities of the moment generating
+#' function, with the integral over
 #' v in closed form and the paths in s and t deformed, an explicit integrand where the line integral needs a noncentral
 #' kernel that is itself an integral.
 #'
@@ -121,7 +122,11 @@
 #'   from the conditional integral (see the section Methods and ranges), and, with `verified = TRUE` and
 #'   `method = "double"` or `"contour"`, if the integral reports at some points that its error estimate is not met.
 #' @references Bao, Y., Broda, S. A. and Kan, R., "The Exact Limiting Distribution of the Dickey-Fuller t-Ratio
-#'   and Some Related Statistics", working paper, 2026, \url{https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7725619}.
+#'   with General Deterministic Terms", working paper, 2026, \url{https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7745921}.
+#'
+#'   Bao, Y., Broda, S. A. and Kan, R., "Low-Rank Representations of the Classical Dickey-Fuller Limits, with an
+#'   Extension to Predictive Regressions", working paper, 2026,
+#'   \url{https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7725619}.
 #'
 #'   Elliott, G., Rothenberg, T. J. and Stock, J. H. (1996), "Efficient Tests for an Autoregressive Unit Root",
 #'   Econometrica 64, 813-836.
