@@ -195,8 +195,8 @@ ltratio_cdf(-2.86157, "DU", -5, engine = "auto")     # the engine of the faster 
 ltratio_cdf(c(-4.5, -4), dfl_perron("C", 0.5))       # a break in level and slope at mid-sample
 }
 \references{
-Bao, Y., Broda, S. A. and Kan, R., "The Exact Limiting Distribution of the Dickey-Fuller t-Ratio
-  with General Deterministic Terms", working paper, 2026, \url{https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7745921}.
+Bao, Y., Broda, S. A. and Kan, R., "Exact Limiting Distributions of Unit Root t-Ratios", working paper, 2026,
+\url{https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7745921}.
 
   Bao, Y., Broda, S. A. and Kan, R., "Low-Rank Representations of the Classical Dickey-Fuller Limits, with an
   Extension to Predictive Regressions", working paper, 2026,

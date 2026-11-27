@@ -45,8 +45,8 @@ check still reports a new submission, and 0.5.0 replaces it. Changes since 0.4.0
   loaded with `_R_CHECK_LIMIT_CORES_` or `_R_CHECK_PACKAGE_NAME_` set, and the tests set it to 2 explicitly. In the
   check above (0.5.0, 27 Nov 2026) the tests took 94 s of CPU time in 54 s elapsed.
 * Run time: no example takes more than 0.8 s (user time; the longest, `mza_cdf`, 0.79 s user and 0.52 s elapsed). Four test blocks are skipped on CRAN.
-* The method is that of two working papers by Bao, Broda and Kan (2026), "The Exact Limiting Distribution of the
-  Dickey-Fuller t-Ratio with General Deterministic Terms", on SSRN at
+* The method is that of two working papers by Bao, Broda and Kan (2026), "Exact Limiting Distributions of Unit Root
+  t-Ratios", on SSRN at
   <https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7745921>, and its companion, "Low-Rank Representations of
   the Classical Dickey-Fuller Limits, with an Extension to Predictive Regressions", on SSRN at
   <https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7725619>; the DESCRIPTION and two help pages give these

@@ -128,8 +128,8 @@
 #'   in which one evaluation is known to be brittle, where points that the line integral refuses get flagged values
 #'   from the conditional integral (see the section Methods and ranges), and, with `verified = TRUE` and
 #'   `method = "double"` or `"contour"`, if the integral reports at some points that its error estimate is not met.
-#' @references Bao, Y., Broda, S. A. and Kan, R., "The Exact Limiting Distribution of the Dickey-Fuller t-Ratio
-#'   with General Deterministic Terms", working paper, 2026, \url{https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7745921}.
+#' @references Bao, Y., Broda, S. A. and Kan, R., "Exact Limiting Distributions of Unit Root t-Ratios", working paper,
+#'   2026, \url{https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7745921}.
 #'
 #'   Bao, Y., Broda, S. A. and Kan, R., "Low-Rank Representations of the Classical Dickey-Fuller Limits, with an
 #'   Extension to Predictive Regressions", working paper, 2026,

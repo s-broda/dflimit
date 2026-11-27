@@ -18,7 +18,7 @@ license: MIT
 repository-code: "https://github.com/s-broda/dflimit"
 preferred-citation:
   type: unpublished
-  title: "The Exact Limiting Distribution of the Dickey-Fuller t-Ratio with General Deterministic Terms"
+  title: "Exact Limiting Distributions of Unit Root t-Ratios"
   authors:
     - family-names: Bao
       given-names: Yong

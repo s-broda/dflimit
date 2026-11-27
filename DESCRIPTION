@@ -26,8 +26,7 @@ Description: The distribution function, density, quantiles and moments of the
     dates, GLS detrending).
     The values come from the exact representations of Bao, Broda and Kan
     (2026) <https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7745921>,
-    "The Exact Limiting Distribution of the Dickey-Fuller t-Ratio with General
-    Deterministic Terms", and, for the classical cases, of their companion
+    "Exact Limiting Distributions of Unit Root t-Ratios", and, for the classical cases, of their companion
     paper (2026) <https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7725619>,
     "Low-Rank Representations of the Classical Dickey-Fuller Limits, with an
     Extension to Predictive Regressions", evaluated by a multithreaded engine
