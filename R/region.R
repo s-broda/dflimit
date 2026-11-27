@@ -30,7 +30,10 @@
 #'
 #' @param bnd The boundary, a list as described above.
 #' @param cas The case: `"DK"` only (with `g0` a fixed start), or a design ([dfl_design]).
-#' @param engine `"auto"` (the default; the classical engine for case DK), `"classical"` or `"general"`.
+#' @param engine `"auto"` (the default: the rule of the C engine's router, `dfl_autoengine`: for case DK with a zero
+#'   start the classical engine, except the parabola at `c0 = 0` for \eqn{-20 \le c \le 0}{-20 <= c <= 0}, which the
+#'   general engine's line integral computes 3.5 to 45 times faster; `v0` and `brks` take the classical engine),
+#'   `"classical"` or `"general"`. With the general engine `info` gives `err` and `status` as `NA`.
 #' @param start,g0,gls With a design: its start (`"zero"`, `"fixed"` with the fixed start `g0`, `"stationary"`) and
 #'   GLS detrending (`NULL`: least squares); see [ltratio_cdf()].
 #' @param c The local-to-unity parameter.
@@ -52,7 +55,7 @@ ltratio_region <- function(bnd, cas = "DK", c = 0, info = FALSE, engine = c("aut
   if (dfl_is_design(cas)) {
     tg <- dfl_target(cas, g0, start, gls)
     # (the classical regions: case DK with a zero start)
-    if (identical(tg$case, "DK") && tg$start == 0L && engine != "general") return(ltratio_region(bnd, "DK", c, info))
+    if (identical(tg$case, "DK") && tg$start == 0L && engine != "general") return(ltratio_region(bnd, "DK", c, info, engine = engine))
     if (engine == "classical") dfl_no_classical("the regions of the classical engine have case DK only, with a zero start")
     return(dfl_region_general(bnd, list(path = "router", spec = dfl_spec(tg, FALSE), engine = 2L), c, info))
   }
@@ -97,6 +100,11 @@ ltratio_region <- function(bnd, cas = "DK", c = 0, info = FALSE, engine = c("aut
     if (!is.finite(b)) {
       P <- if (is.nan(b)) NaN else if (b > 0) 1 else 0
       return(if (isTRUE(info)) list(P = P, err = 0, status = 0L) else P)
+    }
+    # (engine "auto": the parabola as the router takes it, dfl_autoengine with x = 1 and its c0: the general engine at
+    # c0 = 0 for -20 <= c <= 0)
+    if (type == 2L && engine == "auto" && .Call(C_dfl_r_autoengine, 7L, 1L, 0L, 0, NaN, dfl_num(c, "c"), par[2], 1) == 2L) {
+      return(dfl_region_general(bnd, list(path = "router", spec = list(NULL, 1L, 0L, 0, NaN), engine = 2L), c, info))
     }
   }
   v0 <- if (is.null(bnd$v0)) 0 else el("v0")

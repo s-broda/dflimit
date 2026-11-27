@@ -25,7 +25,10 @@ ltratio_region(
 \item{info}{If `TRUE`, return a list with the probability `P`, the error estimate `err` and the status `status`
 (nonzero: the error estimate is not met).}
 
-\item{engine}{`"auto"` (the default; the classical engine for case DK), `"classical"` or `"general"`.}
+\item{engine}{`"auto"` (the default: the rule of the C engine's router, `dfl_autoengine`: for case DK with a zero
+start the classical engine, except the parabola at `c0 = 0` for \eqn{-20 \le c \le 0}{-20 <= c <= 0}, which the
+general engine's line integral computes 3.5 to 45 times faster; `v0` and `brks` take the classical engine),
+`"classical"` or `"general"`. With the general engine `info` gives `err` and `status` as `NA`.}
 
 \item{start, g0, gls}{With a design: its start (`"zero"`, `"fixed"` with the fixed start `g0`, `"stationary"`) and
 GLS detrending (`NULL`: least squares); see [ltratio_cdf()].}

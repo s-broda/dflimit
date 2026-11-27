@@ -103,6 +103,14 @@ static SEXP dfl_r_region(SEXP type, SEXP par, SEXP v0, SEXP brks, SEXP c)
     return res;
 }
 
+/* .Call("dfl_r_autoengine", f, model, stat, g0, gls, c, c0, x): the engine of the router's rule (dfl_autoengine: 1 the
+ * classical engine, 2 the general engine) */
+static SEXP dfl_r_autoengine(SEXP f, SEXP model, SEXP stat, SEXP g0, SEXP gls, SEXP c, SEXP c0, SEXP x)
+{
+    return Rf_ScalarInteger(dfl_autoengine(int1(f, "f"), int1(model, "model"), int1(stat, "stat"), num1(g0, "g0"), num1(gls, "gls"),
+                                           num1(c, "c"), num1(c0, "c0"), num1(x, "x")));
+}
+
 /* .Call("dfl_r_lincdf", b, a, model, c, cbar): P(U - aV <= b) (a = NaN: P(V <= b)) */
 static SEXP dfl_r_lincdf(SEXP b, SEXP a, SEXP model, SEXP c, SEXP cbar)
 {
@@ -142,6 +150,7 @@ static const R_CallMethodDef call_methods[] = {
     {"dfl_r_moments", (DL_FUNC) &dfl_r_moments, 6},
     {"dfl_r_adfmax", (DL_FUNC) &dfl_r_adfmax, 5},
     {"dfl_r_region", (DL_FUNC) &dfl_r_region, 5},
+    {"dfl_r_autoengine", (DL_FUNC) &dfl_r_autoengine, 8},
     {"dfl_r_lincdf", (DL_FUNC) &dfl_r_lincdf, 5},
     {"dfl_r_envelope", (DL_FUNC) &dfl_r_envelope, 3},
     {"dfl_r_threads", (DL_FUNC) &dfl_r_threads, 1},

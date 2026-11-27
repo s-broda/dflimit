@@ -216,6 +216,16 @@ test_that("the starts, GLS detrending and the options are checked", {
   expect_error(ltratio_lincdf(0, 1, dfl_perron("A", 0.5), engine = "classical"), "cases DK and DG only")
   expect_error(ltratio_region(list(type = "line", a = 1, b = 0), dfl_trend(0), engine = "classical"), "case DK only")
   expect_error(ltratio_region(list(type = "line", a = 1, b = 0, v0 = 0.1), "DK", engine = "general"), "v0")
+  # engine "auto": the parabola as the C router takes it (the general engine at c0 = 0 for -20 <= c <= 0, the classical
+  # engine elsewhere and with v0); with a design that is case DK the argument engine is kept
+  par <- list(type = "parabola", x = -1.94)
+  expect_identical(ltratio_region(par, "DK", -7), ltratio_region(par, "DK", -7, engine = "general"))
+  expect_identical(ltratio_region(par, dfl_trend(-1), -7), ltratio_region(par, "DK", -7, engine = "general"))
+  expect_identical(ltratio_region(par, "DK", -30), ltratio_region(par, "DK", -30, engine = "classical"))
+  expect_identical(ltratio_region(c(par, c0 = -2), "DK", -7), ltratio_region(c(par, c0 = -2), "DK", -7, engine = "classical"))
+  expect_identical(ltratio_region(c(par, v0 = 0), "DK", -7), ltratio_region(c(par, v0 = 0), "DK", -7, engine = "classical"))
+  expect_identical(ltratio_region(par, dfl_trend(-1), -7, engine = "classical"), ltratio_region(par, "DK", -7, engine = "classical"))
+  expect_lt(abs(ltratio_region(par, "DK", -7) - ltratio_region(par, "DK", -7, engine = "classical")), 1e-10)
 })
 
 test_that("engine = classical gives the classical values; the default (auto) agrees with them", {
