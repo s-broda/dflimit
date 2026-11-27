@@ -155,6 +155,12 @@ next four entries, outside whose regions the values are unchanged), then the lat
   unit root at large `x` did not return (case DU at `c = 10`, `x = 7860`: its outer nodes filled the memo of the general
   engine's transform, whose search then never ended); now that memo fills at most half its slots and the bound of the
   inner rules is checked before the transform at all the outer nodes, so that the paths compute such points (2 s there).
+* The C engine of dflimit-matlab 289b977 (November 27, 2026): on Windows one call could differ from the next in the
+  last digits (by a few units of the sixteenth digit). A new Windows thread starts with the system's floating-point
+  setting and not with that of R, so the calling thread and the engine's worker threads rounded the elementary
+  functions differently, and which thread took which part of a sum varied from call to call. The workers now take the
+  setting of the calling thread. Linux and macOS were not affected. A compiler warning of GCC 14 about an allocation
+  size in the constructor behind `dfl_fdesign()` is gone (a negative number of breaks is refused first).
 
 ## Rules, timings and documentation
 
