@@ -1,9 +1,22 @@
 # R CMD check on Windows, macOS and Linux with the current R release.
-# Started by hand only (Actions tab, "Run workflow"): the account's Actions minutes are limited, so nothing runs
-# on a push or a pull request.
+# Runs on a push to main that changes the package (code, C sources, tests, documentation pages, build files or this
+# file; a push that changes only the README, the news or other prose starts nothing), and when started by hand
+# (Actions tab, "Run workflow").
 name: R-CMD-check
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'R/**'
+      - 'src/**'
+      - 'tests/**'
+      - 'man/**'
+      - 'inst/**'
+      - 'DESCRIPTION'
+      - 'NAMESPACE'
+      - '.Rbuildignore'
+      - '.github/workflows/R-CMD-check.yaml'
   workflow_dispatch:
 
 permissions:
@@ -39,4 +52,4 @@ jobs:
           args: 'c("--no-manual", "--as-cran")'
           error-on: '"warning"'
           upload-snapshots: false
-# started by hand: gh workflow run R-CMD-check.yaml
+# by hand: gh workflow run R-CMD-check.yaml
