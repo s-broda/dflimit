@@ -51,6 +51,13 @@
   (`hegy_t3_cdf()`, `hegy_t3_pdf()`, `hegy_t3_quantile()`). Calls without them are unchanged. The general engine's outer
   contour is steepened while either group of roots leaves its side of the imaginary axis (the engine's designs are not
   affected). Tests against the reference values of the Julia engine (`tests/testthat/ref/ext_ref.txt`).
+* The C engine of dflimit-matlab 8be66f6 (November 28, 2026), the regime variants of DFLimit.jl: `vol` now goes with
+  GLS detrending (`gls`), with the statistic that detrends first (`dfl_detrend_first()`) and with a stationary start,
+  that of the first regime, J(0) ~ N(0, omega_1^2/(-2 c_1)), which needs `c < 0` on the first regime; GLS detrending
+  and the statistic that detrends first take the zero start, as without `vol`. With a case code, cases SU, ST and DG
+  take `vol`. A fixed start (`gamma0 != 0`, `g0 != 0`) under more than one regime is refused with an error (the
+  engine's paths of a fixed start are laid for a constant variance and persistence). Tests against the new reference
+  values of the Julia engine.
 
 ## Repairs
 

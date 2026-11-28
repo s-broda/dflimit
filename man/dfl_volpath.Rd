@@ -68,9 +68,13 @@ Three extensions of the limit of the Dickey-Fuller t-ratio, computed by the gene
     piecewise constant between known dates (the fractions `breaks`, strictly increasing in (0, 1)), `omega` on the
     `length(breaks) + 1` regimes (any positive scale: only the ratios matter). With `vol = dfl_volpath(...)` the
     t-ratio's limit is that of the process \eqn{dJ = c(r) J\,dr + \omega(r)\,dW}{dJ = c(r) J dr + omega(r) dW}, and
-    `c` may be a vector of one value per regime (changing persistence). Zero start, least squares detrending, the
-    one-step regression, every `c` in \[-480, 0\]; `method` `"auto"` or `"paths"` (the inversion on paths of the
-    volatility transform). One regime with a scalar `c` is the engine itself.}
+    `c` may be a vector of one value per regime (changing persistence). Every `c` in \[-480, 0\]; GLS detrending
+    (`gls`), the statistic that detrends first ([dfl_detrend_first()]) and the stationary start as without `vol`,
+    the stationary start being that of the first regime, \eqn{J(0) \sim N(0, \omega_1^2/(-2 c_1))}{J(0) ~ N(0,
+    omega_1^2/(-2 c_1))} (in the scale of `omega`), which needs `c < 0` on the first regime; GLS detrending and the
+    statistic that detrends first take the zero start only, as without `vol`. A fixed start (`gamma0 != 0`) is
+    refused with more than one regime. `method` `"auto"` or `"paths"` (the inversion on paths of the volatility
+    transform). One regime with a scalar `c` is the engine itself.}
   \item{A normal component}{`rho`: the limit \eqn{\rho \tau_{c_0} + \sqrt{1 - \rho^2} Z}{rho tau_c0 + sqrt(1 - rho^2) Z}
     with \eqn{Z} standard normal and independent of the t-ratio's limit \eqn{\tau_{c_0}}{tau_c0}: the limit of the
     covariate-augmented t-ratio of Hansen (1995) at `c0 = cadf_c0(c, rho, R)` and of the t-ratio of the slope in a
@@ -97,6 +101,9 @@ Three extensions of the limit of the Dickey-Fuller t-ratio, computed by the gene
 V <- dfl_volpath(0.3, c(1, 3))         # the standard deviation triples at 30\%
 dist_cdf(-2.86, dfl_trend(0), 0, vol = V)
 dist_cdf(-2.86, dfl_trend(0), c(0, -20), vol = dfl_volpath(0.5))   # changing persistence
+dist_quantile(0.05, dfl_trend(1), 0, gls = -13.5, vol = V)   # DF-GLS: -2.9967, not -2.8456
+# the stationary start of the first regime (c = -10 up to mid-sample, -5 after it)
+dist_cdf(-2.86, dfl_trend(0), c(-10, -5), start = "stationary", vol = dfl_volpath(0.5))
 cadf_c0(-5, sqrt(0.5))                 # 5
 ltratio_cdf(1.645, "DU", 0, rho = -0.95, c0 = predictive_c0(0, -0.95))   # 0.5788
 hegy_t3_cdf(-3.3442, dfl_trend(0))     # 0.05, seasonal dummies

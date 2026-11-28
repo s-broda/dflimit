@@ -56,8 +56,10 @@ start).}
 detrending at \eqn{1 + \bar c/n}{1 + cbar/n}. With a case code it must be `NULL`.}
 
 \item{vol}{`NULL` (the default) or a volatility path ([dfl_volpath()]): volatility and persistence regimes (`c` may
-then be a vector of one value per regime), computed by the general engine for the case or the design (`engine =
-"classical"` refuses it; `method` `"auto"` or `"paths"`). See [dfl_volpath()].}
+then be a vector of one value per regime), computed by the general engine for the case or the design with its
+start and detrending (cases SU, ST: the stationary start of the first regime, which needs `c < 0` on it; case DG:
+GLS detrending at -13.5; a fixed start `g0 != 0` is refused with more than one regime; `engine = "classical"`
+refuses `vol`; `method` `"auto"` or `"paths"`). See [dfl_volpath()].}
 
 \item{rho}{A normal component (1, the default: none): the limit \eqn{\rho \tau + \sqrt{1 - \rho^2} Z}{rho tau +
 sqrt(1 - rho^2) Z} of the covariate-augmented t-ratio ([cadf_c0()]) and of the predictive regression

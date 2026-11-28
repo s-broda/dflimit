@@ -191,8 +191,11 @@ MATLAB and Python (the help page `?dfl_volpath`):
 - **Volatility and persistence regimes**: `dfl_volpath(breaks, omega)` and the argument `vol` of `dist_cdf()`,
   `dist_pdf()`, `dist_quantile()`, `ltratio_cdf()`, `ltratio_pdf()`, `ltratio_icdf()`: the limit of the t-ratio when
   the process is dJ = c(r) J dr + omega(r) dW with the standard deviation omega and, with `c` a vector of one value per
-  regime, the local-to-unity parameter piecewise constant between known dates (zero start, least squares detrending,
-  every `c` in \[-480, 0\]; the inversion on paths of the volatility transform).
+  regime, the local-to-unity parameter piecewise constant between known dates (every `c` in \[-480, 0\]; the inversion
+  on paths of the volatility transform), with GLS detrending (`gls`), the statistic that detrends first
+  (`dfl_detrend_first()`) and the stationary start, that of the first regime, J(0) ~ N(0, omega_1^2/(-2 c_1)), which
+  needs `c < 0` on the first regime; GLS detrending and the statistic that detrends first take the zero start, as
+  without `vol`, and a fixed start (`gamma0 != 0`) is refused with more than one regime.
 - **A normal component**: the argument `rho` of the same functions, the limit rho tau_c0 + sqrt(1 - rho^2) Z of the
   covariate-augmented t-ratio of Hansen (1995) at `c0 = cadf_c0(c, rho, R)` and of the t-ratio of the slope in a
   predictive regression with a regressor local to unity at `c0 = predictive_c0(c, rho, b)` (`method` `"auto"`,
@@ -206,6 +209,8 @@ MATLAB and Python (the help page `?dfl_volpath`):
 V <- dfl_volpath(0.3, c(1, 3))                  # the standard deviation triples at 30% of the sample
 dist_cdf(-2.86, dfl_trend(0), 0, vol = V)
 dist_quantile(0.05, dfl_trend(1), c(-3, 0, -10), vol = dfl_volpath(c(0.2, 0.7), c(2, 1, 0.5)))
+dist_quantile(0.05, dfl_trend(1), 0, gls = -13.5, vol = V)   # DF-GLS: -2.9967, not -2.8456
+dist_cdf(-2.86, dfl_trend(0), c(-10, -5), start = "stationary", vol = dfl_volpath(0.5))
 ltratio_cdf(1.645, "DU", 0, rho = -0.95, c0 = predictive_c0(0, -0.95))   # the predictive regression
 hegy_t3_quantile(0.05, dfl_trend(0))            # the 5% critical value with seasonal dummies
 ```
