@@ -202,3 +202,23 @@ test_that("the limiting cases of the extensions", {
   expect_equal(dist_cdf(c(-Inf, Inf), T0, -5, vol = V2), c(0, 1))
   expect_true(is.nan(hegy_t3_cdf(NaN, T0)))
 })
+
+test_that("the outer contour under regimes: a root near the imaginary axis far out", {
+  # (the testset of test/extensions/regimes.jl of DFLimit.jl: cases in which the thin step on the engine's 45-degree
+  # hyperbola lost 1.4e-6 to 3.8e-4 at every x, and in the far upper tail the range check of dist_cdf() refused the
+  # value: an early regime of high variance with a break in the deterministic terms or a persistence that changes; the
+  # hyperbola under regimes starts at 70 degrees since the C engine of dflimit-matlab ffeb48e)
+  skip_on_cran()
+  xs <- c(-4, -2, -1, 0, 0.5, 1, 1.5, 2, 3, 5)
+  V3 <- dfl_volpath(c(0.2, 0.7), c(2, 1, 0.5))
+  cases <- list(list(D = dfl_perron("B", 0.5), v = V3, c = c(-5, 0, -10), start = NULL, c0 = 0),
+                list(D = dfl_perron("C", 0.4), v = dfl_volpath(0.3, c(3, 1)), c = c(-5, -5), start = "stationary", c0 = 0),
+                list(D = dfl_perron("B", 0.3), v = dfl_volpath(0.2, c(5, 1)), c = c(-5, -20), start = NULL, c0 = 0),
+                list(D = dfl_perron("B", 0.5), v = V3, c = c(-20, 0, -10), start = NULL, c0 = 1))
+  for (a in cases) {
+    F <- dist_cdf(xs, a$D, a$c, c0 = a$c0, start = a$start, vol = a$v)
+    expect_lt(max(abs(F - dist_cdf(xs, a$D, a$c, c0 = a$c0, start = a$start, verified = TRUE, vol = a$v))), 1e-10)
+    expect_true(all(diff(F) > -1e-11) && 1 - F[length(F)] < 1e-11)
+    expect_gt(min(dist_pdf(xs, a$D, a$c, c0 = a$c0, start = a$start, vol = a$v)), -1e-11)
+  }
+})

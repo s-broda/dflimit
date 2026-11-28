@@ -105,7 +105,9 @@ With `rho` the methods are `"auto"`, `"lines"` and `"mixture"`, with `vol` `"aut
 nodes), `"inner"` (the thin nodes on the present step), `"outer"` (the present nodes on the longer step), `"fine"`
 (the thin nodes on half the present step) or `"finestep"` (a fixed start without deterministic terms: the present
 nodes on the step min(1/2, 2.5/(gamma0 |c0|)) times the present one where the outer hyperbola is flatter than 70
-degrees). The line integral (see `method`) is not affected.}
+degrees). The line integral (see `method`) is not affected.
+Under regimes (`vol`) the outer hyperbola starts at 70 degrees, where the engine's designs start at 45, and
+`"thin"` and `"outer"` take twice the step of that hyperbola.}
 
 \item{vol}{`NULL` (the default) or a volatility path ([dfl_volpath()]): volatility and persistence regimes (with
 `c` a vector of one value per regime); every `c` in \[-480, 0\], with `gls`, the statistic that detrends first and
